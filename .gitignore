@@ -1,0 +1,10 @@
+/.scannerwork
+/node_modules
+/build
+/docs
+
+# For now
+/extensions
+
+secrets.json
+*.todo

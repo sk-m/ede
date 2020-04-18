@@ -1,0 +1,60 @@
+.user-group-management-rights-root {
+    padding: 0;
+}
+
+.user-group-management-rights-root > .text-container {
+    padding: 15px;
+}
+
+.user-group-management-rights-root > .rights-container {
+    border-top: 1px solid rgb(210, 210, 210);
+}
+
+.user-group-management-rights-root > .rights-container > .right {
+    display: flex;
+
+    padding: 15px;
+
+    transition: 0.15s;
+}
+
+.user-group-management-rights-root > .rights-container > .right.w-arguments {
+    cursor: pointer;
+}
+
+.user-group-management-rights-root > .rights-container > .right:hover {
+    background-color: rgb(252, 252, 252);
+}
+
+.user-group-management-rights-root > .rights-container > .right > .left-container > .ui-checkbox-1 {
+    height: 36px;
+}
+
+.user-group-management-rights-root > .rights-container > .right > .right-container > .description-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.user-group-management-rights-root > .rights-container > .right > .right-container > .description-container > .icon {
+    color: hsl(0, 0%, 20%);
+    font-size: 12px;
+
+    transition: 0.15s;
+}
+
+.user-group-management-rights-root > .rights-container > .right.open > .right-container > .description-container > .icon {
+    transform: rotate(180deg);
+}
+
+.user-group-management-rights-root > .rights-container > .right > .right-container > .arguments-container {
+    height: 0;
+    overflow: hidden;
+
+    cursor: default;
+}
+
+.user-group-management-rights-root > .rights-container > .right.open > .right-container > .arguments-container {
+    height: auto;
+    margin-top: 6px;
+}

@@ -1,0 +1,466 @@
+/* Form containers */
+.ui-form-box {
+    position: relative;
+
+    padding: 15px;
+    margin-block-end: 1em;
+
+    border: 1px solid rgb(210, 210, 210);
+    border-radius: 3px;
+
+    transition: all 0.2s, opacity 0.33s, margin 0.1s;
+}
+
+.ui-form-box.green {
+    border-color: #00E817;
+    background-color: rgba(0, 232, 23, 0.05);
+}
+
+.ui-form-box.red {
+    border-color: var(--color-red);
+    background-color: rgba(232, 32, 0, 0.05);
+}
+
+.ui-form-box.hidden {
+    height: 0;
+    
+    margin: 0;
+    padding: 0;
+
+    opacity: 0;
+
+    overflow: hidden;
+    border: none;
+
+    pointer-events: none;
+}
+
+.ui-form-box > .form-label {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    margin: -10px 0 0 10px;
+    padding: 0 7px;
+
+    background-color: white;
+}
+
+.ui-form-container {
+    display: flex;
+    align-items: center;
+}
+
+.ui-form-container.align-start {
+    align-items: flex-start;
+}
+
+.ui-form-container.column {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.ui-form-container.column .ui-text:not(:last-child) {
+    margin-bottom: 3px;
+}
+
+.ui-form-container:not(.no-margin):not(:last-child) {
+    margin-bottom: 8px;
+}
+
+.ui-form-container.margin-top {
+    margin-top: 15px;
+}
+
+.ui-form-container.margin-bottom {
+    margin-bottom: 15px;
+}
+
+.ui-form-container.center {
+    justify-content: center;
+}
+
+.ui-form-container.right {
+    justify-content: flex-end;
+}
+
+.ui-form-container.between {
+    justify-content: space-between;
+}
+
+.ui-form-container ul {
+    margin: 8px 0 0 0;   
+}
+
+.ui-form-spacer {
+    height: 18px;
+}
+
+.ui-input-box {
+    position: relative;
+    width: 100%;
+}
+
+/* Text */
+.ui-text {
+    color: hsl(0, 0%, 10%);
+    font-family: "Open sans", sans-serif;
+    font-size: 14px;    
+}
+
+.ui-text.small {
+    font-size: 12px;
+}
+
+.ui-text.gray,
+.ui-text .gray {
+    color: hsl(0, 0%, 45%);
+}
+
+/* Bold */
+b.ui-text,
+.ui-text.b,
+.ui-text b {
+    font-weight: 600;
+}
+
+/* Italics */
+.ui-text.i {
+    font-style: italic;
+}
+
+a.ui-text[href],
+.ui-text a[href] {
+    color: var(--color-blue3);
+    text-decoration: none;
+
+    transition: 0.1s;
+}
+
+a.ui-text[href]:hover,
+.ui-text a[href]:hover {
+    text-decoration: underline;
+}
+
+a.ui-text[href]:focus:not(:hover),
+.ui-text a[href]:focus:not(:hover) {
+    padding: 0 4px;
+
+    outline: none;
+    background-color: var(--color-blue2-transparent-1);
+    border-radius: 3px;
+}
+
+/* Popups input boxes */
+.ui-input-box > .popup {
+    position: absolute;
+    z-index: 1;
+
+    bottom: 0;
+    margin-bottom: -40px;
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    padding: 8px 12px;
+
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+
+    border-radius: 5px;
+    background-color: var(--color-red);
+
+    box-shadow: 0 2px 5px rgba(232, 32, 0, 0.25);
+
+    transition: 0.2s;
+
+    /* Hidden state */
+    pointer-events: none;
+    opacity: 0;
+    
+    transform: translateY(5px);
+}
+
+.ui-input-box > .popup::before {
+    position: absolute;
+    left: 50%;
+    top: -5px;
+
+    margin-left: -5px;
+
+    display: block;
+    content: '';
+
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 5px solid var(--color-red);
+}
+
+.ui-input-box > .popup.shown {
+    pointer-events: all;
+    opacity: 1;
+    
+    transform: translateY(0);
+}
+
+/* Checkboxes */
+.ui-checkbox-1 {
+    display: flex;
+    align-items: center;
+
+    width: fit-content;
+
+    cursor: pointer;
+}
+
+.ui-checkbox-1 > .checkbox {
+    margin: 4px 8px 4px 0;
+    
+    width: 20px;
+    height: 20px;
+    
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 3px;
+
+    transition: 0.2s;
+}
+
+.ui-checkbox-1.small > .checkbox {
+    width: 15px;
+    height: 15px;
+}
+
+.ui-checkbox-1.small > .text {
+    font-size: 12px;
+}
+
+.ui-checkbox-1.disabled {
+    pointer-events: none;
+}
+
+.ui-checkbox-1.disabled > .checkbox {
+    border: 1px solid rgb(190, 190, 190) !important;
+    background-color: rgb(190, 190, 190) !important;
+}
+
+.ui-checkbox-1:hover > .checkbox {
+    border: 1px solid rgb(140, 140, 140);
+}
+
+.ui-checkbox-1[data-checked=true] > .checkbox > .check path {
+    fill: #fff;
+}
+
+.ui-checkbox-1[data-checked=true] > .checkbox {
+    border: 1px solid var(--color-blue2);
+    background-color: var(--color-blue2);
+}
+
+.ui-checkbox-1[data-checked=true]:hover > .checkbox {
+    border: 1px solid hsl(228, 100%, 55%);
+    background-color: hsl(228, 100%, 55%);
+}
+
+.ui-checkbox-1 > .text {
+    font-size: 14px;
+}
+
+/* Inputs */
+.ui-input1 {
+    outline: none;
+
+    width: 100%;
+
+    border: 0;
+    border-radius: 3px;
+
+    box-shadow: inset 0 0 0 1px var(--color-gray4);
+
+    padding: 7px 10px;
+
+    font-family: "Open Sans";
+    font-size: 13px;
+
+    transition: 0.2s;
+}
+
+.ui-input1.disabled {
+    background-color: var(--color-gray2);
+
+    pointer-events: none;
+}
+
+.ui-input1.monospace {
+    font-family: monospace;
+}
+
+.ui-input1[data-invalid=true] {
+    box-shadow: inset 0 0 0 1px var(--color-red);
+}
+
+.ui-input1:focus {
+    box-shadow: inset 0 0 0 2px var(--color-blue);
+}
+
+.ui-input1[data-invalid=true]:focus {
+    box-shadow: inset 0 0 0 2px var(--color-red);
+}
+
+/* Names for input boxes */
+.ui-input-name1 {
+    margin: 0 0 2px 2px;
+
+    word-break: break-word;
+
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* Buttons */
+.ui-button1 {
+    padding: 7px 12px;
+
+    border: 0;
+    border-radius: 2px;
+
+    background-color: rgb(248, 248, 248);
+    box-shadow: 0 0 0 1px rgb(200, 200, 200);
+
+    outline: none;
+
+    user-select: none;
+    cursor: pointer;
+
+    color: hsl(0, 0%, 20%);
+    font-family: "Roboto", sans-serif;
+    font-weight: bold;
+    font-size: 13px;
+
+    transition: 0.15s;
+}
+
+.ui-button1:focus,
+.ui-button1:hover {
+    background-color: rgb(252, 252, 252);
+    box-shadow: 0 0 0 1px rgb(180, 180, 180);
+}
+
+/* .ui-button1:focus {
+    box-shadow: inset 0 0 0 2px var(--color-blue-lighter);
+} */
+
+.ui-button1:active {
+    background-color: rgb(220, 220, 220);
+    box-shadow: 0 0 0 1px rgb(160, 160, 160);
+}
+
+.ui-button1.disabled {
+    pointer-events: none;
+
+    color: hsl(0, 0%, 35%);
+
+    background-color: rgb(240, 240, 240);
+    box-shadow: 0 0 0 1px rgb(220, 220, 220);
+}
+
+.ui-button1.toggled {
+    color: rgba(255, 255, 255, 0.975);
+
+    box-shadow: 0 0 0 1px var(--color-blue2);
+    background-color: var(--color-blue2);
+}
+
+.ui-button1.toggled:focus,
+.ui-button1.toggled:hover {
+    box-shadow: 0 0 0 1px hsl(228, 100%, 55%);
+    background-color: hsl(228, 100%, 55%);
+}
+
+/* Types */
+.ui-button1.t-frameless {
+    box-shadow: none;
+    background-color: transparent;
+}
+
+.ui-button1.t-frameless:focus,
+.ui-button1.t-frameless:hover {
+    box-shadow: 0 0 0 1px rgb(245, 245, 245);
+    background-color: rgb(245, 245, 245);
+}
+
+.ui-button1.t-frameless:active {
+    box-shadow: 0 0 0 1px rgb(235, 235, 235);
+    background-color: rgb(235, 235, 235);
+}
+
+/* Additional styles */
+.ui-button1.c-blue {
+    color: var(--color-blue-lighter);
+}
+
+.ui-button1.c-blue.t-frameless:focus,
+.ui-button1.c-blue.t-frameless:hover {
+    box-shadow: 0 0 0 1px var(--color-blue2-transparent-1);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+.ui-button1.c-blue.t-frameless:active {
+    box-shadow: 0 0 0 1px var(--color-blue2-transparent-2);
+    background-color: var(--color-blue2-transparent-2);
+}
+
+.ui-button1.c-red.t-frameless:focus,
+.ui-button1.c-red.t-frameless:hover {
+    box-shadow: 0 0 0 1px var(--color-red-transparent-1);
+    background-color: var(--color-red-transparent-1);
+}
+
+.ui-button1.c-red.t-frameless:active {
+    box-shadow: 0 0 0 1px var(--color-red-transparent-2);
+    background-color: var(--color-red-transparent-2);
+}
+
+.ui-button1.c-red {
+    color: var(--color-red);
+}
+
+.ui-button1.low-emp {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+/* Log item */
+.ui-log-item {
+    color: hsl(0, 0%, 10%);
+    font-size: 14px;
+}
+
+.ui-log-item .time {
+    color: hsl(0, 0%, 55%);
+}
+
+.ui-log-item a[href] {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.ui-log-item a[href]:hover {
+    text-decoration: underline;
+}
+
+.ui-log-item code {
+    font-style: italic;
+}
+
+.ui-log-item code .green {
+    color: green;
+}
+
+.ui-log-item code .red {
+    color: crimson;
+}

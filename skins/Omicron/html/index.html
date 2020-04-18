@@ -1,0 +1,105 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/public/skins/Omicron/html/common.css">
+    <link rel="stylesheet" href="/public/skins/Omicron/html/index.css">
+    <link rel="stylesheet" href="/public/skins/Omicron/html/ui.css">
+
+    <!-- Static styles -->
+    {{each(options.ede_css)}}
+    <style>{{@this | safe}}</style>
+    {{/each}}
+
+    <!-- Google fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=PT+Serif:400&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round|Material+Icons+Two+Tone" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+
+    <!-- Scripts -->
+    <script src="/public/lib/ede.js"></script>
+
+    <!-- Dynamic Scripts -->
+    {{each(options.ede_js)}}
+    <script>{{@this | safe}}</script>
+    {{/each}}
+
+    <!-- External -->
+    <link rel="stylesheet" href="/public/lib/prism.css">
+    <script src="/public/lib/prism.js" onload="_ede_prism_onload()" async></script>
+
+    <title>EDE</title>
+</head>
+<body>
+    <div id="ede-top-panel">
+        <div class="left">
+            <div class="menu-button"><i class="fas fa-bars"></i></div>
+            <img class="ede-template ede_instance_logo" draggable="false" src="https://upload.wikimedia.org/wikipedia/commons/0/01/FileZilla_logo.svg"></img>
+            <div class="ede-template ede_instance_displayname">{{ede_instance_displayname}}</div>
+        </div>
+        <div class="middle">
+            <div class="searchbar">
+                <div class="search-icon"><i class="material-icons">search</i></div>
+                <input placeholder="Search for something..." type="text">
+            </div>
+        </div>
+        <div class="right">
+            {{if(options.ede_user_username)}}
+            <div class="button inactive rotate"><i class="material-icons">notifications</i></div>
+            <div class="button inactive"><i class="material-icons">view_list</i></div>
+
+            <div class="user-button">
+                <i class="fas fa-user"></i>
+                <span class="ede-template ede_user_username ede-currentuser-username">{{ede_user_username}}</span>
+                <i class="arrow fas fa-caret-down"></i>
+            </div>
+            {{#else}}
+                <a href="/System:Login" class="link">Login / Join</a>
+            {{/if}}
+        </div>
+    </div>
+    <div id="ede-left-panel">
+        <div class="content">
+            <a href="/Main" class="link"><div class="icon"><i class="material-icons">home</i></div>Main Page</a>
+            <a href="/c" class="link"><div class="icon"><i class="material-icons">format_list_bulleted</i></div>Contents</a>
+            <a href="/fc" class="link"><div class="icon"><i class="material-icons">star</i></div>Featured content</a>
+            <a href="/Test" class="link"><div class="icon"><i class="material-icons">star</i></div>Test</a>
+
+            <div class="spacer"></div>
+        </div>
+    </div>
+    <div id="ede-main-panel">
+        <div class="main-content-container">
+            <div class="main-content{{if(options.ede_page_nocontainer)}} nocontainer{{/if}}">
+                <div class="ede-template ede_page_title_container page-title-container{{if(options.ede_page_hidetitle)}} hidden{{/if}}">
+                    <div class="ede-template ede_page_title">{{ede_page_title}}</div>
+                    <div class="ede-template ede_page_actionbuttons">
+                        <div class="button"><div class="icon"><i class="material-icons">history</i></div>History</div>
+                        <div class="button"><div class="icon"><i class="material-icons">edit</i></div>Edit</div>
+                        <div class="button"><div class="icon"><i class="material-icons">more_vert</i></div></div>
+                    </div>
+                </div>
+                <div class="ede-template ede_page_additional_info_container additional-info-container{{if(options.ede_page_hidetitle)}} hidden{{/if}}">
+                    <div class="ede-template ede_page_subnametext">{{ede_page_subnametext | safe}}</div>
+                    <div class="ede-template ede_page_additionalinfo_badges">
+                        {{if(options.ede_page_additionalinfo_badges)}}
+                        {{each(options.ede_page_additionalinfo_badges)}}
+                        <div class="badge">{{@this | safe}}</div>
+                        {{/each}}
+                        {{/if}}
+                    </div>
+                </div>
+                <div id="ede-page-content" class="ede-template ede_page_content">{{ede_page_content | safe}}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

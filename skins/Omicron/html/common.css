@@ -1,0 +1,34 @@
+body {
+    margin: 0;
+
+    font-family: 'Open Sans', sans-serif;
+}
+
+/* TODO @cleanup */
+:root {
+    --color-blue: #1744FF;
+    --color-blue-lighter: hsl(228, 100%, 60%);
+    --color-blue2: hsla(240, 82%, 55%, 1);
+    --color-blue2-active: #1515D8;
+    --color-blue3: #0020e8;
+
+    --color-blue2-transparent-1: rgba(23, 68, 255, 0.1);
+    --color-blue2-transparent-2: rgba(23, 68, 255, 0.14);
+    --color-blue2-transparent-3: rgba(23, 68, 255, 0.22);
+
+    --color-red: #e82000;
+    
+    --color-red-transparent-1: rgba(232, 32, 0, 0.1);
+    --color-red-transparent-2: rgba(232, 32, 0, 0.14);
+    --color-red-transparent-3: rgba(232, 32, 0, 0.22);
+
+    --color-gray: hsl(0, 0%, 99%);
+    --color-gray2: hsl(0, 0%, 95%);
+    --color-gray3: hsl(0, 0%, 92%);
+    --color-gray4: hsl(0, 0%, 84%);
+}
+
+/* Disable prism's shadow */
+pre[class*="language-"]:before, pre[class*="language-"]:after {
+    display: none !important;
+}

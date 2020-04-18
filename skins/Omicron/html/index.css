@@ -1,0 +1,416 @@
+#ede-top-panel {
+    display: flex;
+    justify-content: space-between;
+
+    box-sizing: border-box;
+
+    width: 100%;
+    height: 58px;
+
+    background-color: var(--color-gray);
+    border-bottom: 2px solid var(--color-gray3);
+}
+
+#ede-top-panel > .left,
+#ede-top-panel > .middle,
+#ede-top-panel > .right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 100%;
+}
+
+#ede-top-panel > .left {
+    justify-content: flex-start;
+
+    flex-shrink: 0;
+}
+
+#ede-top-panel > .left > .menu-button {
+    padding: 10px 12px;
+    margin: 0 13px;
+
+    user-select: none;
+    cursor: pointer;
+
+    font-size: 16px;
+    color: hsl(0, 0%, 40%);
+
+    transition: color 0.2s;
+}
+
+#ede-top-panel > .left > .menu-button:hover {
+    color: hsl(0, 0%, 20%);
+}
+
+#ede-top-panel > .left > .ede-template.ede_instance_logo {
+    height: 42px;
+
+    user-select: none;
+}
+
+#ede-top-panel > .left > .ede-template.ede_instance_displayname {
+    margin-left: 12px;
+
+    color: hsl(0, 0%, 18%);
+    font-weight: 700;
+    font-size: 22px;
+
+    font-family: 'Open Sans', sans-serif;
+
+    white-space: nowrap;
+}
+
+#ede-top-panel > .middle {
+    box-sizing: border-box;
+    
+    width: 100%;
+    padding: 0 20px;
+}
+
+#ede-top-panel > .middle > .searchbar {
+    display: flex;
+
+    width: 80%;
+    min-width: 200px;
+    max-width: 800px;
+
+    height: 32px;
+
+    background-color: white;
+    border: 1px solid var(--color-gray3);
+    border-radius: 4px;
+
+    /* box-shadow: 0px 1px 3px hsla(0, 0%, 90%, 1); */
+
+    transition: border-color 0.2s;
+}
+
+#ede-top-panel > .middle > .searchbar:hover {
+    border-color: var(--color-gray4);
+}
+
+#ede-top-panel > .middle > .searchbar > .search-icon {
+    display: flex;
+
+    user-select: none;
+
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+    width: 40px;
+}
+
+#ede-top-panel > .middle > .searchbar > .search-icon > i {
+    color: hsl(0, 0%, 32%);
+
+    transition: color 0.2s;
+}
+
+#ede-top-panel > .middle > .searchbar:hover > .search-icon > i {
+    color: hsl(0, 0%, 25%);
+}
+
+#ede-top-panel > .middle > .searchbar > input {
+    vertical-align: top;
+
+    height: 100%;
+    width: 100%;
+
+    padding-right: 8px;
+
+    outline: none;
+    border: none;
+    background-color: transparent;
+
+    color: hsl(0, 0%, 18%);
+    font-family: "Roboto", sans-serif;
+}
+
+#ede-top-panel > .right {
+    justify-content: flex-end;
+
+    flex-shrink: 0;
+}
+
+#ede-top-panel > .right > .link {
+    margin: 0 5px;
+
+    color: var(--color-blue);
+
+    font-size: 12.5px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#ede-top-panel > .right > .link:last-child {
+    margin-right: 16px;
+}
+
+#ede-top-panel > .right > .link:hover {
+    text-decoration: underline;
+}
+
+#ede-top-panel > .right > i {
+    margin-left: -4px;
+
+    color: hsl(0, 0%, 35%);
+    font-size: 12px;
+}
+
+#ede-top-panel > .right > .button {
+    user-select: none;
+    cursor: pointer;
+
+    margin-right: 14px;
+
+    transition: transform 0.15s;
+}
+
+#ede-top-panel > .right > .button.rotate:hover {
+    transform: rotate(8deg);
+}
+
+#ede-top-panel > .right > .button.inactive > i {
+    color: hsla(0, 0%, 50%, 1);
+}
+
+#ede-top-panel > .right > .button > i {
+    color: hsla(0, 0%, 20%, 1);
+    font-size: 24px;
+
+    transition: 0.2s;
+}
+
+#ede-top-panel > .right > .button:hover > i {
+    color: hsl(0, 0%, 40%) !important;
+}
+
+#ede-top-panel > .right > .user-button {
+    margin: 0 25px 0 14px;
+    padding: 6px 4px 6px 12px;
+
+    user-select: none;
+    cursor: pointer;
+
+    background-color: white;
+    border: 1px solid var(--color-gray3);
+    border-radius: 5px;
+
+    color: hsl(0, 0%, 18%);
+    font-size: 12.5px;
+    font-weight: 600;
+
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+#ede-top-panel > .right > .user-button:hover {
+    border-color: var(--color-gray4);
+    background-color: hsl(0, 0%, 99%)
+}
+
+#ede-top-panel > .right > .user-button > i {
+    margin-right: 4px;
+
+    color: hsl(0, 0%, 25%);
+    font-size: 12px;
+}
+
+#ede-top-panel > .right > .user-button > i.arrow {
+    margin-left: 8px;
+
+    transition: 0.2s;
+}
+
+#ede-top-panel > .right > .user-button:hover > i.arrow {
+    transform: translateY(1px);
+}
+
+#ede-left-panel {
+    position: fixed;
+
+    width: 230px;
+    height: 100%;
+
+    /* TODO @hack */
+    box-shadow: inset -8px -12px 13px hsla(0, 0%, 95%, 1);
+
+    background-color: var(--color-gray);
+}
+
+#ede-left-panel > .content {
+    box-sizing: border-box;
+
+    height: 100%;
+    width: 100%;
+
+    overflow: hidden;
+
+    padding-top: 12px;
+}
+
+#ede-left-panel > .content .link {
+    display: flex;
+
+    padding: 7px 22px;
+
+    outline: none;
+
+    color: hsl(0, 0%, 25%);
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+
+    font-family: 'Open Sans', sans-serif;
+
+    transition: 0.1s;
+}
+
+#ede-left-panel > .content .link:focus,
+#ede-left-panel > .content .link:hover {
+    color: hsl(0, 0%, 20%);
+    background-color: var(--color-gray2);
+}
+
+#ede-left-panel > .content .link:active {
+    transition: 0s;
+
+    background-color: var(--color-gray3);
+}
+
+#ede-left-panel > .content .link > .icon {
+    display: flex;
+
+    width: 24px;
+}
+
+#ede-left-panel > .content .link > .icon > i.material-icons {
+    font-size: 16px;
+
+    transform: translateY(2px);
+}
+
+#ede-left-panel > .content .spacer {
+    height: 1px;
+    width: 82%;
+
+    margin: 18px auto;
+
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+#ede-main-panel > .main-content-container {
+    margin-left: 230px;
+}
+
+#ede-main-panel > .main-content-container > .main-content {
+    box-sizing: border-box;
+
+    min-width: 600px;
+    max-width: 1600px;
+
+    margin: 0 auto;
+    padding: 35px 60px;
+}
+
+#ede-main-panel > .main-content-container > .main-content.nocontainer {
+    min-width: unset;
+    max-width: unset;
+    
+    margin: 0;
+    padding: 0;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-bottom: 6px;
+
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container.hidden {
+    display: none;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_title {
+    font-family: 'PT Serif', serif;
+    font-size: 28px;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons {
+    display: flex;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button {
+    display: flex;
+    align-items: center;
+
+    margin-left: 18px;
+
+    user-select: none;
+    cursor: pointer;
+
+    color: hsl(0, 0%, 35%);
+    font-size: 14px;
+    font-weight: 600;
+
+    transition: color 0.2s;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button:hover {
+    color: hsl(0, 0%, 5%);
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button > .icon {
+    margin-right: 4px;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button > .icon > i {
+    font-size: 22px;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .additional-info-container {
+    display: flex;
+    justify-content: space-between;
+
+    margin-top: 4px;
+    margin-bottom: 20px;
+}
+
+#ede-main-panel > .main-content-container > .main-content > .additional-info-container.hidden {
+    display: none;
+}
+
+.ede-template.ede_page_subnametext {
+    color: hsl(0, 0%, 20%);
+    font-size: 12px;
+}
+
+.ede-template.ede_page_additionalinfo_badges {
+    display: flex;
+}
+
+.ede-template.ede_page_additionalinfo_badges > .badge {
+    margin-left: 10px;
+
+    color: hsl(0, 0%, 20%);
+    font-size: 12px;
+    font-weight: 300;
+}
+
+.ede-template.ede_page_additionalinfo_badges > .badge .material-icons {
+    vertical-align: sub;
+
+    user-select: none;
+
+    font-size: 16px;
+}
+
+#ede-page-content {
+    font-size: 14px;
+}
