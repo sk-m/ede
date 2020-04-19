@@ -269,6 +269,138 @@ a.ui-text[href]:focus:not(:hover),
     font-size: 14px;
 }
 
+/* Dropdown */
+.ui-input-dropdown1 {
+    position: relative;
+
+    width: 100%;
+
+    box-shadow: inset 0 0 0 1px var(--color-gray4);
+    border-radius: 3px;
+ 
+    transition: 0.15s;
+}
+
+.ui-input-dropdown1:hover {
+    background-color: rgb(252, 252, 252);
+    box-shadow: inset 0 0 0 1px var(--color-gray5);
+}
+
+.ui-input-dropdown1[data-open="true"] {
+    border-radius: 3px 3px 0 0;
+}
+
+.ui-input-dropdown1 > .arrow-icon {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+
+    margin: 11px 12px 0 0;
+
+    pointer-events: none;
+
+    font-size: 12px;
+    color: hsl(0, 0%, 30%);
+
+    transition: 0.15s;
+}
+
+.ui-input-dropdown1:hover > .arrow-icon {
+    transform: translateY(1px);
+}
+
+.ui-input-dropdown1[data-open="true"] > .arrow-icon {
+    transform: rotate(-180deg) !important;
+}
+
+.ui-input-dropdown1 > input {
+    box-sizing: border-box;
+    
+    height: 32px;
+    width: 100%;
+    
+    padding: 7px 11px;
+    
+    cursor: pointer;
+    
+    color: black;
+    font-family: "Open Sans";
+    font-size: 13px;
+    
+    border: 0;
+    background-color: transparent;
+}
+
+.ui-input-dropdown1 > .choices {
+    position: absolute;
+    z-index: 99999;
+
+    overflow: hidden;
+
+    display: none; /* Hidden state */
+    flex-direction: column;
+
+    overflow-y: auto;
+
+    width: calc(100% - 2px);
+    max-height: 50vh;
+
+    background-color: white;
+
+    border: 1px solid var(--color-gray4);
+    border-radius: 0 0 3px 3px;
+    border-top: 0;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.025);
+}
+
+.ui-input-dropdown1[data-open="true"] > .choices {
+    display: flex;
+}
+
+.ui-input-dropdown1 > .choices > .text {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+
+    padding: 8px 10px;
+
+    font-size: 12px;
+
+    opacity: 0.7;
+}
+
+.ui-input-dropdown1 > .choices > .text > i {
+    margin-right: 3px;
+}
+
+.ui-input-dropdown1 > .choices > .choice {
+    padding: 7px 10px;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.ui-input-dropdown1 > .choices > .choice:hover {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-05);
+}
+
+.ui-input-dropdown1 > .choices > .choice[data-selected="true"] {
+    font-weight: 600;
+
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+/* .ui-input-dropdown1 > .choices > .choice[data-selected="true"]:hover {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-05);
+} */
+
 /* Inputs */
 .ui-input1 {
     outline: none;
@@ -280,7 +412,7 @@ a.ui-text[href]:focus:not(:hover),
 
     box-shadow: inset 0 0 0 1px var(--color-gray4);
 
-    padding: 7px 10px;
+    padding: 7px 11px;
 
     font-family: "Open Sans";
     font-size: 13px;

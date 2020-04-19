@@ -12,12 +12,14 @@ body {
     --color-blue2-active: #1515D8;
     --color-blue3: #0020e8;
 
+    --color-blue2-transparent-05: rgba(23, 68, 255, 0.05);
     --color-blue2-transparent-1: rgba(23, 68, 255, 0.1);
     --color-blue2-transparent-2: rgba(23, 68, 255, 0.14);
     --color-blue2-transparent-3: rgba(23, 68, 255, 0.22);
 
     --color-red: #e82000;
     
+    --color-red-transparent-05: rgba(232, 32, 0, 0.05);
     --color-red-transparent-1: rgba(232, 32, 0, 0.1);
     --color-red-transparent-2: rgba(232, 32, 0, 0.14);
     --color-red-transparent-3: rgba(232, 32, 0, 0.22);
@@ -26,6 +28,7 @@ body {
     --color-gray2: hsl(0, 0%, 95%);
     --color-gray3: hsl(0, 0%, 92%);
     --color-gray4: hsl(0, 0%, 84%);
+    --color-gray5: hsl(0, 0%, 78%);
 }
 
 /* Disable prism's shadow */
