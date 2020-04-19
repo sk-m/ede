@@ -327,14 +327,7 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
                 if(usergroup_added_rights[right_name]) {
                     // tslint:disable-next-line: forin
                     for(const argument_name in arguments_obj[right_name]) {
-                        let argument_value = arguments_obj[right_name][argument_name];
-
-                        // Array: translate "1,2,3" to [1, 2, 3]
-                        if(argument_value.indexOf(",") !== -1) {
-                            argument_value = argument_value.split(",");
-                        }
-
-                        usergroup_added_rights[right_name][argument_name] = argument_value;
+                        usergroup_added_rights[right_name][argument_name] = arguments_obj[right_name][argument_name];
                     }
                 }
             }

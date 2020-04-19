@@ -32,52 +32,52 @@ function userGroupManagementPageScript() {
         const form_validation = ede.form.validate("usergroupmanagement");
         if(form_validation.invalid) return;
 
-        const params = {
+        // Create arguments object that will be sent to the backend
+        const params_raw = ede.form.getParams("usergroupmanagement");
+
+        const params_final = {
             rights: {},
             right_arguments: {}
         };
 
-        // Create arguments object that will be sent to the backend
-        for(const input_name in this_form) {
-            const input = this_form[input_name];
+        // Correctly format the params object
+        for(const param_name in params_raw) {
+            const param_value = params_raw[param_name];
 
-            // Skip the form and buttons
-            if(input.nodeName !== "FORM" && input.nodeName !== "BUTTON") {
-                if(input_name.indexOf(";") !== -1) {
-                    const input_name_split = input_name.split(";");
-                    const right_name = input_name_split[1];
+            if(param_name.indexOf(";") !== -1) {
+                const param_name_split = param_name.split(";");
+                const right_name = param_name_split[1];
 
-                    switch(input_name_split[0]) {
-                        case "right": {
-                            // Right checkbox
-                            params.rights[right_name] = input.dataset.checked === "true";
-                        } break;
-                        case "right_argument": {
-                            // Right argument
+                switch(param_name_split[0]) {
+                    case "right": {
+                        // Right checkbox
+                        params_final.rights[right_name] = param_value;
+                    } break;
+                    case "right_argument": {
+                        // Right argument
 
-                            // Create the arguments object for the right if nonexistent
-                            if(!params.right_arguments[right_name]) {
-                                params.right_arguments[right_name] = {};
-                            }
+                        // Create the arguments object for the right if nonexistent
+                        if(!params_final.right_arguments[right_name]) {
+                            params_final.right_arguments[right_name] = {};
+                        }
 
-                            params.right_arguments[right_name][input_name_split[2]] = input.value;
-                        } break;
-                    }
-                } else {
-                    // Just a regular input (like group_name)
-                    params[input_name] = encodeURIComponent(input.value);
+                        params_final.right_arguments[right_name][param_name_split[2]] = param_value;
+                    } break;
                 }
+            } else {
+                // Just a regular input (like group_name)
+                params_final[param_name] = params_raw[param_name];
             }
         }
 
         // Take the current group name from the url
-        params.group_name = location.pathname.split("/")[2];
+        params_final.group_name = location.pathname.split("/")[2];
 
         // Disable the button
         e.target.classList.add("disabled");
 
         // Update the group
-        ede.apiCall("usergroup/update", params, true)
+        ede.apiCall("usergroup/update", params_final, true)
         .then(() => {
             result_status_container.querySelector(".ui-text").innerHTML = `\
 <div class="ui-text b">Success</div>

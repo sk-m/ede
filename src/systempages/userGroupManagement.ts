@@ -70,18 +70,39 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                                 argument_value = argument.default_value;
                             }
 
-                            // TODO allow boolean input types (checkboxes). Text inputs only for now
-                            // TODO "string|array" input handlers are not implemented yet
-                            // Create HTML snippet for single argument input
-                            arguments_html += `\
+                            // Input might is an array
+                            if(argument.type.includes("array")) {
+                                let current_values_html = "";
+
+                                for(const item of argument_value) {
+                                    current_values_html += `<div>${ item }</div>`;
+                                }
+
+                                arguments_html += `\
+<div class="ui-form-container" style="margin-top: 5px">
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">${ argument.description } (array)</div>
+        <div class="ui-input-array1" name="right_argument;${ right_name };${ argument_name }">
+            <div class="items">${ current_values_html }</div>
+            <input text="text">
+        </div>
+    </div>
+</div>`;
+
+                            } else {
+                                // TODO allow boolean input types (checkboxes). Text inputs only for now
+                                // TODO "string|array" input handlers are not implemented yet
+                                // Create HTML snippet for single argument input
+                                arguments_html += `\
 <div class="ui-form-container" style="margin-top: 5px">
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">${ argument.description } (${ argument.type.join(" or ") })</div>
         <input type="text" value="${ argument_value }" name="right_argument;${ right_name };${ argument_name }" data-handler="${ argument.type.join("|") }" class="ui-input1 monospace${ client_can_alter ? "" : " disabled" }">
     </div>
-</div>
-`;
+</div>`;
+                            }
                         }
                     }
                 }
