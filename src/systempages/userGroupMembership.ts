@@ -41,8 +41,9 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
                 User.getUserGroupRights(queried_user.id)
                 .then(async (target_grouprights: GroupsAndRightsObject) => {
                     let client_can_modify_groups = false;
-                    let client_modifiable_groups: string | string[] = [];
-                    let client_can_modify_all = false;
+
+                    let client_modifiable_groups_add: string[] = [];
+                    let client_modifiable_groups_remove: string[] = [];
 
                     if(client) {
                         // Get rights for client user
@@ -51,14 +52,13 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
                             const client_rights = client_grouprights.rights;
 
                             if(client_rights.modifyusergroupmembership) {
-                                // TODO !!! Add only for now !!!
                                 client_can_modify_groups = true;
 
-                                if(client_rights.modifyusergroupmembership.add.includes("*")) {
-                                    client_can_modify_all = true
-                                } else {
-                                    client_modifiable_groups = client_rights.modifyusergroupmembership.add;
-                                }
+                                // Add
+                                client_modifiable_groups_add = client_rights.modifyusergroupmembership.add;
+
+                                // Remove
+                                client_modifiable_groups_remove = client_rights.modifyusergroupmembership.remove;
                             }
                         })
                         .catch(() => undefined);
@@ -69,24 +69,36 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
 
                     // TODO we should use Typescript's utility types more often
                     const registry_usergroups_snapshot: Readonly<GroupsObject> = registry_usergroups.get();
-                    let is_modifiable = false;
 
                     // For every available group
                     for(const group_name in registry_usergroups_snapshot) {
                         if(registry_usergroups_snapshot[group_name]) {
-                            if(!client_can_modify_all) {
-                                is_modifiable = client_modifiable_groups.includes(group_name);
+                            let is_modifiable = false;
+
+                            const group_already_assigned = target_grouprights.groups.includes(group_name);
+
+                            if(group_already_assigned) {
+                                // Check if client can remove the group (target already in group)
+                                if( client_modifiable_groups_remove.includes(group_name) ||
+                                    client_modifiable_groups_remove.includes("*")
+                                ) {
+                                    is_modifiable = true;
+                                }
                             } else {
-                                is_modifiable = true;
+                                // Check if client can add the group (target is not in the group)
+                                if( client_modifiable_groups_add.includes(group_name) ||
+                                    client_modifiable_groups_add.includes("*")
+                                ) {
+                                    is_modifiable = true;
+                                }
                             }
 
                             // TODO Replace group_name in .text element with the real name of the group that is user configurable via
                             // System Messages
 
-                            // TODO-3 !!!!!!!!!!!!!!!!!!!!! WIP, all checkboxes are enabled for now
                             checkboxes_html += `\
-<div class="ui-checkbox-1${ true || is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
-data-checked="${ target_grouprights.groups.includes(group_name) ? "true" : "false" }">
+<div class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
+data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
 <div class="text">${ group_name }</div>
 </div>`;
