@@ -84,6 +84,8 @@ function userGroupManagementPageScript() {
 <div class="ui-text small i">Group saved successfully</div>`;
 
             result_status_container.classList.add("green");
+            result_status_container.classList.remove("red");
+
             result_status_container.classList.remove("hidden");
         })
         .catch(response => {

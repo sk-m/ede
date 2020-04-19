@@ -42,6 +42,8 @@ function userGroupMembershipPageScript() {
 <div class="ui-text small i">User's groups updated successfully</div>`;
 
             result_status_container.classList.add("green");
+            result_status_container.classList.remove("red");
+
             result_status_container.classList.remove("hidden");
         })
         .catch(response => {
