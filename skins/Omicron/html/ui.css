@@ -288,6 +288,8 @@ a.ui-text[href]:focus:not(:hover),
 
     outline: none;
     border: 0;
+
+    background-color: transparent;
 }
 
 .ui-input-array1 > .items {
