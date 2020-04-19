@@ -51,10 +51,10 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
                             const client_rights = client_grouprights.rights;
 
                             if(client_rights.modifyusergroupmembership) {
-                                // TODO Add only for now !!!
+                                // TODO !!! Add only for now !!!
                                 client_can_modify_groups = true;
 
-                                if(client_rights.modifyusergroupmembership.add === "*") {
+                                if(client_rights.modifyusergroupmembership.add.includes("*")) {
                                     client_can_modify_all = true
                                 } else {
                                     client_modifiable_groups = client_rights.modifyusergroupmembership.add;
@@ -74,23 +74,18 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
                     // For every available group
                     for(const group_name in registry_usergroups_snapshot) {
                         if(registry_usergroups_snapshot[group_name]) {
-                            // We have to check if client_modifiable_groups includes the name of a group *and*
-                            // if it is just a string containing one name of a group. This is because
-                            // client_modifiable_groups can also be a string containing just one group
                             if(!client_can_modify_all) {
-                                if(typeof client_modifiable_groups === "string") {
-                                    is_modifiable = client_modifiable_groups === group_name;
-                                } else {
-                                    is_modifiable = client_modifiable_groups.includes(group_name);
-                                }
+                                is_modifiable = client_modifiable_groups.includes(group_name);
                             } else {
                                 is_modifiable = true;
                             }
 
-                            // Replace group_name in .text element with the real name of the group that is user configurable via
+                            // TODO Replace group_name in .text element with the real name of the group that is user configurable via
                             // System Messages
+
+                            // TODO-3 !!!!!!!!!!!!!!!!!!!!! WIP, all checkboxes are enabled for now
                             checkboxes_html += `\
-<div class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
+<div class="ui-checkbox-1${ true || is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
 data-checked="${ target_grouprights.groups.includes(group_name) ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
 <div class="text">${ group_name }</div>

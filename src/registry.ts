@@ -144,13 +144,13 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 
         arguments: {
             add: {
-                type: ["array", "string"],
+                type: ["array"],
                 description: "Groups allowed to assign",
 
                 default_value: "",
             },
             remove: {
-                type: ["array", "string"],
+                type: ["array"],
                 description: "Groups allowed to remove",
 
                 default_value: ""

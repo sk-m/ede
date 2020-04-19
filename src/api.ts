@@ -80,12 +80,17 @@ export async function updateUserGroupMembership(req: any, res: any, client_user?
     }
 
     let client_permissions_error = true;
+    let client_grouprights: any;
+
     let target_user_error = false;
+    let target_user_grouprights: any;
 
     // Check if client has the rights to modify user's group membership
     await User.getUserGroupRights(client_user.id)
-    .then((client_grouprights: GroupsAndRightsObject) => {
-        if(client_grouprights.rights.modifyusergroupmembership) client_permissions_error = false;
+    .then((grouprights: GroupsAndRightsObject) => {
+        client_grouprights = grouprights;
+
+        if(grouprights.rights.modifyusergroupmembership) client_permissions_error = false;
     })
     .catch(() => undefined);
 
@@ -103,6 +108,16 @@ user's group membership"));
 
     if(target_user_error || !target_user) {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Target user does not exist"));
+        return;
+    }
+
+    // Get target user's groups
+    target_user_grouprights = await User.getUserGroupRights(target_user.id).catch(() => {
+        target_user_error = true;
+    })
+
+    if(target_user_error) {
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
         return;
     }
 
@@ -128,13 +143,33 @@ user's group membership"));
                 return;
             }
 
-            if(groups_obj[group_name]) {
+            if(groups_obj[group_name] && !target_user_grouprights.groups.includes(group_name)) {
                 // Group is added
+                // Check if client has the rights to assign
+                if( !client_grouprights ||
+                    (!client_grouprights.rights.modifyusergroupmembership.add.includes(group_name) &&
+                    !client_grouprights.rights.modifyusergroupmembership.add.includes("*"))
+                ) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `You don't have the rights to assign group \
+'${ Util.sanitize(group_name) }'`));
+                    return;
+                }
+
                 added_groups.push(group_name);
 
                 insert_sql_query += `(${ target_user.id },'${ group_name }'),`;
-            } else {
+            } else if(!groups_obj[group_name] && target_user_grouprights.groups.includes(group_name)) {
                 // Group is removed
+                // Check if client has the rights to remove
+                if( !client_grouprights ||
+                    (!client_grouprights.rights.modifyusergroupmembership.remove.includes(group_name) &&
+                    !client_grouprights.rights.modifyusergroupmembership.remove.includes("*"))
+                ) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `You don't have the rights to remove group \
+'${ Util.sanitize(group_name) }'`));
+                    return;
+                }
+
                 removed_groups.push(group_name);
             }
         }
@@ -149,6 +184,10 @@ user's group membership"));
         // TODO @performance
         // We currently have two PRIMARY KEYS in the database to prevent duplicates, I don't think this is a good approach
         // Maybe we can do it more efficiently?
+
+        // TODO These sould be debug logs
+        Util.log(`Adding groups: ${ added_groups || "(none)" }`, 1);
+        Util.log(`Removing groups: ${ removed_groups || "(none)" }`, 1);
 
         // Remove groups
         if(removed_groups.length !== 0) {
