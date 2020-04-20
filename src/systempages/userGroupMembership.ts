@@ -97,7 +97,7 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
                             // System Messages
 
                             checkboxes_html += `\
-<div class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
+<div input class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
 data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
 <div class="text">${ group_name }</div>

@@ -83,7 +83,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">${ argument.description } (array)</div>
-        <div class="ui-input-array1" name="right_argument;${ right_name };${ argument_name }">
+        <div input class="ui-input-array1" name="right_argument;${ right_name };${ argument_name }">
             <div class="items">${ current_values_html }</div>
             <input text="text">
         </div>
@@ -113,7 +113,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                 available_rights_html += `\
 <div class="right${ arguments_count ? " w-arguments" : "" }">
     <div class="left-container">
-        <div name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights[right_name] ? "true" : "false" }">
+        <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights[right_name] ? "true" : "false" }">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">${ right_name }</div>
         </div>
