@@ -153,6 +153,7 @@ export async function saveUserGroup(user_group: Group, old_name?: string): Promi
     });
 }
 
+// TODO @performance
 /**
  * Get user's groups and rights with parameters
  *
@@ -179,8 +180,39 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                     if(right_error) {
                         reject(right_error);
                     } else {
-                        for(const right of right_results) {
-                            result.rights = right.added_rights;
+                        // Go through all groups
+                        for(const group of right_results) {
+                            // Go through all rights this group provides
+                            // tslint:disable-next-line: forin
+                            for(const right_name in group.added_rights) {
+                                // Check if client already has this right
+                                if(result.rights[right_name]) {
+                                    // This right is already present in the results object, go through all arguments
+                                    for(const argument_name in group.added_rights[right_name]) {
+                                        // Check if argument is not just {}
+                                        if( group.added_rights[right_name][argument_name] &&
+                                            group.added_rights[right_name][argument_name] !== {}
+                                        ) {
+                                            const argument_value = group.added_rights[right_name][argument_name];
+
+                                            if(argument_value instanceof Array) {
+                                                // Push array item only if not already included
+                                                for(const array_el of argument_value) {
+                                                    if(!result.rights[right_name][argument_name].includes(array_el)) {
+                                                        result.rights[right_name][argument_name].push(array_el)
+                                                    }
+                                                }
+                                            } else if(argument_value instanceof Object) {
+                                                result.rights[right_name][argument_name] = { ...result.rights[right_name][argument_name],
+                                                ...argument_value };
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // This right is not present in the results object
+                                    result.rights = Object.assign(result.rights, group.added_rights);
+                                }
+                            }
                         }
 
                         resolve(result)
