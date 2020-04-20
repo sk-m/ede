@@ -1,7 +1,9 @@
 // System:Login page script
 
 function loginPageScript() {
-    let login_form_maincontainer;
+    // Main container element
+    const login_form_maincontainer = document.getElementById("form-login-maincontainer");
+
     let login_form_state_is_login = true;
 
     // On form submit
@@ -102,9 +104,6 @@ function loginPageScript() {
             login_form_state_is_login = true;
         }
     }
-
-    // Main container element
-    login_form_maincontainer = document.getElementById("form-login-maincontainer");
 
     // Add onclick handlers for submit and switch buttons
     ede.form.list.login.switch.onclick = login_form_switch;

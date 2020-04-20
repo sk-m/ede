@@ -23,8 +23,11 @@ function userGroupManagementPageScript() {
 
     const this_form = ede.form.list.usergroupmanagement;
 
-    // Reusult text container
+    // Result text container
     const result_status_container = this_form._form.querySelector(".result-status-container");
+
+    // Check if submit button is available (client can alter groups)
+    if(!this_form.submit) return;
 
     // On save
     this_form.submit.onclick = e => {
