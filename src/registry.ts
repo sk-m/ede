@@ -4,9 +4,15 @@ import * as Page from "./page";
 import { HookSubscribersObject, HooksObject } from "./hook";
 import { GroupsObject, Right } from "./right";
 import * as User from "./user";
-import * as Api from "./api";
+
+// System pages
 import { userGroupManagement } from "./systempages/userGroupManagement";
 import { userGroupMembership } from "./systempages/userGroupMembership";
+
+// Api routes
+import { getPageRoute, ApiRoutesObject } from "./api";
+import { updateUserGroupMembershipRoute } from "./api/user_updategroups";
+import { updateUserGroupRoute } from "./api/usergroup_update";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -189,23 +195,23 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
     },
 });
 
-export const registry_apiRoutes = new RegistryContainer<Api.ApiRoutesObject>("ede", undefined, {
+export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
     "get/page": {
         name: "get/page",
         method: "GET",
 
-        handler: Api.getPageRoute
+        handler: getPageRoute
     },
     "usergroup/update": {
         name: "usergroup/update",
         method: "POST",
 
-        handler: Api.updateUserGroupRoute
+        handler: updateUserGroupRoute
     },
     "user/updategroups": {
         name: "user/updategroups",
         method: "POST",
 
-        handler: Api.updateUserGroupMembership
+        handler: updateUserGroupMembershipRoute
     }
 });
