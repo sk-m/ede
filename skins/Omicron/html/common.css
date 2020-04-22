@@ -24,6 +24,8 @@ body {
     --color-red-transparent-2: rgba(232, 32, 0, 0.14);
     --color-red-transparent-3: rgba(232, 32, 0, 0.22);
 
+    --color-green: #0ccf00;
+
     --color-gray: hsl(0, 0%, 99%);
     --color-gray2: hsl(0, 0%, 95%);
     --color-gray3: hsl(0, 0%, 92%);
