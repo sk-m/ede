@@ -33,6 +33,7 @@ export function directRouteWrapper(page: Page.ResponsePage, additional_options?:
     const current_skin_name: string = current_registry_config["instance.current_skin"].value as string;
     const current_skin_html: string = registry_skins.get()[current_skin_name].html;
 
+    // TODO maybe we should strip parsed_content
     const frontend_page_object: Page.ResponsePage = {
         ...page,
 

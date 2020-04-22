@@ -25,6 +25,7 @@ export interface DatabaseConfigItem {
 
     raw_value?: string;
     value?: ConfigItemValueType;
+    is_default: boolean;
 
     value_type: ConfigItemValueTypeName;
     default_value?: ConfigItemValueType;
@@ -90,7 +91,7 @@ function castValue(raw_value: string, type: ConfigItemValueTypeName): ConfigItem
  */
 export async function getConfigFromDB(): Promise<ConfigItemsObject> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query("SELECT * FROM `config` WHERE `access_level` != b'11'", (error: Error, results: any) => {
+        sql.query("SELECT * FROM `config`", (error: Error, results: any) => {
             if(error) {
                 Util.log(`Failed to get configuration from the database!`, 3, error);
 
@@ -117,6 +118,7 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
 
                     raw_value,
                     value: castValue(raw_value, item.value_type),
+                    is_default: !item.value || item.default_value === item.value,
 
                     value_type: item.value_type,
                     default_value: item.default_value,

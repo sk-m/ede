@@ -74,8 +74,11 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                             if(argument.type.includes("array")) {
                                 let current_values_html = "";
 
-                                for(const item of argument_value) {
-                                    current_values_html += `<div>${ item }</div>`;
+                                // Check if current value is actually an array
+                                if(argument_value instanceof Array) {
+                                    for(const item of argument_value) {
+                                        current_values_html += `<div>${ item }</div>`;
+                                    }
                                 }
 
                                 arguments_html += `\
