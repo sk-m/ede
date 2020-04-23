@@ -13,6 +13,7 @@ import { userGroupMembership } from "./systempages/userGroupMembership";
 import { getPageRoute, ApiRoutesObject } from "./api";
 import { updateUserGroupMembershipRoute } from "./api/user_updategroups";
 import { updateUserGroupRoute } from "./api/usergroup_update";
+import { config } from "./systempages/config";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -170,6 +171,21 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
         source: "ede",
 
         arguments: {}
+    },
+    modifyconfig: {
+        name: "modifyconfig",
+        description: "Modify EDE Configuration",
+
+        source: "ede",
+
+        arguments: {
+            restricted_permits: {
+                type: ["array"],
+                description: "Restricted keys that can be modified",
+
+                default_value: ""
+            }
+        }
     }
 });
 
@@ -192,6 +208,14 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
         source: "ede",
 
         dynamic_content: userGroupManagement
+    },
+    config: {
+        name: "Config",
+        display_title: "EDE Configuration",
+
+        source: "ede",
+
+        dynamic_content: config
     },
 });
 

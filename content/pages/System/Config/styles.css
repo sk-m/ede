@@ -1,0 +1,249 @@
+#systempage-config-root {
+    display: flex;
+
+    min-height: 700px;
+
+    border: 1px solid rgb(210, 210, 210);
+    border-radius: 3px;
+}
+
+#systempage-config-root > .left-panel {
+    width: 250px;
+
+    flex-shrink: 0;
+
+    border-right: 1px solid var(--color-gray2);
+}
+
+#systempage-config-root > .left-panel > .categories {
+    display: flex;
+    flex-direction: column; 
+}
+
+#systempage-config-root > .left-panel > .categories > .category {
+    display: flex;
+    align-items: center;
+
+    padding: 10px;
+
+    cursor: pointer;
+
+    box-shadow: inset 0 -1px 0 0 var(--color-gray2);
+
+    color: hsl(0, 0%, 30%);
+    font-size: 14px;
+
+    transition: 0.15s;
+}
+
+#systempage-config-root > .left-panel > .categories > .category > .icon {
+    width: 22px;
+
+    margin-right: 8px;
+
+    text-align: center;
+    font-size: 16px;
+}
+
+#systempage-config-root > .left-panel > .categories > .category:hover {
+    color: var(--color-blue);
+    background-color: var(--color-blue2-transparent-05);
+}
+
+#systempage-config-root > .left-panel > .categories > .category.selected {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+
+    border-left: 3px solid var(--color-blue2);
+    box-shadow: inset 0 -1px 0 0 transparent;
+}
+
+#systempage-config-root > .right-panel {
+    width: 100%;
+}
+
+#systempage-config-root > .right-panel > .config-options {
+    display: none; /* Hidden state */
+}
+
+#systempage-config-root > .right-panel > .config-options > .category-intro {
+    padding: 25px;
+
+    max-width: 800px;
+
+    font-family: "Roboto", sans-serif;
+}
+
+#systempage-config-root > .right-panel > .config-options > .category-intro > .name {
+    color: hsl(0, 0%, 15%);
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .category-intro > .description {
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+
+    line-height: 16px;
+}
+
+#systempage-config-root > .right-panel > .config-options.shown {
+    display: block;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option {
+    position: relative;
+
+    display: flex;
+    box-sizing: border-box;
+
+    overflow: hidden;
+    
+    padding: 15px;
+    
+    transition: 0.15s;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option::before {
+    position: absolute;
+    content: "";
+    
+    top: 0;
+    left: 0;
+
+    width: 20px;
+    height: 20px;
+
+    margin: -20px 0 0 -20px;
+
+    background-color: var(--color-blue);
+
+    transform: rotate(45deg);
+
+    transition: 0.2s;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option.dirty::before {
+    margin: -10px 0 0 -10px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option:hover {
+    background-color: var(--color-gray);
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left {
+    width: 33%;
+    min-width: 200px;
+    max-width: 350px;
+    
+    flex-shrink: 0;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left > .config-option-key {
+    color: hsl(0, 0%, 20%);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left > .config-option-key > .indicator {
+    display: inline-block;
+
+    padding: 3px 7px;
+    margin-left: 5px;
+
+    cursor: help;
+    background-color: rgba(0, 0, 0, 0.05);
+
+    font-weight: 600;
+    font-size: 12px;
+
+    border-radius: 3px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left > .config-option-key > .indicator > i {
+    margin-right: 3px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left > .config-option-description {
+    margin-top: 10px;
+
+    color: hsl(0, 0%, 45%);
+    font-size: 12.5px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .left > .config-option-internalkey {
+    margin-top: 10px;
+    
+    color: hsl(0, 0%, 70%);
+    font-size: 12px;
+    font-family: monospace;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right {
+    width: 100%;
+    max-width: 300px;
+
+    margin-left: 20px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .status {
+    visibility: hidden;
+
+    line-height: 24px;
+
+    font-size: 12px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .status > i {
+    font-size: 10px;
+    margin-right: 3px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .status.green {
+    visibility: visible;
+    
+    color: var(--color-green);
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .status.red {
+    visibility: visible;
+
+    color: var(--color-red);
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .input-container {
+    width: 100%;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .input-container > * {
+    width: 100%;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .bottom-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    /* Hidden state */
+    pointer-events: none;
+    opacity: 0;
+
+    margin: 10px 2px 0 2px;
+
+    transition: 0.15s;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option:hover > .right > .bottom-container,
+#systempage-config-root > .right-panel > .config-options > .config-option.dirty > .right > .bottom-container {
+    pointer-events: all;
+    opacity: 1;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .bottom-container > .buttons > * {
+    margin-right: 7px;
+}
+
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .bottom-container > .default-value {
+    cursor: help;
+}
