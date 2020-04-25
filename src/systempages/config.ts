@@ -61,12 +61,19 @@ function constructItemsHTML(category_name: string, registry_config_snapshot: Con
             let input_html = "";
 
             // Check if the item can be changed by the client
-            let changeable = true;
+            let changeable = client_can_alter;
+            let viewable = true;
 
             if(config_item.access_level === ConfigItemAccessLevel.rXwX) {
                 changeable = false;
+                viewable = false;
 
                 indicator_html = `<div class="indicator" title="This config item is CLI-locked and can be changed or viewed using CLI \
+only"><i class="fas fa-eye-slash"></i> CLI Only</div>`;
+            } else if(config_item.access_level === ConfigItemAccessLevel.rAwX) {
+                changeable = false;
+
+                indicator_html = `<div class="indicator" title="This config item is CLI-locked and can be changed using CLI \
 only"><i class="fas fa-lock"></i> CLI Only</div>`;
             } else if(config_item.access_level === ConfigItemAccessLevel.rRwR) {
                 if(restricted_permits.includes(key)) {
@@ -74,6 +81,7 @@ only"><i class="fas fa-lock"></i> CLI Only</div>`;
 change it"><i class="fas fa-lock-open"></i> Permitted</div>`;
                 } else {
                     changeable = false;
+                    viewable = false;
 
                     indicator_html = `<div class="indicator" title="This config item is restricted, you do not have permission to modify \
 it"><i class="fas fa-lock"></i> Restricted</div>`;
@@ -81,7 +89,7 @@ it"><i class="fas fa-lock"></i> Restricted</div>`;
             }
 
             // Construct the buttons HTML
-            if(client_can_alter) {
+            if(changeable) {
                 buttons_html = `<button name="save" class="ui-button1 s-small disabled save-button">Save</button>`;
 
                 // Check if we should show the "Reset" button
@@ -104,7 +112,7 @@ it"><i class="fas fa-lock"></i> Restricted</div>`;
                 // TODO add allowed_values (dropdown) type
                 // Array input type
                 input_html = `\
-<div input class="ui-input-array1" name="${ config_item.key }"${ !client_can_alter ? " disabled": "" }>
+<div input class="ui-input-array1" name="${ config_item.key }"${ !changeable ? " disabled": "" }>
     <div class="items">${ current_values_html }</div>
     <input text="text"${ config_item.value_pattern ? ` patern="${ config_item.value_pattern }"` : "" }>
 </div>`;
@@ -113,17 +121,17 @@ it"><i class="fas fa-lock"></i> Restricted</div>`;
                 input_html = `\
 <input type="${ config_item.value_type === "int" ? "number" : "text" }" value="${ config_value }" name="${ config_item.key }" \
 data-handler="${ config_item.value_type }" data-cleanvalue="${ config_value }" class="ui-input1 small"\
-${ !client_can_alter ? " disabled": "" }${ config_item.value_pattern ? ` patern="${ config_item.value_pattern }"` : "" }>`
+${ !changeable ? " disabled": "" }${ config_item.value_pattern ? ` patern="${ config_item.value_pattern }"` : "" }>`
             }
 
             result_html += `\
-<form name="${ config_item.key }" class="config-option" data-changeable="${ (!client_can_alter || !changeable) ? "false" : "true" }">
+<form name="${ config_item.key }" class="config-option" data-changeable="${ changeable ? "true" : "false" }">
     <div class="left">
         <div class="config-option-key">${ key.substr(category_name_length) }${ indicator_html }</div>
         <div class="config-option-description">${ config_item.description }</div>
         <div class="config-option-internalkey">${ config_item.key }</div>
     </div>
-    ${ !changeable ? "" :
+    ${ !viewable ? "" :
     `<div class="right">
         <div class="status"><i class="fas fa-check"></i> Saved successfully</div>
         <div class="input-container">
