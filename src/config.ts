@@ -1,6 +1,7 @@
 // Local imports
 import { sql } from "./server";
 import * as Util from "./utils";
+import { registry_config } from "./registry";
 
 // All allowed value types for database config item (as string names)
 type ConfigItemValueTypeName = "bool" | "int" | "string" | "json" | "array" | "allowed_values";
@@ -134,6 +135,101 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
             }
 
             resolve(result);
+        });
+    });
+}
+
+/**
+ * Update config's value
+ *
+ * @param key key
+ * @param value value
+ * @param sanitize sanitize the value
+ */
+export async function setValue(key: string, value: any, sanitize: boolean = true): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        const config_item = registry_config.get()[key];
+
+        // Check if config item with requested key exists
+        if(!config_item) {
+            reject(new Error("Invalid config item key"));
+            return;
+        }
+
+        // Construct a query
+        let sql_query = "";
+
+        switch(config_item.value_type) {
+            case "int": {
+                if(!parseInt(value, 10)) {
+                    reject(new Error("Invalid value. Expected an integer"));
+                    return;
+                }
+
+                sql_query = `UPDATE \`config\` SET \`value\` = ${ value } WHERE \`key\` = '${ key }'`;
+            } break;
+
+            case "json": {
+                if(!(value instanceof Object)) {
+                    reject(new Error("Invalid value. Expected an object"));
+                    return;
+                }
+
+                sql_query = `UPDATE \`config\` SET \`value\` = '${ JSON.stringify(value) }' WHERE \`key\` = '${ key }'`;
+            } break;
+
+            case "array": {
+                if(!(value instanceof Array)) {
+                    reject(new Error("Invalid value. Expected an array"));
+                    return;
+                }
+
+                if(sanitize) {
+                    // tslint:disable-next-line: forin
+                    for(const i in value) {
+                        value[i] = Util.sanitize(value[i]);
+                    }
+                }
+
+                sql_query = `UPDATE \`config\` SET \`value\` = '${ value.join(",") }' WHERE \`key\` = '${ key }'`;
+            } break;
+
+            case "allowed_values": {
+                if(config_item.allowed_values && !config_item.allowed_values.includes(value)) {
+                    reject(new Error("Invalid value. Value is not one of allowed values"));
+                    return;
+                }
+
+                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
+            } break;
+
+            case "bool": {
+                if(typeof value !== "boolean") {
+                    reject(new Error("Invalid value. Expected a boolean"));
+                    return;
+                }
+
+                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
+            } break;
+
+            default: {
+                // Check regex pattern
+                if(config_item.value_pattern) {
+                    if(!new RegExp(config_item.value_pattern, "gm").test(value)) {
+                        reject(new Error("Invalid value. Pattern mismatch"));
+                        return;
+                    }
+                }
+
+                if(sanitize) value = Util.sanitize(value);
+
+                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
+            }
+        }
+
+        sql.query(sql_query, (error: any) => {
+            if(error) reject(error);
+            else resolve();
         });
     });
 }
