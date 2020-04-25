@@ -36,14 +36,14 @@
     <link rel="stylesheet" href="/public/lib/prism.css">
     <script src="/public/lib/prism.js" onload="_ede_prism_onload()" async></script>
 
-    <title>EDE</title>
+    <title>{{ede_page_title | safe}} – {{ede_instance_displayname | safe}}</title>
 </head>
 <body>
     <div id="ede-top-panel">
         <div class="left">
             <div class="menu-button"><i class="fas fa-bars"></i></div>
             <img class="ede-template ede_instance_logo" draggable="false" src="https://upload.wikimedia.org/wikipedia/commons/0/01/FileZilla_logo.svg"></img>
-            <div class="ede-template ede_instance_displayname">{{ede_instance_displayname}}</div>
+            <div class="ede-template ede_instance_displayname">{{ede_instance_displayname | safe}}</div>
         </div>
         <div class="middle">
             <div class="searchbar">

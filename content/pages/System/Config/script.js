@@ -57,7 +57,7 @@ function configPageScript() {
         }, false);
 
         // On save
-        item_form.save.onclick = () => {
+        item_form.save.onclick = e => {
             // Validate the form
             const form_validation = ede.form.validate(config_key);
             if(form_validation.invalid) {
@@ -75,25 +75,35 @@ function configPageScript() {
             .then(() => {
                 status_el.innerHTML = "<i class=\"fas fa-check\"></i> Saved successfully!";
                 status_el.className = "status green";
+
+                config_option_el.classList.remove("dirty");
+                e.target.classList.add("disabled");
             })
             .catch(response => {
-                status_el.innerHTML = `<i class="fas fa-times"></i> Save error: <code>"${ response.error || "unknown error" }"</code>`;
+                status_el.innerHTML = `<i class="fas fa-times"></i> Save error: <code>${ response.error || "unknown error" }</code>`;
                 status_el.className = "status red";
-            })
+
+                e.target.classList.add("disabled");
+            });
         }
 
         // On reset
         if(item_form.reset) {
-            item_form.reset.onclick = () => {
+            item_form.reset.onclick = e => {
                 ede.apiCall("config/resetitem", { key: config_key }, true)
                 .then(() => {
                     status_el.innerHTML = "<i class=\"fas fa-check\"></i> Reset successfully!";
                     status_el.className = "status green";
+
+                    config_option_el.classList.remove("dirty");
+                    e.target.classList.add("disabled");
                 })
                 .catch(response => {
-                    status_el.innerHTML = `<i class="fas fa-times"></i> Reset error: <code>"${ response.error || "unknown error" }"</code>`;
+                    status_el.innerHTML = `<i class="fas fa-times"></i> Reset error: <code>${ response.error || "unknown error" }</code>`;
                     status_el.className = "status red";
-                })
+
+                    e.target.classList.add("disabled");
+                });
             }
         }
     }
