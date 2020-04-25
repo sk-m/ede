@@ -1,7 +1,7 @@
 // Local imports
 import { sql } from "./server";
 import * as Util from "./utils";
-import { registry_config } from "./registry";
+import { registry_config, registry_usergroups } from "./registry";
 
 // All allowed value types for database config item (as string names)
 type ConfigItemValueTypeName = "bool" | "int" | "string" | "json" | "array" | "allowed_values";
@@ -228,6 +228,35 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
         }
 
         sql.query(sql_query, (error: any) => {
+            if(error) reject(error);
+            else resolve();
+        });
+    });
+}
+
+/**
+ * Set config item's value to default_value in the database
+ *
+ * @param key key
+ */
+export async function resetItem(key: string): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        const config_item = registry_config.get()[key];
+
+        // Check if such key exists
+        if(!config_item) {
+            reject(new Error("Invalid config item key"));
+            return;
+        }
+
+        // Check if we can reset
+        if(!config_item.default_value) {
+            reject(new Error("Can't reset config item because there is no default value to reset to"));
+            return;
+        }
+
+        sql.query(`UPDATE \`config\` SET \`value\` = '${ config_item.default_value }' WHERE \`key\` = '${ config_item.key }'`,
+        (error: any) => {
             if(error) reject(error);
             else resolve();
         });
