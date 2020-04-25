@@ -15,6 +15,7 @@ import { updateUserGroupMembershipRoute } from "./api/user_updategroups";
 import { updateUserGroupRoute } from "./api/usergroup_update";
 import { config } from "./systempages/config";
 import { configSetItemRoute } from "./api/config_setitem";
+import { configResetItemRoute } from "./api/config_resetitem";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -244,5 +245,11 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: configSetItemRoute
+    },
+    "config/resetitem": {
+        name: "config/resetitem",
+        method: "POST",
+
+        handler: configResetItemRoute
     }
 });

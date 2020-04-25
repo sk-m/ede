@@ -48,11 +48,13 @@ function configPageScript() {
                 // Value is set to the non-dirty one
                 config_option_el.classList.remove("dirty");
                 item_form.save.classList.add("disabled");
+                item_form.reset.classList.add("disabled");
 
                 status_el.className = "status";
             } else {
                 config_option_el.classList.add("dirty");
                 item_form.save.classList.remove("disabled");
+                item_form.reset.classList.remove("disabled");
             }
         }, false);
 
@@ -91,9 +93,11 @@ function configPageScript() {
         if(item_form.reset) {
             item_form.reset.onclick = e => {
                 ede.apiCall("config/resetitem", { key: config_key }, true)
-                .then(() => {
+                .then(response => {
                     status_el.innerHTML = "<i class=\"fas fa-check\"></i> Reset successfully!";
                     status_el.className = "status green";
+
+                    input_el.value = response.new_value;
 
                     config_option_el.classList.remove("dirty");
                     e.target.classList.add("disabled");

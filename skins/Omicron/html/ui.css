@@ -605,6 +605,12 @@ a.ui-text[href]:focus:not(:hover),
     background-color: rgb(235, 235, 235);
 }
 
+.ui-button1.t-frameless.disabled {
+    color: hsl(0, 0%, 50%) !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
 /* Additional styles */
 .ui-button1.c-blue {
     color: var(--color-blue-lighter);
