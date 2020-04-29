@@ -234,10 +234,18 @@
     width: 230px;
     height: 100%;
 
+    margin-left: 0;
+
     /* TODO @hack */
     box-shadow: inset -8px -12px 13px hsla(0, 0%, 95%, 1);
 
     background-color: var(--color-gray);
+
+    transition: margin-left 0.25s ease-in-out;
+}
+
+#ede-left-panel.closed {
+    margin-left: -230px;
 }
 
 #ede-left-panel > .content {
@@ -303,6 +311,12 @@
 
 #ede-main-panel > .main-content-container {
     margin-left: 230px;
+
+    transition: margin-left 0.25s ease-in-out;
+}
+
+#ede-main-panel > .main-content-container.full-width {
+    margin-left: 0;
 }
 
 #ede-main-panel > .main-content-container > .main-content {
