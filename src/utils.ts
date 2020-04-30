@@ -65,7 +65,54 @@ export function log(message: string, type: number = 1, error?: Error): void {
  *
  * @param str input string
  */
-export function sanitize(str: string): string {
+export function sanitize(str?: string): string {
+    if(!str) return "";
+
     // TODO @hack
     return he.encode(str).replace(/\//g, "&#47;").replace(/\.\./g, "&#46;&#46;");
+}
+
+/**
+ * Construct "24 minutes ago"-like text from UNIX timestamp
+ *
+ * @param timestamp UNIX timestamp
+ */
+export function formatTimeString(timestamp: number): string {
+    const sPerMinute = 60;
+    const sPerHour = 3600;
+    const sPerDay = 86400;
+    const sPerMonth = 2592000;
+    const sPerYear = 31557600;
+
+    const elapsed = Math.floor(new Date().getTime() / 1000) - timestamp;
+    let total;
+    let text;
+
+    if(elapsed < 10) return "just now";
+
+    if(elapsed < sPerMinute) {
+        total = Math.round(elapsed);
+        text = "second";
+    } else if(elapsed < sPerHour) {
+        total = Math.round(elapsed / sPerMinute);
+        text = "minute";
+    } else if(elapsed < sPerDay) {
+        total = Math.round(elapsed / sPerHour);
+        text = "hour";
+    } else if(elapsed < sPerMonth) {
+        total = Math.round(elapsed / sPerDay);
+        text = "day";
+    } else if(elapsed < sPerYear) {
+        total = Math.round(elapsed / sPerMonth);
+        text = "month";
+    }
+
+    if(total) {
+        return `${ total } ${ text }${ total > 1 ? "s" : "" } ago`;
+    }
+
+    const years = Math.round(elapsed / sPerYear);
+    const months = Math.round((years * sPerYear - elapsed) / sPerMonth);
+
+    return `${ years } year(s), ${ months } month(s)`;
 }

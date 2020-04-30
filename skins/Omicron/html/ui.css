@@ -3,7 +3,7 @@
     position: relative;
 
     padding: 15px;
-    margin-block-end: 1em;
+    margin-block-end: 1.5em;
 
     border: 1px solid rgb(210, 210, 210);
     border-radius: 3px;
@@ -69,10 +69,12 @@
     margin-bottom: 8px;
 }
 
+.ui-input-box.margin-top,
 .ui-form-container.margin-top {
     margin-top: 15px;
 }
 
+.ui-input-box.margin-bottom,
 .ui-form-container.margin-bottom {
     margin-bottom: 15px;
 }
@@ -83,6 +85,8 @@
 
 .ui-form-container.right {
     justify-content: flex-end;
+
+    width: 100%;
 }
 
 .ui-form-container.between {
@@ -649,15 +653,70 @@ a.ui-text[href]:focus:not(:hover),
 
 /* Log item */
 .ui-log-item {
+    position: relative;
+
+    box-sizing: border-box;
+
+    width: 100%;
+    padding: 3px 8px;
+
+    overflow: hidden;
+    cursor: pointer;
+
     color: hsl(0, 0%, 10%);
     font-size: 14px;
+
+    border-left: 0px solid var(--color-blue-lighter);
+
+    transition: border-left 0.15s;
+}
+
+.ui-log-item.selected {
+    background-color: var(--color-blue2-transparent-05) !important;
+    border-left: 4px solid var(--color-blue-lighter) !important;
+}
+
+.ui-log-item:hover {
+    color: black;
+    background-color: rgba(0, 0, 0, 0.025);
+}
+
+.ui-log-item.selected:hover {
+    background-color: var(--color-blue2-transparent-1) !important;
 }
 
 .ui-log-item .time {
-    color: hsl(0, 0%, 55%);
+    display: inline-flex;
+    align-items: center;
+
+    padding: 4px 9px;
+    
+    cursor: help;
+
+    color: hsl(0, 0%, 35%);
+    font-size: 12px;
+
+    background-color: rgba(0,0,0,0.025);
+    border-radius: 4px;
 }
 
+.ui-log-item .time > i {
+    margin-right: 5px;
+}
+
+.ui-log-item:hover .time {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.ui-log-item.selected .time {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-05);
+}
+
+.ui-log-item a[href]:visited,
 .ui-log-item a[href] {
+    color: var(--color-blue2);
+
     text-decoration: none;
     font-weight: 600;
 }
@@ -667,13 +726,14 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-log-item code {
-    font-style: italic;
+    font-family: "Roboto Mono", monospace;
 }
 
-.ui-log-item code .green {
-    color: green;
+.ui-log-item code + code {
+    margin-inline-start: 6px;
 }
 
-.ui-log-item code .red {
-    color: crimson;
+.ui-log-item .summary {
+    color: hsl(0, 0%, 40%);
+    font-family: "Roboto", sans-serif;
 }

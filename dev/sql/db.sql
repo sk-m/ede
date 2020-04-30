@@ -32,24 +32,41 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.config: ~12 rows (approximately)
+-- Dumping data for table ede_dev.config: ~10 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
-	(1, 'instance.name', 'dev_instance', 'string', '[a-zA-Z0-9_]', NULL, NULL, NULL, 'Internal name for the instance', 'ede', b'01'),
+	(1, 'instance.name', 'dev_instance', 'string', '[a-zA-Z0-9_]{1,128}', NULL, NULL, NULL, 'Internal name for the instance', 'ede', b'01'),
 	(2, 'instance.display_name', 'Dev Instance', 'string', NULL, NULL, NULL, NULL, 'Display name of this instance', 'ede', b'00'),
-	(3, 'config.hidden', NULL, 'array', NULL, NULL, NULL, 'wip_placeholder;', 'Additional config options that will be hidden', 'ede', b'01'),
-	(4, 'config.locked', NULL, 'array', NULL, NULL, NULL, 'wip_placeholder;', 'Additional confiig options that will be locked from editing', 'ede', b'01'),
-	(5, 'instance.current_skin', NULL, 'string', '[a-zA-Z0-9_]', 'Omicron', NULL, 'wip_placeholder;', 'Currently active skin', 'ede', b'00'),
-	(6, 'instance.page_subnametext', 'This is a subname text', 'string', NULL, NULL, NULL, NULL, 'The text under the page name', 'ede', b'00'),
-	(7, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'01'),
-	(8, 'auth.password_hash_iterations', NULL, 'int', NULL, '50000', NULL, NULL, 'Number of iterations to execute on the password', 'ede', b'01'),
-	(9, 'auth.password_hash_keylen', NULL, 'int', NULL, '256', NULL, NULL, 'Key length for the password', 'ede', b'01'),
-	(10, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'10'),
-	(11, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'01'),
-	(12, 'instance.domain', NULL, 'string', NULL, 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'01');
+	(3, 'instance.current_skin', NULL, 'string', '[a-zA-Z0-9_]{1,128}', 'Omicron', NULL, NULL, 'Currently active skin', 'ede', b'00'),
+	(4, 'instance.page_subnametext', 'This is a subname text', 'string', NULL, NULL, NULL, NULL, 'The text under the page name', 'ede', b'00'),
+	(5, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'01'),
+	(6, 'auth.password_hash_iterations', NULL, 'int', NULL, '50000', NULL, NULL, 'Number of iterations to execute on the password', 'ede', b'01'),
+	(7, 'auth.password_hash_keylen', NULL, 'int', NULL, '256', NULL, NULL, 'Key length for the password', 'ede', b'01'),
+	(8, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'10'),
+	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'01'),
+	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'01');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
+
+-- Dumping structure for table ede_dev.logs
+CREATE TABLE IF NOT EXISTS `logs` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `type` varchar(128) NOT NULL,
+  `executor` int(10) unsigned NOT NULL,
+  `target` varchar(256) NOT NULL,
+  `action_text` text NOT NULL,
+  `summary_text` varchar(1024) NOT NULL DEFAULT '',
+  `created_on` int(10) unsigned NOT NULL,
+  `visibility_level` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `logs_executor` (`executor`),
+  CONSTRAINT `logs_executor` FOREIGN KEY (`executor`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+
+-- Dumping data for table ede_dev.logs: ~0 rows (approximately)
+/*!40000 ALTER TABLE `logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `logs` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.namespaces
 CREATE TABLE IF NOT EXISTS `namespaces` (
