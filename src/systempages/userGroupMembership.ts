@@ -3,6 +3,7 @@ import fs from "fs";
 import * as Page from "../page";
 import * as User from "../user";
 import * as Util from "../utils";
+import * as Log from "../log";
 import { registry_usergroups } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject, GroupsObject } from "../right";
@@ -22,6 +23,8 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
 </div>
 
 <form class="ui-form-box" name="usergroupmembership-query">
+    <div class="form-label">User query</div>
+
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">Username</div>
@@ -36,7 +39,9 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
         if(queried_username) {
             // Get queried user
             User.getFromUsername(queried_username)
-            .then((queried_user: User.User) => {
+            .then(async (queried_user: User.User) => {
+                const log_entries = await Log.getEntries("usergroupsupdate", undefined, queried_user.id);
+
                 // Get groups for queried user
                 User.getUserGroupRights(queried_user.id)
                 .then(async (target_grouprights: GroupsAndRightsObject) => {
@@ -108,30 +113,30 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
                     // Groups form
                     page.parsed_content += `\
 <form class="ui-form-box" name="usergroupmembership-groups">
-<div class="ui-form-container column">
-    <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
-    <div class="ui-text">Currently a member of: <b>${ target_grouprights.groups.length > 0 ? target_grouprights.groups.join(", ") : "<i>(none)</i>" }</b>.</div>
-</div>
+    <div class="form-label">Groups</div>
 
-${ client_can_modify_groups ? `\
-<div class="ui-form-container column">${ checkboxes_html }</div>
-<div class="ui-form-container right">
-    <button name="submit" class="ui-button1">Save groups</button>
-</div>` : "" }
+    <div class="ui-form-container column">
+        <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
+        <div class="ui-text">Currently a member of: <b>${ target_grouprights.groups.length > 0 ? target_grouprights.groups.join(", ") : "<i>(none)</i>" }</b>.</div>
+    </div>
+${ client_can_modify_groups ? `<div class="ui-form-container column">${ checkboxes_html }</div>` : "" }
 </form>
+${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembership-save">
+    <div class="form-label">Save</div>
+
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Summary</div>
+        <input type="text" name="summary" data-handler="summary" class="ui-input1">
+    </div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1">Save groups</button>
+    </div>
+</form>` : "" }
 
 <div class="ui-form-box">
-<div class="ui-form-container">
-    <div class="ui-text">User rights log for <b>${ queried_username }</b>:</div>
-</div>
-<div class="ui-form-container">
-    <div class="ui-log-item">
-        <span class="time">(30 Mar 2020, 16:04 GMT)</span>\
-        <span><a href="/User:Max">Max</a> set <a href="/User:Max">Max</a>'s groups to:
-        <code>sysadmin, test [<span class="green">+sysadmin</span>, <span class="red">-interfaceadmin</span>]</code></span>
-        <span><i>(Test log item...)</i></span>
-    </div>
-</div>
+    <div class="form-label">User rights log</div>
+    <div class="ui-form-container ui-logs-container column">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`;
 
                     resolve(page);

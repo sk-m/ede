@@ -1,5 +1,5 @@
 function userGroupMembershipPageScript() {
-    const groups_form = ede.form.list["usergroupmembership-groups"];
+    const save_form = ede.form.list["usergroupmembership-save"];
     const result_status_container = document.getElementById("usergroupmembership-result-status-container");
 
     // Query submit handler
@@ -12,7 +12,7 @@ function userGroupMembershipPageScript() {
     };
 
     // Groups submit handler
-    groups_form.submit.onclick = e => {
+    save_form.submit.onclick = e => {
         const final_params = {
             groups: {}
         };
@@ -30,6 +30,9 @@ function userGroupMembershipPageScript() {
 
         // Take the querried username from the url
         final_params.username = location.pathname.split("/")[2];
+
+        // Get the summary
+        final_params.summary = ede.form.list["usergroupmembership-save"].summary.value;
 
         // Disable the button
         e.target.classList.add("disabled");

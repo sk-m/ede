@@ -1,4 +1,5 @@
 import * as User from "../user";
+import * as Log from "../log";
 import { GroupsAndRightsObject } from "../right";
 import { sql } from "../server";
 import * as Util from "../utils"
@@ -113,17 +114,19 @@ user's group membership"));
         // Remove last comma from sql query
         insert_sql_query = insert_sql_query.substring(0, insert_sql_query.length - 1);
 
-        // TODO maybe somehow make it into one query
-
         let error_occured = false;
 
         // TODO @performance
         // We currently have two PRIMARY KEYS in the database to prevent duplicates, I don't think this is a good approach
         // Maybe we can do it more efficiently?
 
-        // TODO These sould be debug logs
-        Util.log(`Adding groups: ${ added_groups || "(none)" }`, 1);
-        Util.log(`Removing groups: ${ removed_groups || "(none)" }`, 1);
+        // Check if user changed anything
+        if(added_groups.length === 0 && removed_groups.length === 0) {
+            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "No groups altered"));
+            return;
+        }
+
+        // TODO maybe somehow make it into one query
 
         // Remove groups
         if(removed_groups.length !== 0) {
@@ -167,10 +170,22 @@ user's group membership"));
             });
         }
 
-        // We don't really need a check here
-        if(!error_occured) {
-            res.send(apiResponse(ApiResponseStatus.success));
+        // Add new Log entry
+        // TODO get group names from sysmsgs
+        let log_str = "";
+
+        if(added_groups.length !== 0) log_str = `added <i>${ added_groups.join(", ") }</i>`;
+        if(removed_groups.length !== 0) {
+            if(log_str) log_str += "; ";
+
+            log_str += `removed <i>${ removed_groups.join(", ") }</i>`;
         }
+
+        Log.createEntry("usergroupsupdate", client_user.id, target_user.id,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated groups for <a href="/User:${ target_user.username }">\
+${ target_user.username }</a>: ${ log_str }`, Util.sanitize(req.body.summary));
+
+        res.send(apiResponse(ApiResponseStatus.success));
     } else {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "groups JSON object must be provided"));
     }
