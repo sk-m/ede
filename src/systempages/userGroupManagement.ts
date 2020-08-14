@@ -2,14 +2,18 @@ import fs from "fs";
 
 import * as Page from "../page";
 import * as User from "../user";
+import * as Log from "../log";
+import * as UI from "../ui";
 import { registry_usergroups, registry_rights } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 
 export async function userGroupManagement(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
+        const queried_group_name = page.address.url_params[1];
         let client_can_alter = false;
 
+        // Check if client can alter requeted group
         if(client) {
             await User.getUserGroupRights(client.id)
             .then((client_rights: GroupsAndRightsObject) => {
@@ -18,10 +22,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             .catch(() => undefined);
         }
 
-
-        const queried_group_name = page.address.url_params[1];
-
-        // No group provided
+        // Check if a group name was provided
         if(!queried_group_name) {
             page.parsed_content = "no group provided!";
 
@@ -31,7 +32,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         const queried_group =  registry_usergroups.get()[queried_group_name];
 
-        // Queried group does not exist
+        // Check if queried group exists
         if(!queried_group) {
             page.parsed_content = "no such group!";
 
@@ -48,6 +49,9 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         let available_rights_html = "";
         const registry_rights_snapshot = registry_rights.get();
+
+        // Get logs for this group
+        const log_entries = await Log.getEntries("groupupdate", undefined, queried_group_name);
 
         // Loop through all available rigths
         for(const right_name in registry_rights_snapshot) {
@@ -89,6 +93,10 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         <div input class="ui-input-array1" name="right_argument;${ right_name };${ argument_name }">
             <div class="items">${ current_values_html }</div>
             <input text="text">
+            <div class="buttons">
+                <div title="Undo changes" class="reset-button"><i class="fas fa-undo"></i></div>
+                <div title="Remove all" class="red clean-button"><i class="fas fa-trash"></i></div>
+            </div>
         </div>
     </div>
 </div>`;
@@ -125,7 +133,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         <div class="description-container">
             <div>
                 <div class="ui-text">${ right.description }</div>
-                <div class="ui-text small gray i"><i class="ui-text small gray fas fa-ellipsis-h"></i> ${ arguments_count || "no" } arguments</div>
+                <div class="ui-text small gray i"><i class="ui-text small gray fas fa-caret-down"></i> ${ arguments_count || "no" } arguments</div>
             </div>
             <div class="icon">${ arguments_count ? '<i class="fas fa-chevron-down"></i>' : "" }</div>
         </div>
@@ -144,7 +152,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     </div>
 
     <div class="ui-form-box">
-        <div class="form-label">Main information</div>
+        ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
 
         <div class="ui-input-box">
             <div class="popup"></div>
@@ -159,7 +167,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     </div>
 
     <div class="ui-form-box user-group-management-rights-root">
-        <div class="form-label">Rights</div>
+        ${ UI.constructFormBoxTitleBar("rights", "Rights") }
 
         <div class="text-container">${ client_can_alter ? "You can modify rights for this group" : "You don't have permission to modify\
  rights for this group" }</div>
@@ -170,28 +178,25 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     </div>
 
     ${ client_can_alter ? `\
-    <div class="ui-form-box ui-form-container between">
-        <div class="ui-text"><i class="gray">Tip:</i> Arrays are separated by comma.</div>
-        <button name="submit" class="ui-button1">Save group</button>
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("save", "Save") }
+
+        <div class="ui-input-box">
+            <div class="popup"></div>
+            <div class="ui-input-name1">Summary</div>
+            <input type="text" name="summary" data-handler="summary" class="ui-input1">
+        </div>
+
+        <div class="ui-form-container between margin-top">
+            <div class="ui-text"><i class="gray">Tip:</i> Arrays are separated by comma.</div>
+            <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
+        </div>
     </div>` : "" }
 
     <div class="ui-form-box">
-        <div class="ui-form-container">
-            <div class="ui-text">Logs for <b>${ queried_group_name }</b> group:</div>
-        </div>
-        <div class="ui-form-container column">
-            <div class="ui-log-item">
-                <span class="time">(30 Mar 2020, 16:04 GMT)</span>\
-                <span><a href="/User:Max">Max</a> updated rights for group <a href="/User:Max">test</a>:
-                <code> modifyusergroups [<span class="green">+modifyusergroups</span>, <span class="red">-testright</span>]</code></span>
-                <span><i>(Test log item...)</i></span>
-            </div>
-            <div class="ui-log-item">
-                <span class="time">(30 Mar 2020, 16:04 GMT)</span>\
-                <span><a href="/User:Max">Max</a> renamed group <a href="/User:Max">testgroup</a> to <a href="/User:Max">sysadmin</a></span>
-                <span><i>(Test log item...)</i></span>
-            </div>
-        </div>
+        ${ UI.constructFormBoxTitleBar("logs", "Logs for this group") }
+
+        <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
     </div>
 </form>`;
 

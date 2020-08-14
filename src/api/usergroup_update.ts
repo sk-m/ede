@@ -1,4 +1,6 @@
 import * as User from "../user";
+import * as Log from "../log";
+import * as Util from "../utils";
 import { registry_usergroups } from "../registry";
 import { Group, GroupsAndRightsObject } from "../right";
 import { apiResponse, ApiResponseStatus } from "../api";
@@ -33,6 +35,8 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Group name is invalid"));
         return;
     }
+
+    const is_renamed = req.body.new_group_name !== req.body.group_name;
 
     // New usergroup object
     const new_usergroup: Group = {
@@ -108,6 +112,11 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     .then(() => {
         // Update groups registry
         registry_usergroups.update();
+
+        // Log the update
+        // TODO more detailed log message
+        Log.createEntry("groupupdate", client_user.id, req.body.new_group_name,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.new_group_name }">${ req.body.new_group_name }</a> ${ is_renamed ? `(also renamed from <i>${ req.body.group_name }</i> to <i>${ req.body.new_group_name }</i>)` : "" }`, Util.sanitize(req.body.summary));
 
         res.send(apiResponse(ApiResponseStatus.success));
     })

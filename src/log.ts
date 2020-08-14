@@ -16,8 +16,9 @@ export interface LogEntry {
     visibility_level: number;
 }
 
-export const log_icons: { [log_type: string]: string } = {
-    usergroupsupdate: "fas fa-user-cog"
+export let log_icons: { [log_type: string]: string } = {
+    usergroupsupdate: "fas fa-user-cog",
+    groupupdate: "fas fa-users-cog"
 };
 
 /**
@@ -28,7 +29,7 @@ export const log_icons: { [log_type: string]: string } = {
 export function constructLogEntriesHTML(entries: LogEntry[]): string {
     // Check if there are entries
     if(entries.length === 0) {
-        return "No entries";
+        return "<span class=\"info-message\"><i class=\"fas fa-info-circle\"></i> No entries</span>";
     }
 
     let html = "";

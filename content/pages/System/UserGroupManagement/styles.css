@@ -3,11 +3,12 @@
 }
 
 .user-group-management-rights-root > .text-container {
-    padding: 15px;
+    margin: 15px 0;
 }
 
 .user-group-management-rights-root > .rights-container {
-    border-top: 1px solid rgb(210, 210, 210);
+    border-top: 1px solid rgb(233, 233, 233);
+    padding: 0;
 }
 
 .user-group-management-rights-root > .rights-container > .right {
@@ -24,6 +25,14 @@
 
 .user-group-management-rights-root > .rights-container > .right:hover {
     background-color: rgb(252, 252, 252);
+}
+
+.user-group-management-rights-root > .rights-container > .right .description-container i {
+    transition: 0.1s;
+}
+
+.user-group-management-rights-root > .rights-container > .right.w-arguments:hover .description-container i {
+    transform: translateY(2px);
 }
 
 .user-group-management-rights-root > .rights-container > .right > .left-container > .ui-checkbox-1 {

@@ -2,22 +2,52 @@
 .ui-form-box {
     position: relative;
 
-    padding: 15px;
+    padding-bottom: 15px;
+
     margin-block-end: 1.5em;
 
-    border: 1px solid rgb(230, 230, 230);
+    border: 1px solid rgb(233, 233, 233);
     border-radius: 3px;
 
-    transition: all 0.2s, opacity 0.33s, margin 0.1s;
+    transition: all 0s, opacity 0.33s, margin 0.1s;
 }
 
+.ui-form-box.collapsed > div {
+    display: none;
+}
+
+.ui-form-box.collapsed > .form-top {
+    display: flex;
+    margin: 0;
+}
+
+.ui-form-box.collapsed {
+    padding: 0;
+}
+
+.ui-form-box:not(.no-title) > * {
+    box-sizing: border-box;
+
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.ui-form-box.no-title {
+    padding: 15px 20px;
+}
+
+/* TODO remove in the future, replace with on-screen notifications */
 .ui-form-box.green {
-    border-color: #00E817;
+    padding: 15px;
+
+    border: none;
     background-color: rgba(0, 232, 23, 0.05);
 }
 
 .ui-form-box.red {
-    border-color: var(--color-red);
+    padding: 15px;
+
+    border: none;
     background-color: rgba(232, 32, 0, 0.05);
 }
 
@@ -35,19 +65,101 @@
     pointer-events: none;
 }
 
-.ui-form-box > .form-label {
+.ui-form-box > .form-top {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 8px 9px 8px 15px;
+    margin-bottom: 15px;
+
+    color: hsl(0, 0%, 4%);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    
+    background-color: hsl(0, 0%, 98%);
+}
+
+@keyframes formbox-highlighted {
+    0% {
+        color: var(--color-red);
+    }
+    50% {
+        color: #ffa300;
+    }
+}
+
+@keyframes formbox-highlighted-w-bkg {
+    0% {
+        color: var(--color-red);
+        background-color: rgba(255, 110, 0, 0.08);
+    }
+    50% {
+        color: #ffa300;
+        background-color: rgba(255, 110, 0, 0.08);
+    }
+    100% {
+        background-color: hsl(0, 0%, 98%);
+    }
+}
+
+.ui-form-box > .form-top.highlighted > .form-label::before,
+.ui-form-box > .form-top.highlighted {
+    animation: formbox-highlighted-w-bkg 3s ease-out running;
+}
+
+.ui-form-box > .form-top.highlighted > .right-side > .button {
+    animation: formbox-highlighted 3s ease-out running;
+}
+
+.ui-form-box > .form-top > .form-label {
+    position: relative;
+
+    margin-left: 22px;
+}
+
+.ui-form-box > .form-top > .form-label::before {
+    display: block;
     position: absolute;
 
-    top: 0;
     left: 0;
 
-    margin: -10px 0 0 10px;
-    padding: 0 7px;
+    margin-left: -27px;
+    padding: 0 3px 0 4px;
 
-    color: hsl(0, 0%, 22%);
-    font-weight: 600;
+    content: '//';
+    
+    color: hsl(0, 0%, 80%);
+    font-weight: 700;
 
-    background-color: white;
+    border-radius: 3px;
+}
+
+.ui-form-box > .form-top > .right-side {
+    display: flex;
+}
+
+.ui-form-box > .form-top > .right-side > .button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-width: 14px;
+    margin-left: 8px;
+
+    cursor: pointer;
+
+    color: hsl(0, 0%, 40%);
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.ui-form-box > .form-top > .right-side > .button:hover {
+    color: hsl(0, 0%, 25%);
+}
+
+.ui-form-box > .form-top > .right-side > .button i {
+    transition: transform 0.15s;
 }
 
 .ui-form-container {
@@ -64,7 +176,13 @@
     align-items: flex-start;
 }
 
-.ui-form-container.column .ui-text:not(:last-child) {
+.ui-form-container.column-reverse {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+}
+
+.ui-form-container.column .ui-text:not(:last-child),
+.ui-form-container.column-reverse .ui-text:not(:last-child) {
     margin-bottom: 3px;
 }
 
@@ -98,6 +216,13 @@
 
 .ui-form-container ul {
     margin: 8px 0 0 0;   
+}
+
+.ui-logs-container > .info-message > i {
+    margin-right: 4px;
+
+    color: hsl(0, 0%, 25%);
+    font-size: 14px;
 }
 
 .ui-form-spacer {
@@ -278,9 +403,14 @@ a.ui-text[href]:focus:not(:hover),
 
 /* Array input */
 .ui-input-array1 {
+    position: relative;
     display: flex;
 
+    overflow: hidden;
+    cursor: text;
+
     width: 100%;
+    min-height: 33px;
 
     box-sizing: border-box;
 
@@ -301,7 +431,9 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-input-array1 > input {
-    width: 100%;
+    min-width: 180px;
+
+    margin-right: 64px;
 
     outline: none;
     border: 0;
@@ -311,11 +443,14 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-input-array1 > .items {
     display: flex;
+    flex-wrap: wrap;
 }
 
 .ui-input-array1 > .items > div {
     margin-right: 5px;
     padding: 2px 6px;
+
+    user-select: none;
 
     cursor: pointer;
     white-space: nowrap;
@@ -326,10 +461,72 @@ a.ui-text[href]:focus:not(:hover),
 
     color: var(--color-blue2);
     background-color: var(--color-blue2-transparent-1);
+
+    transition: 0.1s;
+}
+
+.ui-input-array1 > .items > div::before {
+    display: inline;
+    content: '';
+
+    font-family: monospace;
+}
+
+.ui-input-array1 > .items > div:hover::before {
+    content: '-';
 }
 
 .ui-input-array1 > .items > div:hover {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
+
     opacity: 0.75;
+}
+
+.ui-input-array1 > .buttons {
+    position: absolute;
+    height: 33px;
+
+    top: 0;
+    right: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-left: 1px solid var(--color-gray3);
+    border-bottom: 1px solid var(--color-gray3);
+
+    margin-left: 4px;
+}
+
+.ui-input-array1 > .buttons > div {
+    box-sizing: border-box;
+
+    width: 32px;
+    padding: 11px;
+
+    cursor: pointer;
+
+    color: var(--color-blue);
+
+    transition: 0.1s;
+}
+
+.ui-input-array1 > .buttons > div > i {
+    font-size: 10px;
+}
+
+.ui-input-array1 > .buttons > div.red {
+    color: var(--color-red);
+}
+
+.ui-input-array1 > .buttons > div:hover {
+    background-color: var(--color-blue2-transparent-1);
+}
+
+.ui-input-array1 > .buttons > div.red:hover {
+    background-color: var(--color-red-transparent-1);
 }
 
 /* Dropdown */
@@ -548,19 +745,19 @@ a.ui-text[href]:focus:not(:hover),
     font-weight: 600;
     font-size: 13px;
 
-    transition: 0.15s;
+    transition: 0.1s;
 }
 
 .ui-button1 > i.far,
 .ui-button1 > i.fas {
     font-size: 12px;
-    margin-right: 3px;
+    margin-right: 4px;
 }
 
 .ui-button1 > i.far.r,
 .ui-button1 > i.fas.r {
     margin-right: 0px;
-    margin-left: 3px;
+    margin-left: 4px;
 }
 
 .ui-button1.s-small {
@@ -578,6 +775,8 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-button1:active {
+    transition: 0s;
+
     background-color: rgb(220, 220, 220);
 }
 

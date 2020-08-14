@@ -4,6 +4,7 @@ import * as Page from "../page";
 import * as User from "../user";
 import * as Util from "../utils";
 import * as Log from "../log";
+import * as UI from "../ui";
 import { registry_usergroups } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject, GroupsObject } from "../right";
@@ -23,7 +24,7 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
 </div>
 
 <form class="ui-form-box" name="usergroupmembership-query">
-    <div class="form-label">User query</div>
+    ${ UI.constructFormBoxTitleBar("query", "User query") }
 
     <div class="ui-input-box">
         <div class="popup"></div>
@@ -113,7 +114,7 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
                     // Groups form
                     page.parsed_content += `\
 <form class="ui-form-box" name="usergroupmembership-groups">
-    <div class="form-label">Groups</div>
+    ${ UI.constructFormBoxTitleBar("groups", "Groups") }
 
     <div class="ui-form-container column">
         <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
@@ -122,7 +123,7 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
 ${ client_can_modify_groups ? `<div class="ui-form-container column">${ checkboxes_html }</div>` : "" }
 </form>
 ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembership-save">
-    <div class="form-label">Save</div>
+    ${ UI.constructFormBoxTitleBar("save", "Save") }
 
     <div class="ui-input-box">
         <div class="popup"></div>
@@ -135,8 +136,9 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
 </form>` : "" }
 
 <div class="ui-form-box">
-    <div class="form-label">User rights log</div>
-    <div class="ui-form-container ui-logs-container column">${ Log.constructLogEntriesHTML(log_entries) }</div>
+    ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
+
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`;
 
                     resolve(page);

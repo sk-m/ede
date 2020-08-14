@@ -57,6 +57,9 @@ export interface PageAddress {
     raw_url: string;
 }
 
+// TODO This is not a good system. We have to describe the value type, source and display every time we set the option
+// So, if we want to hide a titlebar of a page, we can't just do `page.info.hidetitle = false`
+// We have to write `page.info.hidetitle = { value_type: "boolean", source: "ede", display_name: "abc" ... }`
 export type PageInfoItemsObject = { [internal_name: string]: PageInfoItem };
 export interface PageInfoItem {
     display_name: string;
