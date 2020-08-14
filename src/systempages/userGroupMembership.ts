@@ -31,7 +31,7 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
         <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
     </div>
     <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1">Get groups</button>
+        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
     </div>
 </form>`;
 
@@ -130,7 +130,7 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
         <input type="text" name="summary" data-handler="summary" class="ui-input1">
     </div>
     <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1">Save groups</button>
+        <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save groups</button>
     </div>
 </form>` : "" }
 

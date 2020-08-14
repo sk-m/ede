@@ -83,18 +83,18 @@ change it"><i class="fas fa-lock-open"></i> Permitted</div>`;
                     changeable = false;
                     viewable = false;
 
-                    indicator_html = `<div class="indicator" title="This config item is restricted, you do not have permission to modify \
-it"><i class="fas fa-lock"></i> Restricted</div>`;
+                    indicator_html = `<div class="indicator" title="This config item is restricted, you do not have permission to read or \
+modify it"><i class="fas fa-eye-slash"></i> Restricted</div>`;
                 }
             }
 
             // Construct the buttons HTML
             if(changeable) {
-                buttons_html = `<button name="save" class="ui-button1 s-small disabled save-button">Save</button>`;
+                buttons_html = `<button name="save" class="ui-button1 s-small disabled save-button"><i class="fas fa-check"></i> Save</button>`;
 
                 // Check if we should show the "Reset" button
                 if(!config_item.is_default && config_item.default_value) {
-                    buttons_html += `<button name="reset" class="ui-button1 s-small t-frameless c-red">Reset</button>`;
+                    buttons_html += `<button name="reset" class="ui-button1 s-small t-frameless c-red"><i class="fas fa-redo"></i> Reset</button>`;
                 }
             }
 

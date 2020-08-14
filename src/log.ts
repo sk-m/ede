@@ -26,6 +26,11 @@ export const log_icons: { [log_type: string]: string } = {
  * @param entries log entries
  */
 export function constructLogEntriesHTML(entries: LogEntry[]): string {
+    // Check if there are entries
+    if(entries.length === 0) {
+        return "No entries";
+    }
+
     let html = "";
     const icon = log_icons[entries[0].type] || "fas fa-cog";
 
