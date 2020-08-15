@@ -186,7 +186,7 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                             // tslint:disable-next-line: forin
                             for(const right_name in group.added_rights) {
                                 // Check if client already has this right
-                                if(result.rights[right_name]) {
+                                if(result.rights.hasOwnProperty(right_name)) {
                                     // This right is already present in the results object, go through all arguments
                                     for(const argument_name in group.added_rights[right_name]) {
                                         // Check if argument is not just {}
