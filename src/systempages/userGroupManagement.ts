@@ -13,6 +13,27 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         const queried_group_name = page.address.url_params[1];
         let client_can_alter = false;
 
+        page.parsed_content = `\
+<form class="ui-form-box" name="usergroupmanagement-query">
+    ${ UI.constructFormBoxTitleBar("query", "Group query") }
+
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Group name</div>
+        <input type="text" value="${ queried_group_name || "" }" name="group_name" data-handler="group_name" class="ui-input1">
+    </div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
+    </div>
+</form>`;
+
+        // Load css and js files for this system page
+        const page_css = fs.readFileSync("./content/pages/System/UserGroupManagement/styles.css", "utf8");
+        const page_js = fs.readFileSync("./content/pages/System/UserGroupManagement/script.js", "utf8");
+
+        page.additional_css = [page_css];
+        page.additional_js = [page_js];
+
         // Check if client can alter requeted group
         if(client) {
             await User.getUserGroupRights(client.id)
@@ -24,7 +45,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Check if a group name was provided
         if(!queried_group_name) {
-            page.parsed_content = "no group provided!";
+            page.parsed_content += "no group provided!";
 
             resolve(page);
             return;
@@ -34,18 +55,11 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Check if queried group exists
         if(!queried_group) {
-            page.parsed_content = "no such group!";
+            page.parsed_content += "no such group!";
 
             resolve(page);
             return;
         }
-
-        // Load css and js files for this system page
-        const page_css = fs.readFileSync("./content/pages/System/UserGroupManagement/styles.css", "utf8");
-        const page_js = fs.readFileSync("./content/pages/System/UserGroupManagement/script.js", "utf8");
-
-        page.additional_css = [page_css];
-        page.additional_js = [page_js];
 
         let available_rights_html = "";
         const registry_rights_snapshot = registry_rights.get();
@@ -145,7 +159,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             }
         }
 
-        page.parsed_content = `\
+        page.parsed_content += `\
 <form name="usergroupmanagement" data-onsubmit="test">
     <div class="ui-form-box result-status-container hidden">
         <div class="ui-text"></div>
@@ -154,13 +168,8 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="ui-form-box">
         ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
 
-        <div class="ui-input-box">
-            <div class="popup"></div>
-            <div class="ui-input-name1">Group name</div>
-            <input type="text" value="${ queried_group_name }" name="new_group_name" data-handler="group_name" class="ui-input1">
-        </div>
-
-        <div class="ui-form-container column margin-top">
+        <div class="ui-form-container column">
+            <div class="ui-text">System name: <code>${ queried_group_name }</code></div>
             <div class="ui-text">Name: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
             <div class="ui-text">Short description: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
         </div>

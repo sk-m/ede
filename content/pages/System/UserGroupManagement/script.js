@@ -21,16 +21,27 @@ function userGroupManagementPageScript() {
         }, false);
     }
 
-    const this_form = ede.form.list.usergroupmanagement;
+    const query_form = ede.form.list["usergroupmanagement-query"];
+
+    // On query
+    query_form.submit.onclick = () => {
+        const validation_result = ede.form.validate("usergroupmanagement-query");
+
+        if(!validation_result.invalid) {
+            ede.navigate("/System:UserGroupManagement/" + query_form.group_name.value);
+        }
+    }
+
+    // Check if the main form is available
+    const main_form = ede.form.list.usergroupmanagement;
+
+    if(!main_form._form) return;
 
     // Result text container
-    const result_status_container = this_form._form.querySelector(".result-status-container");
-
-    // Check if submit button is available (client can alter groups)
-    if(!this_form.submit) return;
+    const result_status_container = main_form._form.querySelector(".result-status-container");
 
     // On save
-    this_form.submit.onclick = e => {
+    main_form.submit.onclick = e => {
         // Validate the form
         const form_validation = ede.form.validate("usergroupmanagement");
         if(form_validation.invalid) return;

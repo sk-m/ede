@@ -30,26 +30,23 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     }
 
     // Check if the name is correct
-    if(!req.body.group_name.match(/^[a-z_-]{1,127}$/) ||
-       !req.body.new_group_name.match(/^[a-z_-]{1,127}$/)) {
+    if(!req.body.group_name.match(/^[a-z_-]{1,127}$/)) {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Group name is invalid"));
         return;
     }
-
-    const is_renamed = req.body.new_group_name !== req.body.group_name;
-
-    // New usergroup object
-    const new_usergroup: Group = {
-        name: req.body.new_group_name || req.body.group_name,
-
-        added_rights: {}
-    };
 
     // Check if the group exsists
     if(!registry_usergroups.get()[req.body.group_name]) {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Specified group doesn't exists"));
         return;
     }
+
+    // New usergroup object
+    const new_usergroup: Group = {
+        name: req.body.group_name,
+
+        added_rights: {}
+    };
 
     const usergroup_added_rights = Object.assign({}, registry_usergroups.get()[req.body.group_name].added_rights);
 
@@ -115,8 +112,8 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
 
         // Log the update
         // TODO more detailed log message
-        Log.createEntry("groupupdate", client_user.id, req.body.new_group_name,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.new_group_name }">${ req.body.new_group_name }</a> ${ is_renamed ? `(also renamed from <i>${ req.body.group_name }</i> to <i>${ req.body.new_group_name }</i>)` : "" }`, Util.sanitize(req.body.summary));
+        Log.createEntry("groupupdate", client_user.id, req.body.group_name,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`, Util.sanitize(req.body.summary));
 
         res.send(apiResponse(ApiResponseStatus.success));
     })
