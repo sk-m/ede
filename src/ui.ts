@@ -10,7 +10,7 @@ export function constructFormBoxTitleBar(id: string, title: string): string {
     <div class="form-label">${ title }</div>
     <div class="right-side">
     <a href="#${ id }" class="button" title="Link to this block"><i class="fas fa-hashtag"></i></a>
-    <div onclick="ede.collapse_block('${ id }', this)" class="button" title="Collapse this block"><i class="fas fa-chevron-up"></i></div>
+    <div onclick="ede.collapse_block('${ id }')" class="button collapse" title="Collapse this block"><i class="fas fa-chevron-up"></i></div>
     </div>
 </div>`
 }

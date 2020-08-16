@@ -158,8 +158,14 @@
     color: hsl(0, 0%, 25%);
 }
 
-.ui-form-box > .form-top > .right-side > .button i {
+.ui-form-box > .form-top > .right-side > .button.collapse i {
+    transform: rotate(0deg);
+    
     transition: transform 0.15s;
+}
+
+.ui-form-box.collapsed > .form-top > .right-side > .button.collapse i {
+    transform: rotate(180deg);
 }
 
 .ui-form-container {
