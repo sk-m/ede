@@ -874,7 +874,7 @@ a.ui-text[href]:focus:not(:hover),
     box-sizing: border-box;
 
     width: 100%;
-    padding: 3px 8px;
+    padding: 3px;
 
     overflow: hidden;
     cursor: pointer;
@@ -883,6 +883,7 @@ a.ui-text[href]:focus:not(:hover),
     font-size: 14px;
 
     border-left: 0px solid var(--color-blue-lighter);
+    border-radius: 2px;
 
     transition: border-left 0.15s;
 }

@@ -2,6 +2,14 @@ function userGroupMembershipPageScript() {
     const save_form = ede.form.list["usergroupmembership-save"];
     const result_status_container = document.getElementById("usergroupmembership-result-status-container");
 
+    // Disable submit on enter key
+    window.addEventListener("keydown", e => {
+        if(e.keyCode === 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
     // Query submit handler
     ede.form.list["usergroupmembership-query"].submit.onclick = () => {
         const validation_result = ede.form.validate("usergroupmembership-query");
