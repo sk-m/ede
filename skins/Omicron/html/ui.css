@@ -13,11 +13,11 @@
 }
 
 .ui-form-box.collapsed > div {
-    display: none;
+    display: none !important;
 }
 
 .ui-form-box.collapsed > .form-top {
-    display: flex;
+    display: flex !important;
     margin: 0;
 }
 

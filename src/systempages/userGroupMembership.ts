@@ -36,8 +36,11 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
     </div>
 </form>`;
 
-        // TODO @sysmsg
-        if(queried_username) {
+        // Check if username was provided
+        if(!queried_username) {
+            resolve(page);
+            return;
+        } else {
             // Get queried user
             User.getFromUsername(queried_username)
             .then(async (queried_user: User.User) => {
@@ -150,12 +153,14 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
             .catch(() => {
                 // Nonexistent user
                 page.parsed_content += `\
-                <form class="ui-form-box" name="usergroupmembership-groups">
+                <div class="ui-form-box" name="usergroupmembership-groups">
+                    ${ UI.constructFormBoxTitleBar("groups", "Groups") }
+
                     <div class="ui-form-container column">
                         <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
                         <div class="ui-text">Such user does not exist.</div>
                     </div>
-                </form>`;
+                </div>`;
 
                 resolve(page);
                 return;
