@@ -1,4 +1,47 @@
+import fs from "fs";
+import path from "path";
+
 import * as Page from "./page";
+import * as Util from "./utils";
+import { registry_systempages } from "./registry";
+
+/**
+ * Register system pages that are not provided by the ede backend. For example, System:Login is not provided by the backend,
+ * it's just a simple page in System namespace
+ */
+export function registerNonSytemSystempages(): void {
+    const registry_systempages_snapshot = registry_systempages.get();
+
+    fs.readdir(path.join(__dirname, "../content/pages/System"), (dirs_error: any, folders: string[]) => {
+        if(dirs_error) {
+            const error_message = "Could not read system namespace (\"/content/pages/System\")";
+
+            Util.log(error_message, 3);
+            return new Error(error_message);
+        }
+
+        for(const folder_name of folders) {
+            // Namespace is not registered, register here
+            const lowercase_name = folder_name.toLowerCase();
+
+            if(registry_systempages_snapshot[lowercase_name] === undefined) {
+                registry_systempages_snapshot[lowercase_name] = {
+                    name: lowercase_name,
+                    display_title: folder_name,
+
+                    source: "ede",
+
+                    static_fs_content: true
+                };
+            }
+        }
+
+        // Update the registry
+        registry_systempages.set(registry_systempages_snapshot);
+
+        return;
+    });
+}
 
 // TODO maybe get rid entirely
 export async function defaultSystempageHandler(page: Page.ResponsePage): Promise<Page.ResponsePage> {

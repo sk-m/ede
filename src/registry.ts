@@ -14,6 +14,7 @@ import { getPageRoute, ApiRoutesObject } from "./api";
 import { updateUserGroupMembershipRoute } from "./api/user_updategroups";
 import { updateUserGroupRoute } from "./api/usergroup_update";
 import { config } from "./systempages/config";
+import { dashboard } from "./systempages/dashboard";
 import { configSetItemRoute } from "./api/config_setitem";
 import { configResetItemRoute } from "./api/config_resetitem";
 
@@ -197,7 +198,11 @@ export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>(
 export const registry_systempages = new RegistryContainer<Page.SystemPagesObject>("ede", undefined, {
     usergroupmembership: {
         name: "UserGroupMembership",
+
         display_title: "User group membership",
+        display_category: "users_and_groups",
+        display_description: "Change user's groups",
+        display_icon: "fas fa-user-cog",
 
         source: "ede",
 
@@ -205,7 +210,11 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
     },
     usergroupmanagement: {
         name: "UserGroupManagement",
+
         display_title: "User group management",
+        display_category: "users_and_groups",
+        display_description: "Modify rights, assigned to user groups",
+        display_icon: "fas fa-users-cog",
 
         source: "ede",
 
@@ -213,11 +222,27 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
     },
     config: {
         name: "Config",
+
         display_title: "EDE Configuration",
+        display_category: "ede_config",
+        display_description: "All configuration options for EDE and extesions",
+        display_icon: "fas fa-cog",
 
         source: "ede",
 
         dynamic_content: config
+    },
+    dashboard: {
+        name: "Dashboard",
+
+        display_title: "Dashboard",
+        display_category: "other",
+        display_description: "EDE Status and a list of system pages",
+        display_icon: "fas fa-tachometer-alt",
+
+        source: "ede",
+
+        dynamic_content: dashboard
     },
 });
 

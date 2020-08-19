@@ -15,11 +15,15 @@ export interface SystemPage {
     name: string;
 
     display_title: string;
+    display_category?: string;
+    display_description?: string;
+    display_icon?: string;
 
     /** Extension that provides this system page */
     source: string;
 
     static_content?: string;
+    static_fs_content?: boolean;
     dynamic_content?: (page: ResponsePage, client: User.User) => Promise<ResponsePage> | ResponsePage;
 }
 
@@ -123,7 +127,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         const registry_systempages_snapshot = registry_systempages.get();
         const lowercase_name = address.name.toLowerCase();
 
-        if(registry_systempages_snapshot[lowercase_name]) {
+        if(registry_systempages_snapshot[lowercase_name] && !registry_systempages_snapshot[lowercase_name].static_fs_content) {
             const systempage: SystemPage = registry_systempages_snapshot[lowercase_name];
 
             page.display_title = systempage.display_title;

@@ -20,6 +20,7 @@ import { joinRoute, loginRoute } from "./user";
 import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
+import { registerNonSytemSystempages } from "./systempage";
 
 // Fastify app
 const app: any = fastify();
@@ -133,6 +134,9 @@ async function serverInit(db_error: Error): Promise<void> {
             }
         }
     } as Hook.HooksObject);
+
+    // Register non-system systempages (like System:Login)
+    registerNonSytemSystempages();
 
     // Call the ede_onload hook
     await Hook.call("ede_load");
