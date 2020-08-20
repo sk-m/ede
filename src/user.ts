@@ -187,6 +187,11 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                             for(const right_name in group.added_rights) {
                                 // Check if client already has this right
                                 if(result.rights.hasOwnProperty(right_name)) {
+                                    // Check if this right is currenly explicitly not present
+                                    if(result.rights[right_name] === false) {
+                                        result.rights[right_name] = {};
+                                    }
+
                                     // This right is already present in the results object, go through all arguments
                                     for(const argument_name in group.added_rights[right_name]) {
                                         // Check if argument is not just {}
@@ -198,6 +203,11 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                                             if(argument_value instanceof Array) {
                                                 // Push array item only if not already included
                                                 for(const array_el of argument_value) {
+                                                    // Add empty arguments array, if there isn't one
+                                                    if(result.rights[right_name][argument_name] === undefined) {
+                                                        result.rights[right_name][argument_name] = [];
+                                                    }
+
                                                     if(!result.rights[right_name][argument_name].includes(array_el)) {
                                                         result.rights[right_name][argument_name].push(array_el)
                                                     }
