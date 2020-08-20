@@ -65,7 +65,8 @@ ${ breadcrumbs_html }
     <div class="text">Please, select a user group</div>
 </div>
 
-<div id="systempage-usergroupmanagement-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
 <form class="ui-form-box" name="usergroupmanagement-query">
     ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
@@ -80,6 +81,7 @@ ${ breadcrumbs_html }
 </form>
 
 <div class="ui-text">no group provided!</div>
+</div>
 </div>`;
 
             resolve(page);
@@ -105,7 +107,8 @@ ${ breadcrumbs_html }
     <div class="text">Please, select a user group</div>
 </div>
 
-<div id="systempage-usergroupmanagement-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
 <form class="ui-form-box" name="usergroupmanagement-query">
     ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
@@ -120,6 +123,7 @@ ${ breadcrumbs_html }
 </form>
 
 <div class="ui-text">such group does not exist!</div>
+</div>
 </div>`;
 
             resolve(page);
@@ -240,7 +244,8 @@ ${ breadcrumbs_html }
     </div>
 </div>
 
-<div id="systempage-usergroupmanagement-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
     <form class="ui-form-box" name="usergroupmanagement-query">
         ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
@@ -301,6 +306,22 @@ ${ breadcrumbs_html }
             <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
         </div>
     </form>
+</div>
+<div class="ui-systempage-sidebar-right">
+    <div class="sidebar">
+        <div class="links">
+            <div class="heading">Configure</div>
+            <a class="link"><i class="fas fa-palette"></i> Change the color of this group</a>
+
+            <div class="heading">Related links</div>
+            <a class="link"><i class="fas fa-users"></i> Users in this group</a>
+            <a class="link"><i class="fas fa-list"></i> Related system messages</a>
+
+            <div class="heading">Danger zone</div>
+            <a class="link red"><i class="fas fa-trash"></i> Delete group</a>
+        </div>
+    </div>
+</div>
 </div>`;
 
         resolve(page);

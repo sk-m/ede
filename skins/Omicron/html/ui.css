@@ -73,9 +73,9 @@
     margin-bottom: 15px;
 
     color: hsl(0, 0%, 4%);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.1px;
     
     background-color: hsl(0, 0%, 98%);
 }
@@ -895,6 +895,8 @@ a.ui-text[href]:focus:not(:hover),
 .ui-log-item.selected {
     background-color: var(--color-blue2-transparent-05) !important;
     border-left: 4px solid var(--color-blue-lighter) !important;
+
+    border-radius: 0;
 }
 
 .ui-log-item:hover {
@@ -995,6 +997,124 @@ table.ui-table td {
     border: 1px solid var(--color-gray3);
 }
 
+/* Systempage */
+.ui-systempage-content-container {
+    display: flex;
+    justify-content: space-between;
+
+    box-sizing: border-box;
+
+    min-width: 720px;
+    max-width: 1800px;
+
+    margin: 0 auto;
+    padding: 35px;
+}
+
+.ui-systempage-content-container > .ui-systempage-main-content {
+    width: 100%;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right {
+    margin-left: 15px;
+
+    width: 280px;
+
+    flex-shrink: 0;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar {
+    box-sizing: border-box;
+    
+    width: 100%;
+
+    padding: 12px;
+
+    font-family: "Roboto", sans-serif;
+
+    border: 1px solid var(--color-gray2);
+    border-radius: 3px;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar .heading {
+    margin: 18px 0 5px 2px;
+
+    color: hsl(0, 0%, 40%);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar .heading:first-of-type {
+    margin-top: 0;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .spacer {
+    margin: 16px auto;
+
+    height: 1px;
+    width: 90%;
+
+    background-color: var(--color-gray3);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .spacer.invisible {
+    margin: 7px 0;
+
+    background-color: transparent;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link {
+    display: block;
+    
+    padding: 6px 10px 6px 6px;
+    margin-top: 2px;
+
+    user-select: none;
+    cursor: pointer;
+
+    color: hsl(0, 0%, 20%);
+    font-size: 13px;
+    font-weight: 400;
+
+    text-decoration: none;
+
+    border-radius: 3px;
+
+    transition: 0.1s;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:first-of-type {
+    margin-top: 0;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:hover {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.red:hover {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-05);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link > i {
+    text-align: center;
+
+    width: 24px;
+    
+    margin-right: 2px;
+
+    color: hsl(0, 0%, 22%);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:hover > i {
+    color: var(--color-blue3);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.red:hover > i {
+    color: var(--color-red);
+}
+
 /* Systempage header box */
 .ui-systempage-header-box {
     padding: 20px 30px;
@@ -1078,7 +1198,7 @@ table.ui-table td {
     text-decoration: none;
 
     color: hsl(0, 0%, 12%);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 

@@ -56,7 +56,8 @@ ${ breadcrumbs_html }
     <div class="text">Please, select a user</div>
 </div>
 
-<div id="systempage-usergroupmembership-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
     <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
         <div class="ui-text"></div>
     </div>
@@ -73,6 +74,7 @@ ${ breadcrumbs_html }
             <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
         </div>
     </form>
+</div>
 </div>`;
 
             resolve(page);
@@ -175,7 +177,8 @@ ${ breadcrumbs_html }
     ${ targetuser_groups_list ? `<div class="tags">${ targetuser_groups_list }</div>` : "" }
 </div>
 
-<div id="systempage-usergroupmembership-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
 <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
     <div class="ui-text"></div>
 </div>
@@ -219,7 +222,20 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
     ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
-</div></div>`;
+</div>
+</div>
+<div class="ui-systempage-sidebar-right">
+    <div class="sidebar">
+        <div class="links">
+            <div class="heading">Actions on selected user</div>
+            <a class="link"><i class="fas fa-list"></i> Related logs</a>
+            <div class="spacer invisible"></div>
+            <a class="link"><i class="fas fa-cog"></i> Manage this user</a>
+            <a class="link red"><i class="fas fa-minus-circle"></i> Block this user</a>
+        </div>
+    </div>
+</div>
+</div>`;
 
                     resolve(page);
                 })
@@ -243,7 +259,8 @@ ${ breadcrumbs_html }
     <div class="text">Please, select a user</div>
 </div>
 
-<div id="systempage-usergroupmembership-content">
+<div class="ui-systempage-content-container">
+<div class="ui-systempage-main-content">
     <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
         <div class="ui-text"></div>
     </div>
@@ -262,6 +279,8 @@ ${ breadcrumbs_html }
     </form>
 
     <div class="ui-text">Such user does not exist!</div>
+</div>
+</div>
 </div>`;
 
                 resolve(page);
