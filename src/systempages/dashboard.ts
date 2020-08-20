@@ -80,7 +80,23 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
             source: "ede"
         }
 
+        page.info.nocontainer = {
+            display_name: "No container",
+
+            value_type: "boolean",
+            value: true,
+
+            source: "ede"
+        }
+
         page.parsed_content = `\
+<div class="ui-systempage-header-box">
+    <div class="title-container">
+        <div class="icon"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="title">Dashboard</div>
+    </div>
+</div>
+
 <div id="systempage-dashboard-root">
     ${ constructSystemPagesListHTML() }
 </div>`;

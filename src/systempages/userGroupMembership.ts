@@ -15,29 +15,66 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
 
         // Load css and js files for this system page
         const page_js = fs.readFileSync("./content/pages/System/UserGroupMembership/script.js", "utf8");
+        const page_css = fs.readFileSync("./content/pages/System/UserGroupMembership/styles.css", "utf8");
+
         page.additional_js = [page_js];
+        page.additional_css = [page_css];
 
-        // Query form
-        page.parsed_content = `\
-<div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
-    <div class="ui-text"></div>
-</div>
+        // TODO bad system
+        page.info.hidetitle = {
+            display_name: "Hidden title",
 
-<form class="ui-form-box" name="usergroupmembership-query">
-    ${ UI.constructFormBoxTitleBar("query", "User query") }
+            value_type: "boolean",
+            value: true,
 
-    <div class="ui-input-box">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Username</div>
-        <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
-    </div>
-    <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
-    </div>
-</form>`;
+            source: "ede"
+        }
+
+        page.info.nocontainer = {
+            display_name: "No container",
+
+            value_type: "boolean",
+            value: true,
+
+            source: "ede"
+        }
 
         // Check if username was provided
         if(!queried_username) {
+            // Construct breadcrumbs HTML
+            const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
+                ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"]
+            ]);
+
+            page.parsed_content = `\
+${ breadcrumbs_html }
+<div class="ui-systempage-header-box">
+    <div class="title-container">
+        <div class="icon"><i class="fas fa-user-cog"></i></div>
+        <div class="title">User Group Membership</div>
+    </div>
+    <div class="text">Please, select a user</div>
+</div>
+
+<div id="systempage-usergroupmembership-content">
+    <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
+        <div class="ui-text"></div>
+    </div>
+
+    <form class="ui-form-box" name="usergroupmembership-query">
+        ${ UI.constructFormBoxTitleBar("query", "User query") }
+
+        <div class="ui-input-box">
+            <div class="popup"></div>
+            <div class="ui-input-name1">Username</div>
+            <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
+        </div>
+        <div class="ui-form-container right margin-top">
+            <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
+        </div>
+    </form>
+</div>`;
+
             resolve(page);
             return;
         } else {
@@ -114,17 +151,57 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
                         }
                     }
 
+                    // Create a list of groups, assigned to target user
+                    let targetuser_groups_list = "";
+
+                    for(const group_name of target_grouprights.groups) {
+                        targetuser_groups_list += `<div class="item">${ group_name }</div>`;
+                    }
+
+                    // Construct breadcrumbs HTML
+                    const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
+                        ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"],
+                        [queried_user.username, "fas fa-user"],
+                    ]);
+
                     // Groups form
-                    page.parsed_content += `\
+                    page.parsed_content = `\
+${ breadcrumbs_html }
+<div class="ui-systempage-header-box">
+    <div class="title-container">
+        <div class="icon"><i class="fas fa-user-cog"></i></div>
+        <div class="title">${ queried_user.username }</div>
+    </div>
+    ${ targetuser_groups_list ? `<div class="tags">${ targetuser_groups_list }</div>` : "" }
+</div>
+
+<div id="systempage-usergroupmembership-content">
+<div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
+    <div class="ui-text"></div>
+</div>
+
+<form class="ui-form-box" name="usergroupmembership-query">
+    ${ UI.constructFormBoxTitleBar("query", "User query") }
+
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Username</div>
+        <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
+    </div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
+    </div>
+</form>
+
 <form class="ui-form-box" name="usergroupmembership-groups">
     ${ UI.constructFormBoxTitleBar("groups", "Groups") }
 
-    <div class="ui-form-container column">
-        <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
-        <div class="ui-text">Currently a member of: <b>${ target_grouprights.groups.length > 0 ? target_grouprights.groups.join(", ") : "<i>(none)</i>" }</b>.</div>
-    </div>
-${ client_can_modify_groups ? `<div class="ui-form-container column">${ checkboxes_html }</div>` : "" }
+    ${ client_can_modify_groups ? `\
+<div class="ui-text">You have permission to modify this user's groups</div>
+<div class="ui-form-container column margin-top">${ checkboxes_html }</div>`
+: `<div class="ui-text">You don't have permission to modify this user's groups</div>` }
 </form>
+
 ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembership-save">
     ${ UI.constructFormBoxTitleBar("save", "Save") }
 
@@ -142,7 +219,7 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
     ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
-</div>`;
+</div></div>`;
 
                     resolve(page);
                 })
@@ -152,15 +229,40 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
             })
             .catch(() => {
                 // Nonexistent user
-                page.parsed_content += `\
-                <div class="ui-form-box" name="usergroupmembership-groups">
-                    ${ UI.constructFormBoxTitleBar("groups", "Groups") }
+                const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
+                    ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"]
+                ]);
 
-                    <div class="ui-form-container column">
-                        <div class="ui-text">Changing user groups for <b><a href="/User:Max">${ queried_username }</a></b>.</div>
-                        <div class="ui-text">Such user does not exist.</div>
-                    </div>
-                </div>`;
+                page.parsed_content = `\
+${ breadcrumbs_html }
+<div class="ui-systempage-header-box">
+    <div class="title-container">
+        <div class="icon"><i class="fas fa-user-cog"></i></div>
+        <div class="title">User Group Membership</div>
+    </div>
+    <div class="text">Please, select a user</div>
+</div>
+
+<div id="systempage-usergroupmembership-content">
+    <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
+        <div class="ui-text"></div>
+    </div>
+
+    <form class="ui-form-box" name="usergroupmembership-query">
+        ${ UI.constructFormBoxTitleBar("query", "User query") }
+
+        <div class="ui-input-box">
+            <div class="popup"></div>
+            <div class="ui-input-name1">Username</div>
+            <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
+        </div>
+        <div class="ui-form-container right margin-top">
+            <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
+        </div>
+    </form>
+
+    <div class="ui-text">Such user does not exist!</div>
+</div>`;
 
                 resolve(page);
                 return;

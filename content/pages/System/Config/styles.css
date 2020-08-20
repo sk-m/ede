@@ -1,3 +1,14 @@
+/* TODO Move to ui.css */
+#systempage-config-content {
+    box-sizing: border-box;
+
+    min-width: 600px;
+    max-width: 1600px;
+
+    margin: 0 auto;
+    padding: 35px 60px 15px 60px;
+}
+
 #systempage-config-root {
     display: flex;
 

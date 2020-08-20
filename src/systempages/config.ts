@@ -2,6 +2,7 @@ import fs from "fs";
 
 import * as User from "../user";
 import * as Page from "../page";
+import * as UI from "../ui";
 import { ConfigItemsObject, ConfigItemAccessLevel } from "../config";
 import { registry_config } from "../registry";
 import { GroupsAndRightsObject } from "../right";
@@ -164,6 +165,25 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
         page.additional_css = [page_css];
         page.additional_js = [page_js];
 
+        // TODO bad system
+        page.info.hidetitle = {
+            display_name: "Hidden title",
+
+            value_type: "boolean",
+            value: true,
+
+            source: "ede"
+        }
+
+        page.info.nocontainer = {
+            display_name: "No container",
+
+            value_type: "boolean",
+            value: true,
+
+            source: "ede"
+        }
+
         let client_can_alter = false;
         let client_restricted_permits: string[] = [];
 
@@ -192,15 +212,30 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
 ${ constructItemsHTML(category, registry_config_snapshot, client_can_alter, client_restricted_permits) }</div>`;
         }
 
+        // Construct breadcrumbs HTML
+        const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
+            ["EDE Configuration", "fas fa-cog", "/System:Config"]
+        ]);
+
         page.parsed_content = `\
-<div id="systempage-config-root">
-    <div class="left-panel">
-        <div class="categories">
-            ${ categories_response.html }
-        </div>
+${ breadcrumbs_html }
+<div class="ui-systempage-header-box">
+    <div class="title-container">
+        <div class="icon"><i class="fas fa-cog"></i></div>
+        <div class="title">EDE Configuration</div>
     </div>
-    <div class="right-panel">
-        ${ options_html }
+</div>
+
+<div id="systempage-config-content">
+    <div id="systempage-config-root">
+        <div class="left-panel">
+            <div class="categories">
+                ${ categories_response.html }
+            </div>
+        </div>
+        <div class="right-panel">
+            ${ options_html }
+        </div>
     </div>
 </div>`;
 
