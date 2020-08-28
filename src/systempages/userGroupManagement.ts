@@ -8,7 +8,7 @@ import { registry_usergroups, registry_rights } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 
-export async function userGroupManagement(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
+export async function userGroupManagement(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
         const queried_group_name = page.address.url_params[1];
         let client_can_alter = false;
@@ -32,6 +32,14 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             source: "ede"
         }
 
+        const page_config: Page.SystempageConfig = {
+            page,
+
+            breadcrumbs_data: [ ["User Group Management", "fas fa-users-cog", "/System:UserGroupManagement"] ],
+
+            body_html: ""
+        }
+
         // Load css and js files for this system page
         const page_css = fs.readFileSync("./content/pages/System/UserGroupManagement/styles.css", "utf8");
         const page_js = fs.readFileSync("./content/pages/System/UserGroupManagement/script.js", "utf8");
@@ -50,23 +58,13 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Check if a group name was provided
         if(!queried_group_name) {
-            // Construct breadcrumbs HTML
-            const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-                ["User Group Management", "fas fa-users-cog", "/System:UserGroupManagement"]
-            ]);
+            page_config.header_config = {
+                icon: "fas fa-users-cog",
+                title: "User Group Management",
+                description: "Please, select a group"
+            };
 
-            page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-users-cog"></i></div>
-        <div class="title">User Group Management</div>
-    </div>
-    <div class="text">Please, select a user group</div>
-</div>
-
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
+            page_config.body_html = `\
 <form class="ui-form-box" name="usergroupmanagement-query">
     ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
@@ -78,13 +76,9 @@ ${ breadcrumbs_html }
     <div class="ui-form-container right margin-top">
         <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
     </div>
-</form>
+</form>`;
 
-<div class="ui-text">no group provided!</div>
-</div>
-</div>`;
-
-            resolve(page);
+            resolve(page_config);
             return;
         }
 
@@ -92,23 +86,13 @@ ${ breadcrumbs_html }
 
         // Check if queried group exists
         if(!queried_group) {
-            // Construct breadcrumbs HTML
-            const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-                ["User Group Management", "fas fa-users-cog", "/System:UserGroupManagement"]
-            ]);
+            page_config.header_config = {
+                icon: "fas fa-users-cog",
+                title: "User Group Management",
+                description: "Please, select a group"
+            };
 
-            page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-users-cog"></i></div>
-        <div class="title">User Group Management</div>
-    </div>
-    <div class="text">Please, select a user group</div>
-</div>
-
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
+            page_config.body_html = `\
 <form class="ui-form-box" name="usergroupmanagement-query">
     ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
@@ -122,11 +106,9 @@ ${ breadcrumbs_html }
     </div>
 </form>
 
-<div class="ui-text">such group does not exist!</div>
-</div>
-</div>`;
+<div class="ui-text">such group does not exist!</div>`;
 
-            resolve(page);
+            resolve(page_config);
             return;
         }
 
@@ -228,102 +210,116 @@ ${ breadcrumbs_html }
             }
         }
 
-        // Construct breadcrumbs HTML
-        const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-            ["User Group Management", "fas fa-users-cog", "/System:UserGroupManagement"],
-            [queried_group.name, "fas fa-users"]
-        ]);
+        // Page is ready
+        // Header
+        page_config.header_config = {
+            icon: "fas fa-users-cog",
+            title: queried_group.name
+        };
+
+        // Breadcrumbs
+        page_config.breadcrumbs_data.push([queried_group.name, "fas fa-users"]);
+
+        // Sidebar
+        page_config.sidebar_config = { links: [
+            {
+                type: "heading",
+                text: "Configure"
+            },
+            {
+                type: "link",
+                text: "Change the color of this group",
+                icon: "fas fa-palette"
+            },
+            {
+                type: "heading",
+                text: "Related links"
+            },
+            {
+                type: "link",
+                text: "Users in this group",
+                icon: "fas fa-users"
+            },
+            {
+                type: "link",
+                text: "Related system messages",
+                icon: "fas fa-list"
+            },
+            {
+                type: "heading",
+                text: "Danger zone"
+            },
+            {
+                type: "link",
+                additional_classes: "red",
+                text: "Delete group",
+                icon: "fas fa-trash"
+            },
+        ] };
 
         // TODO "Main information" block should be moved to the systempage header box
-        page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-users-cog"></i></div>
-        <div class="title">${ queried_group.name }</div>
-    </div>
-</div>
+        page_config.body_html = `\
+<form class="ui-form-box" name="usergroupmanagement-query">
+    ${ UI.constructFormBoxTitleBar("query", "Group query") }
 
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
-    <form class="ui-form-box" name="usergroupmanagement-query">
-        ${ UI.constructFormBoxTitleBar("query", "Group query") }
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Group name</div>
+        <input type="text" value="${ queried_group_name || "" }" name="group_name" data-handler="group_name" class="ui-input1">
+    </div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
+    </div>
+</form>
+
+<form name="usergroupmanagement" data-onsubmit="test">
+    <div class="ui-form-box result-status-container hidden">
+        <div class="ui-text"></div>
+    </div>
+
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
+
+        <div class="ui-form-container column">
+            <div class="ui-text">Name: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
+            <div class="ui-text">Short description: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
+        </div>
+    </div>
+
+    <div class="ui-form-box user-group-management-rights-root">
+        ${ UI.constructFormBoxTitleBar("rights", "Rights") }
+
+        <div class="text-container">${ client_can_alter ? "You can modify rights for this group" : "You don't have permission to modify\
+rights for this group" }</div>
+
+        <div class="rights-container">
+        ${ available_rights_html }
+        </div>
+    </div>
+
+    ${ client_can_alter ? `\
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("save", "Save") }
 
         <div class="ui-input-box">
             <div class="popup"></div>
-            <div class="ui-input-name1">Group name</div>
-            <input type="text" value="${ queried_group_name || "" }" name="group_name" data-handler="group_name" class="ui-input1">
-        </div>
-        <div class="ui-form-container right margin-top">
-            <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
-        </div>
-    </form>
-
-    <form name="usergroupmanagement" data-onsubmit="test">
-        <div class="ui-form-box result-status-container hidden">
-            <div class="ui-text"></div>
+            <div class="ui-input-name1">Summary</div>
+            <input type="text" name="summary" data-handler="summary" class="ui-input1">
         </div>
 
-        <div class="ui-form-box">
-            ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
-
-            <div class="ui-form-container column">
-                <div class="ui-text">Name: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
-                <div class="ui-text">Short description: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
-            </div>
+        <div class="ui-form-container between margin-top">
+            <div class="ui-text"><i class="gray">Tip:</i> Arrays are separated by comma.</div>
+            <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
         </div>
+    </div>` : "" }
 
-        <div class="ui-form-box user-group-management-rights-root">
-            ${ UI.constructFormBoxTitleBar("rights", "Rights") }
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("logs", "Logs for this group") }
 
-            <div class="text-container">${ client_can_alter ? "You can modify rights for this group" : "You don't have permission to modify\
-    rights for this group" }</div>
-
-            <div class="rights-container">
-            ${ available_rights_html }
-            </div>
-        </div>
-
-        ${ client_can_alter ? `\
-        <div class="ui-form-box">
-            ${ UI.constructFormBoxTitleBar("save", "Save") }
-
-            <div class="ui-input-box">
-                <div class="popup"></div>
-                <div class="ui-input-name1">Summary</div>
-                <input type="text" name="summary" data-handler="summary" class="ui-input1">
-            </div>
-
-            <div class="ui-form-container between margin-top">
-                <div class="ui-text"><i class="gray">Tip:</i> Arrays are separated by comma.</div>
-                <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
-            </div>
-        </div>` : "" }
-
-        <div class="ui-form-box">
-            ${ UI.constructFormBoxTitleBar("logs", "Logs for this group") }
-
-            <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
-        </div>
-    </form>
-</div>
-<div class="ui-systempage-sidebar-right">
-    <div class="sidebar">
-        <div class="links">
-            <div class="heading">Configure</div>
-            <a class="link"><i class="fas fa-palette"></i> Change the color of this group</a>
-
-            <div class="heading">Related links</div>
-            <a class="link"><i class="fas fa-users"></i> Users in this group</a>
-            <a class="link"><i class="fas fa-list"></i> Related system messages</a>
-
-            <div class="heading">Danger zone</div>
-            <a class="link red"><i class="fas fa-trash"></i> Delete group</a>
-        </div>
+        <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
     </div>
-</div>
-</div>`;
+</form>`;
 
-        resolve(page);
+        resolve(page_config);
     });
 }

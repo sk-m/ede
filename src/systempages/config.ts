@@ -212,13 +212,7 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
 ${ constructItemsHTML(category, registry_config_snapshot, client_can_alter, client_restricted_permits) }</div>`;
         }
 
-        // Construct breadcrumbs HTML
-        const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-            ["EDE Configuration", "fas fa-cog", "/System:Config"]
-        ]);
-
         page.parsed_content = `\
-${ breadcrumbs_html }
 <div class="ui-systempage-header-box">
     <div class="title-container">
         <div class="icon"><i class="fas fa-cog"></i></div>

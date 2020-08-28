@@ -1037,7 +1037,7 @@ table.ui-table td {
 }
 
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar .heading {
-    margin: 18px 0 5px 2px;
+    margin: 18px 0 6px 2px;
 
     color: hsl(0, 0%, 40%);
     font-weight: 600;
@@ -1058,7 +1058,7 @@ table.ui-table td {
 }
 
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .spacer.invisible {
-    margin: 7px 0;
+    margin: 5px 0;
 
     background-color: transparent;
 }

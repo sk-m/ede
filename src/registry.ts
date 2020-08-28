@@ -195,7 +195,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins);
 export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getNamespacesFromDB);
 
-export const registry_systempages = new RegistryContainer<Page.SystemPagesObject>("ede", undefined, {
+export const registry_systempages = new RegistryContainer<Page.SystemPageDescriptorsObject>("ede", undefined, {
     usergroupmembership: {
         name: "UserGroupMembership",
 
@@ -206,7 +206,7 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
 
         source: "ede",
 
-        dynamic_content: userGroupMembership
+        systempage_config: userGroupMembership
     },
     usergroupmanagement: {
         name: "UserGroupManagement",
@@ -218,7 +218,7 @@ export const registry_systempages = new RegistryContainer<Page.SystemPagesObject
 
         source: "ede",
 
-        dynamic_content: userGroupManagement
+        systempage_config: userGroupManagement
     },
     config: {
         name: "Config",

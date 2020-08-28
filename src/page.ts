@@ -4,13 +4,13 @@ import { sql } from "./server";
 import * as Util from "./utils";
 import { registry_namespaces, registry_systempages } from "./registry";
 import * as SystemMessage from "./system_message";
-import { defaultSystempageHandler } from "./systempage";
+import { defaultSystempageHandler, systempageBuilder } from "./systempage";
 import * as User from "./user";
 
-export type SystemPagesObject = { [name: string]: SystemPage };
+export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
 
 /** The params are primarily used for system pages that list other system pages (like dashboard) */
-export interface SystemPage {
+export interface SystemPageDescriptor {
     /** Internal name */
     name: string;
 
@@ -24,7 +24,26 @@ export interface SystemPage {
 
     static_content?: string;
     static_fs_content?: boolean;
+    systempage_config?: (page: ResponsePage, client: User.User) => Promise<SystempageConfig>;
     dynamic_content?: (page: ResponsePage, client: User.User) => Promise<ResponsePage> | ResponsePage;
+}
+
+export interface SystempageConfig {
+    page: ResponsePage;
+
+    body_html: string;
+
+    header_config?: SystempageHeaderConfig;
+    breadcrumbs_data?: any;
+    sidebar_config?: any;
+}
+
+export interface SystempageHeaderConfig {
+    icon: string;
+    title: string;
+
+    description?: string;
+    body?: string;
 }
 
 export interface ResponsePage {
@@ -128,11 +147,13 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         const lowercase_name = address.name.toLowerCase();
 
         if(registry_systempages_snapshot[lowercase_name] && !registry_systempages_snapshot[lowercase_name].static_fs_content) {
-            const systempage: SystemPage = registry_systempages_snapshot[lowercase_name];
+            const systempage: SystemPageDescriptor = registry_systempages_snapshot[lowercase_name];
 
             page.display_title = systempage.display_title;
 
-            if(systempage.dynamic_content) {
+            if(systempage.systempage_config) {
+                page = systempageBuilder(await systempage.systempage_config(page, client));
+            } else if(systempage.dynamic_content) {
                 page = await systempage.dynamic_content(page, client);
             } else {
                 page.parsed_content = systempage.static_content;

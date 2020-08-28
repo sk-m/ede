@@ -9,7 +9,7 @@ import { registry_usergroups } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject, GroupsObject } from "../right";
 
-export async function userGroupMembership(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
+export async function userGroupMembership(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise((resolve: any) => {
         const queried_username = page.address.url_params[1];
 
@@ -39,45 +39,37 @@ export async function userGroupMembership(page: Page.ResponsePage, client: User.
             source: "ede"
         }
 
+        const page_config: Page.SystempageConfig = {
+            page,
+
+            breadcrumbs_data: [ ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"] ],
+
+            body_html: ""
+        }
+
         // Check if username was provided
         if(!queried_username) {
-            // Construct breadcrumbs HTML
-            const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-                ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"]
-            ]);
+            page_config.header_config = {
+                icon: "fas fa-user-cog",
+                title: "User Group Membership",
+                description: "Please, select a user"
+            };
 
-            page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-user-cog"></i></div>
-        <div class="title">User Group Membership</div>
+            page_config.body_html = `\
+<form class="ui-form-box" name="usergroupmembership-query">
+    ${ UI.constructFormBoxTitleBar("query", "User query") }
+
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Username</div>
+        <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
     </div>
-    <div class="text">Please, select a user</div>
-</div>
-
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
-    <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
-        <div class="ui-text"></div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
     </div>
+</form>`;
 
-    <form class="ui-form-box" name="usergroupmembership-query">
-        ${ UI.constructFormBoxTitleBar("query", "User query") }
-
-        <div class="ui-input-box">
-            <div class="popup"></div>
-            <div class="ui-input-name1">Username</div>
-            <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
-        </div>
-        <div class="ui-form-container right margin-top">
-            <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
-        </div>
-    </form>
-</div>
-</div>`;
-
-            resolve(page);
+            resolve(page_config);
             return;
         } else {
             // Get queried user
@@ -160,25 +152,46 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
                         targetuser_groups_list += `<div class="item">${ group_name }</div>`;
                     }
 
-                    // Construct breadcrumbs HTML
-                    const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-                        ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"],
-                        [queried_user.username, "fas fa-user"],
-                    ]);
+                    // Update breadcrumbs
+                    page_config.breadcrumbs_data.push([queried_user.username, "fas fa-user"]);
 
-                    // Groups form
-                    page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-user-cog"></i></div>
-        <div class="title">${ queried_user.username }</div>
-    </div>
-    ${ targetuser_groups_list ? `<div class="tags">${ targetuser_groups_list }</div>` : "" }
-</div>
+                    // Header
+                    page_config.header_config = {
+                        icon: "fas fa-user-cog",
+                        title: queried_user.username,
+                    };
 
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
+                    // Sidebar
+                    page_config.sidebar_config = { links: [
+                        {
+                            type: "heading",
+                            text: "Actions on selected user"
+                        },
+                        {
+                            type: "link",
+                            text: "Related logs",
+                            icon: "fas fa-list"
+                        },
+                        {
+                            type: "spacer",
+                            invisible: true
+                        },
+                        {
+                            type: "link",
+                            text: "Manage this user",
+                            icon: "fas fa-cog"
+                        },
+                        {
+                            type: "link",
+                            additional_classes: "red",
+                            text: "Block this user",
+                            icon: "fas fa-minus-circle"
+                        },
+                    ] };
+
+                    if(targetuser_groups_list) page_config.header_config.body = `<div class="tags">${ targetuser_groups_list }</div>`;
+
+                    page_config.body_html = `\
 <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
     <div class="ui-text"></div>
 </div>
@@ -222,22 +235,9 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
     ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
-</div>
-</div>
-<div class="ui-systempage-sidebar-right">
-    <div class="sidebar">
-        <div class="links">
-            <div class="heading">Actions on selected user</div>
-            <a class="link"><i class="fas fa-list"></i> Related logs</a>
-            <div class="spacer invisible"></div>
-            <a class="link"><i class="fas fa-cog"></i> Manage this user</a>
-            <a class="link red"><i class="fas fa-minus-circle"></i> Block this user</a>
-        </div>
-    </div>
-</div>
 </div>`;
 
-                    resolve(page);
+                    resolve(page_config);
                 })
                 .catch((error: any) => {
                     Util.log(`Error occured trying to get groups and rights for user id ${ queried_user.id }`, 3, error);
@@ -245,26 +245,13 @@ ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembersh
             })
             .catch(() => {
                 // Nonexistent user
-                const breadcrumbs_html = UI.constructSystempageBreadcrumbs([
-                    ["User Group Membership", "fas fa-user-cog", "/System:UserGroupMembership"]
-                ]);
+                page_config.header_config = {
+                    icon: "fas fa-user-cog",
+                    title: "User Group Membership",
+                    description: "Please, select a user"
+                };
 
-                page.parsed_content = `\
-${ breadcrumbs_html }
-<div class="ui-systempage-header-box">
-    <div class="title-container">
-        <div class="icon"><i class="fas fa-user-cog"></i></div>
-        <div class="title">User Group Membership</div>
-    </div>
-    <div class="text">Please, select a user</div>
-</div>
-
-<div class="ui-systempage-content-container">
-<div class="ui-systempage-main-content">
-    <div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
-        <div class="ui-text"></div>
-    </div>
-
+                page_config.body_html = `\
     <form class="ui-form-box" name="usergroupmembership-query">
         ${ UI.constructFormBoxTitleBar("query", "User query") }
 
@@ -279,11 +266,9 @@ ${ breadcrumbs_html }
     </form>
 
     <div class="ui-text">Such user does not exist!</div>
-</div>
-</div>
 </div>`;
 
-                resolve(page);
+                resolve(page_config);
                 return;
             });
         }
