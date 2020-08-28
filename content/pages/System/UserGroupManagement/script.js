@@ -31,12 +31,15 @@ function userGroupManagementPageScript() {
 
     const query_form = ede.form.list["usergroupmanagement-query"];
 
-    // On query
-    query_form.submit.onclick = () => {
-        const validation_result = ede.form.validate("usergroupmanagement-query");
+    // Check if query form is available
+    if(query_form) {
+        // On query
+        query_form.submit.onclick = () => {
+            const validation_result = ede.form.validate("usergroupmanagement-query");
 
-        if(!validation_result.invalid) {
-            ede.navigate("/System:UserGroupManagement/" + query_form.group_name.value);
+            if(!validation_result.invalid) {
+                ede.navigate("/System:UserGroupManagement/" + query_form.group_name.value);
+            }
         }
     }
 

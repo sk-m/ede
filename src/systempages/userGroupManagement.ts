@@ -259,19 +259,6 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // TODO "Main information" block should be moved to the systempage header box
         page_config.body_html = `\
-<form class="ui-form-box" name="usergroupmanagement-query">
-    ${ UI.constructFormBoxTitleBar("query", "Group query") }
-
-    <div class="ui-input-box">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Group name</div>
-        <input type="text" value="${ queried_group_name || "" }" name="group_name" data-handler="group_name" class="ui-input1">
-    </div>
-    <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
-    </div>
-</form>
-
 <form name="usergroupmanagement" data-onsubmit="test">
     <div class="ui-form-box result-status-container hidden">
         <div class="ui-text"></div>

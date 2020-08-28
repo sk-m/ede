@@ -196,19 +196,6 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
     <div class="ui-text"></div>
 </div>
 
-<form class="ui-form-box" name="usergroupmembership-query">
-    ${ UI.constructFormBoxTitleBar("query", "User query") }
-
-    <div class="ui-input-box">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Username</div>
-        <input type="text" value="${ queried_username || "" }" name="username" data-handler="username" class="ui-input1">
-    </div>
-    <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Get groups</button>
-    </div>
-</form>
-
 <form class="ui-form-box" name="usergroupmembership-groups">
     ${ UI.constructFormBoxTitleBar("groups", "Groups") }
 

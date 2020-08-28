@@ -10,14 +10,19 @@ function userGroupMembershipPageScript() {
         }
     });
 
-    // Query submit handler
-    ede.form.list["usergroupmembership-query"].submit.onclick = () => {
-        const validation_result = ede.form.validate("usergroupmembership-query");
+    const query_form = ede.form.list["usergroupmembership-query"];
 
-        if(!validation_result.invalid) {
-            ede.navigate("/System:UserGroupMembership/" + ede.form.list["usergroupmembership-query"].username.value);
-        }
-    };
+    // Check if query form is available
+    if(query_form) {
+        // Query submit handler
+        query_form.submit.onclick = () => {
+            const validation_result = ede.form.validate("usergroupmembership-query");
+
+            if(!validation_result.invalid) {
+                ede.navigate("/System:UserGroupMembership/" + ede.form.list["usergroupmembership-query"].username.value);
+            }
+        };
+    }
 
     // Groups submit handler
     if(save_form) {
