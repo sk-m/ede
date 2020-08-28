@@ -4,7 +4,7 @@ import { sql } from "./server";
 import * as Util from "./utils";
 import { registry_namespaces, registry_systempages } from "./registry";
 import * as SystemMessage from "./system_message";
-import { defaultSystempageHandler, systempageBuilder } from "./systempage";
+import { systempageBuilder } from "./systempage";
 import * as User from "./user";
 
 export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
@@ -23,7 +23,6 @@ export interface SystemPageDescriptor {
     source: string;
 
     static_content?: string;
-    static_fs_content?: boolean;
     systempage_config?: (page: ResponsePage, client: User.User) => Promise<SystempageConfig>;
     dynamic_content?: (page: ResponsePage, client: User.User) => Promise<ResponsePage> | ResponsePage;
 }
@@ -146,7 +145,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         const registry_systempages_snapshot = registry_systempages.get();
         const lowercase_name = address.name.toLowerCase();
 
-        if(registry_systempages_snapshot[lowercase_name] && !registry_systempages_snapshot[lowercase_name].static_fs_content) {
+        if(registry_systempages_snapshot[lowercase_name]) {
             const systempage: SystemPageDescriptor = registry_systempages_snapshot[lowercase_name];
 
             page.display_title = systempage.display_title;
@@ -159,11 +158,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
                 page.parsed_content = systempage.static_content;
             }
         } else {
-            page = await defaultSystempageHandler(page);
-
-            if(page.status.includes("page_not_found")) {
-                page = await notFound(page) as ResponsePage;
-            }
+            page = await notFound(page) as ResponsePage;
         }
 
         resolve(page);

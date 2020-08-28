@@ -30,15 +30,6 @@ function constructSystemPagesListHTML(): string {
     <div class="right">
         <div class="icons">
             ${ systempage.source !== "ede" ? `<div class="icon" title="System page provided by '${ systempage.source }' extension"><i class="fas fa-puzzle-piece"></i></div>` : "" }
-
-            ${ systempage.static_fs_content ? `\
-            <div class="hoveronly">
-                <div class="icon clickable" data-linkto="System:${ systempage_name }/styles.css" title="Go to styles.css"><i class="fab fa-css3"></i></div>
-                <div class="icon clickable" data-linkto="System:${ systempage_name }/script.js" title="Go to script.js"><i class="fab fa-js"></i></div>
-                <div class="spacer"></div>
-            </div>
-            <div class="icon" title="Static system page"><i class="fas fa-file-alt"></i></div>
-            ` : "" }
         </div>
     </div>
 </div>`;

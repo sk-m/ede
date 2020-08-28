@@ -17,6 +17,7 @@ import { config } from "./systempages/config";
 import { dashboard } from "./systempages/dashboard";
 import { configSetItemRoute } from "./api/config_setitem";
 import { configResetItemRoute } from "./api/config_resetitem";
+import { login } from "./systempages/login";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -243,6 +244,18 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
         source: "ede",
 
         dynamic_content: dashboard
+    },
+    login: {
+        name: "Login",
+
+        display_title: "Login",
+        display_category: "other",
+        display_description: "Login and registration page",
+        display_icon: "fas fa-sign-in-alt",
+
+        source: "ede",
+
+        dynamic_content: login
     },
 });
 

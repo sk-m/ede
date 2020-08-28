@@ -135,9 +135,6 @@ async function serverInit(db_error: Error): Promise<void> {
         }
     } as Hook.HooksObject);
 
-    // Register non-system systempages (like System:Login)
-    registerNonSytemSystempages();
-
     // Call the ede_onload hook
     await Hook.call("ede_load");
 }
