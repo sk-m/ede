@@ -159,6 +159,25 @@ export async function saveUserGroup(user_group: Group): Promise<true> {
     });
 }
 
+/**
+ * Create a new user groups without rights
+ *
+ * @param name Internal name of the new user group
+ */
+export async function createUserGroup(name: string): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`INSERT INTO \`user_groups\` (\`name\`,\`added_rights\`,\`right_arguments\`) VALUES ('${ Util.sanitize(name) }', '', '{}')`, (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not create a new user group '${ name }'`, 3, error);
+
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
 // TODO @performance
 /**
  * Get user's groups and rights with parameters

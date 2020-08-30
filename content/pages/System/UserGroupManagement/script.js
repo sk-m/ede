@@ -43,6 +43,29 @@ function userGroupManagementPageScript() {
         }
     }
 
+    const create_form = ede.form.list["usergroupmanagement-create"];
+
+    // Check if create form is available
+    if(create_form) {
+        create_form.submit.onclick = () => {
+            const form_validation = ede.form.validate("usergroupmanagement-create");
+
+            if(!form_validation.invalid) {
+                // Create a new group
+                ede.apiCall("usergroup/create", {
+                    new_group_name: create_form.new_group_name.value
+                }, true)
+                .then(() => {
+                    ede.navigate("/System:UserGroupManagement/" + create_form.new_group_name.value);
+                })
+                .catch(error => {
+                    // TODO show error
+                    console.log(error);
+                });
+            }
+        }
+    }
+
     // Check if the main form is available
     const main_form = ede.form.list.usergroupmanagement;
 

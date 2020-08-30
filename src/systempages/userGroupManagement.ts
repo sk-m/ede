@@ -57,6 +57,19 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="ui-form-container right margin-top">
         <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
     </div>
+</form>
+
+<form class="ui-form-box" name="usergroupmanagement-create">
+    ${ UI.constructFormBoxTitleBar("create", "Create a group") }
+
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">New group name</div>
+        <input type="text" name="new_group_name" data-handler="group_name" class="ui-input1">
+    </div>
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1"><i class="fas fa-star-of-life"></i> Create group</button>
+    </div>
 </form>`;
 
             resolve(page_config);

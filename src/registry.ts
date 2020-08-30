@@ -7,7 +7,6 @@ import * as User from "./user";
 
 // System pages
 import { userGroupManagement } from "./systempages/userGroupManagement";
-import { userGroupMembership } from "./systempages/userGroupMembership";
 
 // Api routes
 import { getPageRoute, ApiRoutesObject } from "./api";
@@ -18,6 +17,7 @@ import { dashboard } from "./systempages/dashboard";
 import { configSetItemRoute } from "./api/config_setitem";
 import { configResetItemRoute } from "./api/config_resetitem";
 import { login } from "./systempages/login";
+import { createUserGroupRoute } from "./api/usergroup_create";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -282,6 +282,12 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: updateUserGroupRoute
+    },
+    "usergroup/create": {
+        name: "usergroup/create",
+        method: "POST",
+
+        handler: createUserGroupRoute
     },
     "user/updategroups": {
         name: "user/updategroups",
