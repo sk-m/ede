@@ -13,25 +13,6 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         const queried_group_name = page.address.url_params[1];
         let client_can_alter = false;
 
-        // TODO bad system
-        page.info.hidetitle = {
-            display_name: "Hidden title",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
-
-        page.info.nocontainer = {
-            display_name: "No container",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
-
         const page_config: Page.SystempageConfig = {
             page,
 

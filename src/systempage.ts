@@ -23,6 +23,7 @@ import * as Page from "./page";
  *       {
  *           type: "link",
  *           text: "Manage this user",
+ *           disabled: true,
  *           icon: "fas fa-cog"
  *       },
  *       {
@@ -87,7 +88,7 @@ ${ item[0] }</a>`;
                             // Element types
                             if(el.type === "heading") links_html += `<div class="heading">${ el.text }</div>`
                             else if(el.type === "spacer") links_html += `<div class="spacer${ el.invisible ? " invisible" : "" }"></div>`
-                            else if(el.type === "link") links_html += `<a href="${ el.href || "#" }" class="link ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
+                            else if(el.type === "link") links_html += `<a href="${ (!el.disabled && el.href) || "#" }" class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
                         }
 
                         sidebar_html += `<div class="links">${ links_html }</div>`;
@@ -117,6 +118,25 @@ ${ header_html }
         </div>
     </div>` : "" }
 </div>`;
+
+    // Bad system
+    config.page.info.hidetitle = {
+        display_name: "Hidden title",
+
+        value_type: "boolean",
+        value: true,
+
+        source: "ede"
+    }
+
+    config.page.info.nocontainer = {
+        display_name: "No container",
+
+        value_type: "boolean",
+        value: true,
+
+        source: "ede"
+    }
 
     return config.page;
 }

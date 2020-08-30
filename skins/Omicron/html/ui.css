@@ -1083,6 +1083,22 @@ table.ui-table td {
     transition: 0.1s;
 }
 
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled {
+    cursor: not-allowed;
+
+    color: hsl(0, 0%, 50%);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled > i,
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover > i {
+    color: hsl(0, 0%, 50%) !important;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover {
+    color: hsl(0, 0%, 50%) !important;
+    background-color: rgba(0, 0, 0, 0.033) !important;
+}
+
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:first-of-type {
     margin-top: 0;
 }

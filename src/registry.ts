@@ -170,11 +170,34 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     modifyusergroups: {
         name: "modifyusergroups",
-        description: "Modify all user groups",
+        description: "Complete control over user groups",
 
         source: "ede",
 
         arguments: {}
+    },
+    renameuser: {
+        name: "renameuser",
+        description: "Rename a user",
+
+        source: "ede",
+
+        arguments: {}
+    },
+    blockuser: {
+        name: "blockuser",
+        description: "Block a user",
+
+        source: "ede",
+
+        arguments: {
+            restricted_user_groups: {
+                type: ["array"],
+                description: "Disallow blocking users, that are members of these groups",
+
+                default_value: "sysadmin"
+            }
+        }
     },
     modifyconfig: {
         name: "modifyconfig",
@@ -197,18 +220,6 @@ export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins
 export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getNamespacesFromDB);
 
 export const registry_systempages = new RegistryContainer<Page.SystemPageDescriptorsObject>("ede", undefined, {
-    usergroupmembership: {
-        name: "UserGroupMembership",
-
-        display_title: "User group membership",
-        display_category: "users_and_groups",
-        display_description: "Change user's groups",
-        display_icon: "fas fa-user-cog",
-
-        source: "ede",
-
-        systempage_config: userGroupMembership
-    },
     usergroupmanagement: {
         name: "UserGroupManagement",
 

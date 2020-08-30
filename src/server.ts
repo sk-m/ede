@@ -20,6 +20,7 @@ import { joinRoute, loginRoute } from "./user";
 import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
+import { userNamespaceHandler } from "./userpage";
 
 // Fastify app
 const app: any = fastify();
@@ -74,8 +75,9 @@ async function serverInit(db_error: Error): Promise<void> {
     // Get all namespaces
     const namespaces: Page.NamespacesObject = await registry_namespaces.updater_function();
 
-    // Set a handler for a system and main namespaces (baked into ede)
+    // Set a handler for a system, user and main namespaces (baked into ede)
     namespaces.System.handler = Page.systemNamespaceHandler;
+    namespaces.User.handler = userNamespaceHandler;
     registry_namespaces.set(namespaces);
 
     // Load all extensions in the `./extensions` folder

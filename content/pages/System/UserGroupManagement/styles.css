@@ -24,7 +24,7 @@
 }
 
 .user-group-management-rights-root > .rights-container > .right:hover {
-    background-color: rgb(252, 252, 252);
+    background-color: rgb(251, 251, 251);
 }
 
 .user-group-management-rights-root > .rights-container > .right .description-container i {
@@ -35,8 +35,15 @@
     transform: translateY(2px);
 }
 
+.user-group-management-rights-root > .rights-container > .right > .left-container {
+    margin-right: 10px;
+}
+
 .user-group-management-rights-root > .rights-container > .right > .left-container > .ui-checkbox-1 {
     height: 36px;
+
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto Mono", monospace;
 }
 
 .user-group-management-rights-root > .rights-container > .right > .right-container > .description-container {
