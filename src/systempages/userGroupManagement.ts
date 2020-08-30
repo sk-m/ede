@@ -82,7 +82,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             return;
         }
 
-        const queried_group =  registry_usergroups.get()[queried_group_name];
+        const queried_group = registry_usergroups.get()[queried_group_name];
 
         // Check if queried group exists
         if(!queried_group) {
@@ -133,13 +133,13 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                             let argument_value;
 
                             // Get argument's current value or set to default value
-                            if(queried_group.added_rights[right_name]) {
-                                argument_value = queried_group.added_rights[right_name][argument_name];
+                            if(queried_group.right_arguments[right_name]) {
+                                argument_value = queried_group.right_arguments[right_name][argument_name];
                             } else {
                                 argument_value = argument.default_value;
                             }
 
-                            // Input might is an array
+                            // Input can be an array
                             if(argument.type.includes("array")) {
                                 let current_values_html = "";
 
@@ -189,7 +189,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                 available_rights_html += `\
 <div class="right${ arguments_count ? " w-arguments" : "" }">
     <div class="left-container">
-        <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights[right_name] ? "true" : "false" }">
+        <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights.includes(right_name) ? "true" : "false" }">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">${ right_name }</div>
         </div>

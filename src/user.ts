@@ -111,18 +111,25 @@ export async function checkUsername(username: string): Promise<UsernameAvailabil
  */
 export async function getAllUserGroups(): Promise<any> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query("SELECT `name`, `added_rights` FROM `user_groups`", (error: any, results: any) => {
+        sql.query("SELECT `name`, `added_rights`, `right_arguments` FROM `user_groups`", (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log("Could not get all user groups from the database", 3);
 
                 reject();
             } else {
                 const result_object: GroupsObject = {};
-
                 for(const group of results) {
+                    let added_rights = [];
+
+                    if(group.added_rights) {
+                        added_rights = group.added_rights.split(";");
+                    }
+
                     result_object[group.name] = {
                         name: group.name,
-                        added_rights: group.added_rights
+
+                        added_rights,
+                        right_arguments: group.right_arguments
                     };
                 }
 
@@ -136,12 +143,11 @@ export async function getAllUserGroups(): Promise<any> {
  * Update the user group in the database (does not update the registry container)
  *
  * @param user_group new user group
- * @param old_name old name of the group, used only when renaming the group
  */
-export async function saveUserGroup(user_group: Group, old_name?: string): Promise<true> {
+export async function saveUserGroup(user_group: Group): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`UPDATE \`user_groups\` SET \`name\` = '${ Util.sanitize(user_group.name) }', \`added_rights\` = \
-'${ JSON.stringify(user_group.added_rights) }' WHERE \`name\` = '${ Util.sanitize(old_name || user_group.name) }'`, (error: any, results: any) => {
+        sql.query(`UPDATE \`user_groups\` SET \`added_rights\` = '${ user_group.added_rights.join(";") }', \`right_arguments\` = \
+'${ JSON.stringify(user_group.right_arguments) }' WHERE \`name\` = '${ Util.sanitize(user_group.name) }'`, (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not save user group '${ user_group.name }' to the database`, 3, error);
 
@@ -166,39 +172,49 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
             rights: {}
         };
 
+        // An array to keep track of rights we already encountered
+        const rights_arr: string[] = [];
+
+        // Get every group the requested user is in
         sql.query(`SELECT \`group\` FROM \`user_group_membership\` WHERE \`user\` = ${ user_id };`,
         (group_error: any, group_results: any) => {
             if(group_error) {
                 reject(group_error);
+                return;
             } else {
                 for(const group of group_results) {
                     result.groups.push(group.group);
                 }
 
-                sql.query(`SELECT \`added_rights\` FROM \`user_groups\` WHERE \`name\` IN ('${ result.groups.join("','") }')`,
+                // Get every right for that particular group
+                sql.query(`SELECT \`added_rights\`, \`right_arguments\` FROM \`user_groups\` WHERE \`name\` IN ('${ result.groups.join("','") }')`,
                 (right_error: any, right_results: any) => {
                     if(right_error) {
                         reject(right_error);
+                        return;
                     } else {
                         // Go through all groups
                         for(const group of right_results) {
-                            // Go through all rights this group provides
-                            // tslint:disable-next-line: forin
-                            for(const right_name in group.added_rights) {
-                                // Check if client already has this right
-                                if(result.rights.hasOwnProperty(right_name)) {
-                                    // Check if this right is currenly explicitly not present
-                                    if(result.rights[right_name] === false) {
-                                        result.rights[right_name] = {};
-                                    }
+                            let added_rights = [];
 
-                                    // This right is already present in the results object, go through all arguments
-                                    for(const argument_name in group.added_rights[right_name]) {
+                            if(group.added_rights) {
+                                added_rights = group.added_rights.split(";");
+                            }
+
+                            // Go through all rights this group provides
+                            for(const right_name of added_rights) {
+                                // Check if client already has this right
+                                if(rights_arr.includes(right_name)) {
+                                    // This right was provided from an earlier group, we have to merge the existing arguments for this right
+                                    // with the new ones
+
+                                    // Go through all new arguments
+                                    for(const argument_name in group.right_arguments[right_name]) {
                                         // Check if argument is not just {}
-                                        if( group.added_rights[right_name][argument_name] &&
-                                            group.added_rights[right_name][argument_name] !== {}
+                                        if( group.right_arguments[right_name][argument_name] &&
+                                            group.right_arguments[right_name][argument_name] !== {}
                                         ) {
-                                            const argument_value = group.added_rights[right_name][argument_name];
+                                            const argument_value = group.right_arguments[right_name][argument_name];
 
                                             if(argument_value instanceof Array) {
                                                 // Push array item only if not already included
@@ -215,17 +231,22 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                                             } else if(argument_value instanceof Object) {
                                                 result.rights[right_name][argument_name] = { ...result.rights[right_name][argument_name],
                                                 ...argument_value };
+                                            } else {
+                                                result.rights[right_name][argument_name] = argument_value;
                                             }
                                         }
                                     }
                                 } else {
-                                    // This right is not present in the results object
-                                    result.rights = Object.assign(result.rights, group.added_rights);
+                                    // This right is not yet present in the results object, so we can just assign it to the first arguments
+                                    // object we encounter
+
+                                    rights_arr.push(right_name);
+                                    result.rights[right_name] = group.right_arguments[right_name] || {};
                                 }
                             }
                         }
 
-                        resolve(result)
+                        resolve(result);
                     }
                 });
             }

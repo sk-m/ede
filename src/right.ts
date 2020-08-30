@@ -2,7 +2,8 @@ export type GroupsObject = { [group_name: string]: Group };
 export interface Group {
     name: string;
 
-    added_rights: { [right_name: string]: any };
+    added_rights: string[];
+    right_arguments: { [right_name: string]: any };
 }
 
 export type RightsObject = { [right_name: string]: Right };

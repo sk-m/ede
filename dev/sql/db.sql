@@ -1,6 +1,6 @@
 -- --------------------------------------------------------
 -- Host:                         web-vm.local
--- Server version:               5.7.29-0ubuntu0.18.04.1 - (Ubuntu)
+-- Server version:               5.7.30-0ubuntu0.18.04.1 - (Ubuntu)
 -- Server OS:                    Linux
 -- HeidiSQL Version:             10.3.0.5771
 -- --------------------------------------------------------
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `logs` (
   PRIMARY KEY (`id`),
   KEY `logs_executor` (`executor`),
   CONSTRAINT `logs_executor` FOREIGN KEY (`executor`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Dumping data for table ede_dev.logs: ~0 rows (approximately)
 /*!40000 ALTER TABLE `logs` DISABLE KEYS */;
@@ -156,15 +156,16 @@ INSERT INTO `users` (`id`, `username`, `email_address`, `password`, `stats`) VAL
 CREATE TABLE IF NOT EXISTS `user_groups` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL DEFAULT '',
-  `added_rights` json NOT NULL,
+  `added_rights` text,
+  `right_arguments` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
--- Dumping data for table ede_dev.user_groups: ~0 rows (approximately)
+-- Dumping data for table ede_dev.user_groups: ~1 rows (approximately)
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;
-INSERT INTO `user_groups` (`id`, `name`, `added_rights`) VALUES
-	(1, 'sysadmin', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}');
+INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALUES
+	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}');
 /*!40000 ALTER TABLE `user_groups` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.user_group_membership

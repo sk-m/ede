@@ -20,7 +20,6 @@ import { joinRoute, loginRoute } from "./user";
 import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
-import { registerNonSytemSystempages } from "./systempage";
 
 // Fastify app
 const app: any = fastify();

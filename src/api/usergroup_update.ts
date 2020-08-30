@@ -41,14 +41,7 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         return;
     }
 
-    // New usergroup object
-    const new_usergroup: Group = {
-        name: req.body.group_name,
-
-        added_rights: {}
-    };
-
-    const usergroup_added_rights = Object.assign({}, registry_usergroups.get()[req.body.group_name].added_rights);
+    const current_usergroup = registry_usergroups.get()[req.body.group_name];
 
     // Rights
     if(req.body.rights) {
@@ -63,13 +56,13 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
 
         for(const right_name in rights_obj) {
             // Right removed from group
-            if(!rights_obj[right_name] && usergroup_added_rights[right_name]) {
-                usergroup_added_rights[right_name] = false;
+            if(rights_obj[right_name] === false && current_usergroup.added_rights.includes(right_name)) {
+                current_usergroup.added_rights.splice(current_usergroup.added_rights.indexOf(right_name), 1);
             }
 
             // Right added to group
-            else if(rights_obj[right_name] && !usergroup_added_rights[right_name]) {
-                usergroup_added_rights[right_name] = {};
+            else if(rights_obj[right_name] === true && !current_usergroup.added_rights.includes(right_name)) {
+                current_usergroup.added_rights.push(right_name);
             }
         }
     }
@@ -88,11 +81,17 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         for(const right_name in arguments_obj) {
             if(arguments_obj[right_name]) {
                 // Change arguments only if the right is assigned to the group
-                if(usergroup_added_rights[right_name]) {
+                if(current_usergroup.added_rights.includes(right_name)) {
                     // tslint:disable-next-line: forin
                     for(const argument_name in arguments_obj[right_name]) {
-                        usergroup_added_rights[right_name][argument_name] = arguments_obj[right_name][argument_name];
+                        if(current_usergroup.right_arguments[right_name] === undefined) {
+                            current_usergroup.right_arguments[right_name] = {};
+                        }
+
+                        current_usergroup.right_arguments[right_name][argument_name] = arguments_obj[right_name][argument_name];
                     }
+                } else {
+                    // current_usergroup.right_arguments[right_name] = {};
                 }
             }
         }
@@ -103,9 +102,16 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         return;
     }
 
+    // New usergroup object
+    const new_usergroup: Group = {
+        name: req.body.group_name,
+
+        added_rights: current_usergroup.added_rights,
+        right_arguments: current_usergroup.right_arguments
+    };
+
     // Write updated group to the database
-    new_usergroup.added_rights = usergroup_added_rights;
-    User.saveUserGroup(new_usergroup, req.body.group_name)
+    User.saveUserGroup(new_usergroup)
     .then(() => {
         // Update groups registry
         registry_usergroups.update();
