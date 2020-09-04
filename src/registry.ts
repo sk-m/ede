@@ -18,6 +18,7 @@ import { configSetItemRoute } from "./api/config_setitem";
 import { configResetItemRoute } from "./api/config_resetitem";
 import { login } from "./systempages/login";
 import { createUserGroupRoute } from "./api/usergroup_create";
+import { blockUserRoute } from "./api/user_block";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -306,5 +307,11 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: configResetItemRoute
+    },
+    "user/block": {
+        name: "user/block",
+        method: "POST",
+
+        handler: blockUserRoute
     }
 });

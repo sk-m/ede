@@ -72,7 +72,7 @@ export async function createEntry(
 ): Promise<number> {
     return new Promise((resolve: any, reject: any) => {
         sql.query(`INSERT INTO \`logs\` (type, executor, target, action_text, summary_text, created_on, visibility_level )\
- VALUES ('${ type }', ${ executor }, '${ target }', '${ action_text }', '${ summary_text }', \
+ VALUES ('${ type }', ${ executor }, '${ target }', '${ action_text }', '${ Util.sanitize(summary_text) }', \
 ${ Math.floor(new Date().getTime() / 1000) }, ${ visibility_level })`, (error: any, results: any) => {
         if(error) reject(error);
         else resolve(results.insertId);

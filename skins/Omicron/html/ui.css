@@ -202,6 +202,7 @@
 }
 
 .ui-input-box.margin-bottom,
+.ui-text.margin-bottom,
 .ui-form-container.margin-bottom {
     margin-bottom: 15px;
 }
@@ -359,6 +360,10 @@ a.ui-text[href]:focus:not(:hover),
     cursor: pointer;
 }
 
+.ui-checkbox-1.second-level {
+    margin-left: 26px;
+}
+
 .ui-checkbox-1 > .checkbox {
     margin: 4px 8px 4px 0;
     
@@ -368,7 +373,7 @@ a.ui-text[href]:focus:not(:hover),
     border: 1px solid rgb(200, 200, 200);
     border-radius: 3px;
 
-    transition: 0.2s;
+    transition: all 0.2s, visibility 0s;
 }
 
 .ui-checkbox-1.small > .checkbox {
@@ -405,6 +410,16 @@ a.ui-text[href]:focus:not(:hover),
 .ui-checkbox-1[data-checked=true]:hover > .checkbox {
     border: 1px solid hsl(228, 100%, 55%);
     background-color: hsl(228, 100%, 55%);
+}
+
+.ui-checkbox-1.red[data-checked=true] > .checkbox {
+    border: 1px solid hsl(8, 100%, 45%);
+    background-color: hsl(8, 100%, 45%);
+}
+
+.ui-checkbox-1.red[data-checked=true]:hover > .checkbox {
+    border: 1px solid hsl(8, 100%, 55%);
+    background-color: hsl(8, 100%, 55%);
 }
 
 .ui-checkbox-1 > .text {
@@ -792,8 +807,8 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-button1.disabled {
     pointer-events: none;
-
-    color: hsl(0, 0%, 50%);
+    
+    color: hsl(0, 0%, 50%) !important;
 
     background-color: rgb(250, 250, 250);
     box-shadow: none;

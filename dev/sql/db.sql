@@ -142,14 +142,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email_address` varchar(256) NOT NULL,
   `password` varchar(2048) NOT NULL DEFAULT '',
   `stats` json NOT NULL,
+  `blocks` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 -- Dumping data for table ede_dev.users: ~1 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` (`id`, `username`, `email_address`, `password`, `stats`) VALUES
-	(1, 'admin', 'invalid@localhost.local', 'pbkdf2;tmB3hIWFDTdlwFNur69YlanFWiaD0TQ+dGNqcLkYA/6+Nmm6QRr0fPKRx9eiIN7IpacL/yIhvne/8sQdVFfS2sxGvDMiPO/ytPka/kNECUOX4i4gNIX8p5oa6vdjEjLuc23+I59d4uKM2rmiim30FpK1XJaOQvtv7rMkAAqorXRNSfwE6ZmKBTqg49n8NlR4e26L/GV9qjKFPr9mqlzTJzPisDl2qseZ8p1aotp5XAtIimmGiQ7s8mFGoe5AJ/2djGlRsRK1xbmM7Eaq4/751JUMikLPIsbrUBw/dRP2S60z4xPhUwFb13ItGyp21mwaXg5cz/UPRvcDzSIqeLJzdQ==;zBTztJqbt1AJ6EV04dPqGq2ylNeCJ7sI468giNK8t1LCYXHf4I3on4G8kQNdicP8ds_HTOQba2tJ9ZyjMyZ0X2XKzX_KxdTt_4gy2ZnFvwTlM1MjC7DbMnUSNp6kzkQiW4qQ0_RpNcC3VKiwnM6tuESKA_y5itagFwtIDR2s35_cU6l2DrEAFLNqDy_AmUcgVn0g5OoDTIfMd75LsJ_Uy71Wv6KEpKWSGxyEDpz1lpz1FWNJqsvIosPTBTdHo7dB8uUyVvGQpc_fEG59GnN_9S7iFHW4nYJA0WWGBMPX5NEiV3vI2PBo6zK4TXz4a1aDnkTxocNeC22DWLhR7I8dkQ==;50000;256', '{"created_on": 1586892000}');
+INSERT INTO `users` (`id`, `username`, `email_address`, `password`, `stats`, `blocks`) VALUES
+	(1, 'admin', 'invalid@localhost.local', 'pbkdf2;tmB3hIWFDTdlwFNur69YlanFWiaD0TQ+dGNqcLkYA/6+Nmm6QRr0fPKRx9eiIN7IpacL/yIhvne/8sQdVFfS2sxGvDMiPO/ytPka/kNECUOX4i4gNIX8p5oa6vdjEjLuc23+I59d4uKM2rmiim30FpK1XJaOQvtv7rMkAAqorXRNSfwE6ZmKBTqg49n8NlR4e26L/GV9qjKFPr9mqlzTJzPisDl2qseZ8p1aotp5XAtIimmGiQ7s8mFGoe5AJ/2djGlRsRK1xbmM7Eaq4/751JUMikLPIsbrUBw/dRP2S60z4xPhUwFb13ItGyp21mwaXg5cz/UPRvcDzSIqeLJzdQ==;zBTztJqbt1AJ6EV04dPqGq2ylNeCJ7sI468giNK8t1LCYXHf4I3on4G8kQNdicP8ds_HTOQba2tJ9ZyjMyZ0X2XKzX_KxdTt_4gy2ZnFvwTlM1MjC7DbMnUSNp6kzkQiW4qQ0_RpNcC3VKiwnM6tuESKA_y5itagFwtIDR2s35_cU6l2DrEAFLNqDy_AmUcgVn0g5OoDTIfMd75LsJ_Uy71Wv6KEpKWSGxyEDpz1lpz1FWNJqsvIosPTBTdHo7dB8uUyVvGQpc_fEG59GnN_9S7iFHW4nYJA0WWGBMPX5NEiV3vI2PBo6zK4TXz4a1aDnkTxocNeC22DWLhR7I8dkQ==;50000;256', '{"created_on": 1586892000}', NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.user_groups

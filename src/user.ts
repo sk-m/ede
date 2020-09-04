@@ -23,6 +23,7 @@ export interface User {
     password_hash_keylen?: number;
 
     stats?: UserStats;
+    blocks: string[];
 
     current_session?: UserSession;
 }
@@ -289,6 +290,9 @@ export async function getFromUsername(username: string): Promise<User> {
             const user = results[0];
             const user_password = user.password.split(";");
 
+            let user_blocks = [];
+            if(user.blocks) user_blocks = user.blocks.split(";");
+
             resolve({
                 id: user.id,
 
@@ -299,7 +303,8 @@ export async function getFromUsername(username: string): Promise<User> {
                 password_hash_iterations: user_password[3],
                 password_hash_hash: user_password[2],
 
-                stats: user.stats
+                stats: user.stats,
+                blocks: user_blocks
             } as User);
         });
     });
@@ -342,7 +347,7 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
             const session = session_results[0];
 
             // session was invalidated
-            if(session.invalid > 0) {
+            if(session.invalid.readInt8(0) > 0) {
                 reject("session_invalidated");
                 return;
             }
@@ -368,6 +373,9 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
                     const user = user_results[0];
                     const user_password = user.password.split(";");
 
+                    let user_blocks = [];
+                    if(user.blocks) user_blocks = user.blocks.split(";");
+
                     resolve({
                         id: user.id,
 
@@ -379,6 +387,7 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
                         password_hash_hash: user_password[2],
 
                         stats: user.stats,
+                        blocks: user_blocks,
 
                         current_session: {
                             cookie_sid: cookies.sid,
@@ -531,6 +540,50 @@ export async function createSession(user_id: string, ip_address: string, user_ag
     });
 }
 
+/**
+ * Update user's blocks
+ *
+ * @param user_id User's id
+ * @param restrictions Array of restrictions
+ */
+export async function updateUserBlocks(user_id: number, restrictions: string[]): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        let blocks_string;
+
+        if(restrictions.length === 0) blocks_string = "null";
+        else blocks_string = `'${ Util.sanitize(restrictions.join(";")) }'`;
+
+        sql.query(`UPDATE \`users\` SET \`blocks\` = ${ blocks_string } WHERE id = ${ user_id }`, (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not update blocks for user id ${ user_id }`, 3, error);
+
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Destroy user's sessions
+ *
+ * @param user_id User's id
+ */
+export async function destroyUserSessions(user_id: number): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`UPDATE \`user_sessions\` SET \`invalid\` = 1 WHERE \`user\` = ${ user_id }`, (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not destroy sessions for user id ${ user_id }`, 3, error);
+
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
 export async function joinRoute(req: any, res: any): Promise<void> {
     // Get ip address of a client
     const ip_address: string = req.headers["x-forwarded-for"] || req.ip;
@@ -665,7 +718,7 @@ export function loginRoute(req: any, res: any): void {
         return;
     }
 
-    // Captcha
+    // TODO Captcha
     // if(!req.body.captcha_token) {
     //     res.status(403).send({ error: "captcha_error" });
     //     return;
@@ -697,11 +750,21 @@ export function loginRoute(req: any, res: any): void {
         }
 
         // Get user
-        sql.query(`SELECT id, username, password FROM \`users\` WHERE username = '${ Util.sanitize(req.body.username) }'`,
+        sql.query(`SELECT id, \`username\`, \`password\`, \`blocks\` FROM \`users\` WHERE username = '${ Util.sanitize(req.body.username) }'`,
         (error: any, results: any) => {
             if(error || results.length !== 1) {
                 res.status(403).send({ error: "invalid_credentials" });
                 return;
+            }
+
+            // Check if user is blocked from logging in
+            if(results[0].blocks.indexOf(";") !== -1) {
+                const blocks = results[0].blocks.split(";");
+
+                if(blocks.includes("lockout")) {
+                    res.status(403).send({ error: "blocked" });
+                    return;
+                }
             }
 
             const password_split: string = results[0].password.split(";");

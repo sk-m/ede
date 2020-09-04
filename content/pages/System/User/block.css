@@ -1,0 +1,47 @@
+#blockuser-userinfo-box {
+    padding: 5px 18px;
+    margin-bottom: 15px;
+
+    background-color: hsl(0, 0%, 98%);
+    border-radius: 4px;
+}
+
+#blockuser-userinfo-box .text-w-icon {
+    display: flex;
+    align-items: center;
+
+    margin: 10px 0;
+}
+
+#blockuser-userinfo-box .text-w-icon .icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 26px;
+    height: 26px;
+
+    margin-right: 10px;
+
+    border-radius: 50%;
+
+    color: var(--color-green);
+    font-size: 12px;
+    background-color: rgba(12, 207, 0, 0.1);
+}
+
+#blockuser-userinfo-box .text-w-icon .icon.red {
+    color: var(--color-red);
+    background-color: rgba(232, 32, 0, 0.1);
+}
+
+#blockuser-userinfo-box .text-w-icon .icon.orange {
+    color: #FFA300;
+    font-size: 10px;
+    background-color: rgba(255, 163, 0, 0.1);
+}
+
+#blockuser-userinfo-box .text-w-icon .text {
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto", sans-serif;
+}

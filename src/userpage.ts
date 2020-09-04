@@ -126,12 +126,98 @@ function rename_page(target_user: User.User, client?: User.User, client_rights?:
     return 'rename!';
 }
 
-function block_page(target_user: User.User, client?: User.User, client_rights?: GroupsAndRightsObject): string {
+function block_page(target_user: User.User, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+    return new Promise(async (resolve: any) => {
+        if(!client_rights || !client_rights.rights.blockuser) {
+            resolve("You don't have permission to block users.");
+            return;
+        }
+
+        const log_entries = await Log.getEntries("blockuser", undefined, target_user.id);
+
+        const not_blocked_text = `\
+<div class="text-w-icon"><div class="icon"><i class="fas fa-check"></i></div><div class="text">User is not currently blocked.</div></div>
+${ log_entries.length !== 0 ? `<div class="text-w-icon"><div class="icon orange"><i class="fas fa-exclamation"></i></div><div class="text">User was blocked before.</div></div>` : ""}`;
+
+        const blocked_text = `\
+<div class="text-w-icon"><div class="icon red"><i class="fas fa-times"></i></div><div class="text">User is currently blocked${ target_user.blocks.includes("lockout") ? " and locked out" : "" }.</div></div>`;
+
+        resolve(`\
+<div id="blockuser-result-status-container" class="ui-form-box hidden">
+<div class="ui-text"></div>
+</div>
+
+<div id="blockuser-userinfo-box">
+    ${ target_user.blocks.length === 0 ? not_blocked_text : blocked_text }
+</div>
+
+<form name="blockuser-form">
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("restrictions", "Access restrictions") }
+
+        <div class="ui-text margin-bottom">Select actions that will be restricted for this user.</div>
+
+        <div input name="restriction;lockout" data-checked="${ target_user.blocks.includes("lockout") ? "true" : "false" }" class="ui-checkbox-1">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+            <div class="text">Completely lock out (destroy sessions and disable logging in)</div>
+        </div>
+
+        <!-- <div input name="restriction;edit" data-checked="${ target_user.blocks.includes("edit") ? "true" : "false" }" class="ui-checkbox-1 second-level">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+            <div class="text">Editing (WIP)</div>
+        </div> -->
+
+        <div input name="restriction;account_creation" data-checked="${ target_user.blocks.includes("account_creation") ? "true" : "false" }" class="ui-checkbox-1" style="margin-top: 1em">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+            <div class="text">Disallow creating new accounts (WIP)</div>
+        </div>
+
+        <div input name="restriction;block_ip" data-checked="${ target_user.blocks.includes("block_ip") ? "true" : "false" }" class="ui-checkbox-1">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+            <div class="text">Also block ip-address (WIP)</div>
+        </div>
+    </div>
+
+    <div class="ui-form-box">
+        ${ UI.constructFormBoxTitleBar("block", "Block") }
+
+        <div class="ui-input-box">
+            <div class="popup"></div>
+            <div class="ui-input-name1">Reason</div>
+            <input type="text" name="summary" data-handler="summary" class="ui-input1">
+        </div>
+
+        <div class="ui-form-container between margin-top">
+            <div class="ui-form-container no-margin">
+            <div input name="confirm_checkbox" class="ui-checkbox-1 red">
+                <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+                <div class="text">Confirm block</div>
+            </div>
+            <div input name="confirm_lockout_checkbox" class="ui-checkbox-1 red" style="margin-left: 14px; visibility: hidden">
+                <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+                <div class="text">Confirm lockout</div>
+            </div>
+            </div>
+            <button name="submit" class="ui-button1 c-red disabled">Block user</button>
+        </div>
+    </div>
+</form>
+
+<div class="ui-form-box">
+${ UI.constructFormBoxTitleBar("logs", "Block logs for this user") }
+
+<div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
+</div>
+        `);
+    });
+}
+
+function unblock_page(target_user: User.User, client?: User.User, client_rights?: GroupsAndRightsObject): string {
     if(!client_rights || !client_rights.rights.blockuser) {
-        return "You don't have permission to block users.";
+        return "You don't have permission to unblock users.";
     }
 
-    return 'block!';
+    return 'unblock!';
 }
 
 export async function userNamespaceHandler(address: Page.PageAddress, client: User.User): Promise<Page.ResponsePage> {
@@ -167,6 +253,9 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         if(queried_user && !queried_user_error) {
             // Get user's groups
             const queried_user_groups = await User.getUserGroupRights(queried_user.id);
+
+            // Get blocked status
+            const queried_user_blocked = queried_user.blocks.length !== 0;
 
             let client_logged_in = true;
             let client_groups;
@@ -224,21 +313,31 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
                     });
                 }
 
-                // Block user button
                 if(client_groups.rights.blockuser) {
+                    // Block user button
                     page_config.sidebar_config.links.push({
                         type: "link",
-                        icon: "fas fa-minus-circle",
-                        text: "Block user",
-                        additional_classes: "red",
+                        icon: "fas fa-user-lock",
+                        text: (queried_user_blocked ? "Change block settings" : "Block user"),
+                        additional_classes: (queried_user_blocked ? "" : "red"),
                         href: `/User:${ queried_user.username }/block`
                     });
+
+                    // Unblock user button
+                    if(queried_user_blocked) {
+                        page_config.sidebar_config.links.push({
+                            type: "link",
+                            icon: "fas fa-unlock",
+                            text: "Unblock user",
+                            href: `/User:${ queried_user.username }/unblock`
+                        });
+                    }
                 }
             }
 
             switch(address.url_params[1]) {
                 case "groups": {
-                    const page_js = fs.readFileSync("./content/pages/User/UserGroupMembership/script.js", "utf8");
+                    const page_js = fs.readFileSync("./content/pages/System/User/group_membership.js", "utf8");
 
                     page_config.page.additional_js = [page_js];
 
@@ -250,8 +349,18 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
                     page_config.body_html = rename_page(queried_user, client, client_groups || undefined);
                 } break;
                 case "block": {
+                    const page_js = fs.readFileSync("./content/pages/System/User/block.js", "utf8");
+                    const page_css = fs.readFileSync("./content/pages/System/User/block.css", "utf8");
+
+                    page_config.page.additional_js = [page_js];
+                    page_config.page.additional_css = [page_css];
+
                     page_config.breadcrumbs_data.push(["Block"]);
-                    page_config.body_html = block_page(queried_user, client, client_groups || undefined);
+                    page_config.body_html = await block_page(queried_user, client, client_groups || undefined);
+                } break;
+                case "unblock": {
+                    page_config.breadcrumbs_data.push(["Unblock"]);
+                    page_config.body_html = unblock_page(queried_user, client, client_groups || undefined);
                 } break;
                 default: {
                     page_config.breadcrumbs_data.push(["Profile"]);
