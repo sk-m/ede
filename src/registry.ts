@@ -151,6 +151,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     modifyusergroupmembership: {
         name: "modifyusergroupmembership",
         description: "Modify user's group membership",
+        risk_text: "Dangerous",
 
         source: "ede",
 
@@ -172,6 +173,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     modifyusergroups: {
         name: "modifyusergroups",
         description: "Complete control over user groups",
+        risk_text: "Very dangerous",
 
         source: "ede",
 
@@ -180,6 +182,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     renameuser: {
         name: "renameuser",
         description: "Rename a user",
+        risk_text: "Dangerous",
 
         source: "ede",
 
@@ -188,6 +191,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     blockuser: {
         name: "blockuser",
         description: "Block a user",
+        risk_text: "Dangerous",
 
         source: "ede",
 
@@ -196,13 +200,14 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
                 type: ["array"],
                 description: "Disallow blocking users, that are members of these groups",
 
-                default_value: "sysadmin"
+                default_value: ["sysadmin"]
             }
         }
     },
     modifyconfig: {
         name: "modifyconfig",
         description: "Modify EDE Configuration",
+        risk_text: "Very dangerous",
 
         source: "ede",
 

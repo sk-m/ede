@@ -46,6 +46,19 @@
     font-family: "Roboto Mono", monospace;
 }
 
+.user-group-management-rights-root > .rights-container > .right > .left-container > .ui-checkbox-1 > .text {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-group-management-rights-root > .rights-container > .right > .left-container > .ui-checkbox-1 > .text > .tag {
+    margin-top: 2px;
+
+    color: hsl(0, 0%, 75%);
+    font-size: 12px;
+    font-family: "Roboto", sans-serif;
+}
+
 .user-group-management-rights-root > .rights-container > .right > .right-container > .description-container {
     display: flex;
     align-items: center;

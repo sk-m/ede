@@ -10,6 +10,7 @@ export type RightsObject = { [right_name: string]: Right };
 export interface Right {
     name: string;
     description: string;
+    risk_text?: string;
 
     /** Name of the extension that provided the right */
     source: string;
@@ -22,7 +23,7 @@ export interface RightArgument {
     type: RightArgumentType[];
     description: string;
 
-    default_value: string;
+    default_value: any;
 }
 
 export interface GroupsAndRightsObject {

@@ -11,7 +11,17 @@ import { registry_usergroups } from "./registry";
 import { UI_CHECKBOX_SVG } from "./constants";
 
 function profile_page(target_user: User.User, client: User.User): string {
-    return "profile!";
+    if(!target_user.stats) return "some error occured!";
+
+    const stat_createdon = new Date(target_user.stats.created_on * 1000).toUTCString();
+
+    return `\
+<div class="ui-form-box no-title ui-keyvalue-container">
+    <div class="item">
+        <div class="key">Joined on</div>
+        <div class="value">${ stat_createdon } (${ Util.formatTimeString(target_user.stats.created_on) })</div>
+    </div>
+</div>`;
 }
 
 async function groups_page(target_user: User.User, client: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
@@ -84,7 +94,7 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
 </div>
 
 <form class="ui-form-box" name="usergroupmembership-groups">
-${ UI.constructFormBoxTitleBar("groups", "Groups") }
+${ UI.constructFormBoxTitleBar("groups", "Groups", "Select groups this user will be a member of. Keep in mind that there could be groups that you won't be able to remove after assigning them") }
 
 ${ client_can_modify_groups ? `\
 <div class="ui-text">You have permission to modify this user's groups</div>
@@ -135,28 +145,44 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
 
         const log_entries = await Log.getEntries("blockuser", undefined, target_user.id);
 
+        // Some strings
         const not_blocked_text = `\
-<div class="text-w-icon"><div class="icon"><i class="fas fa-check"></i></div><div class="text">User is not currently blocked.</div></div>
-${ log_entries.length !== 0 ? `<div class="text-w-icon"><div class="icon orange"><i class="fas fa-exclamation"></i></div><div class="text">User was blocked before.</div></div>` : ""}`;
+<div class="icon"><i class="fas fa-check"></i></div><div class="text">User is not currently blocked.</div>`;
 
         const blocked_text = `\
-<div class="text-w-icon"><div class="icon red"><i class="fas fa-times"></i></div><div class="text">User is currently blocked${ target_user.blocks.includes("lockout") ? " and locked out" : "" }.</div></div>`;
+<div class="icon red"><i class="fas fa-times"></i></div><div class="text">User is currently blocked${ target_user.blocks.includes("lockout") ? " and locked out" : "" }.</div>`;
+
+    const blocked_before_text = `\
+<div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div><div class="text">User was blocked before.</div>`;
+
 
         resolve(`\
 <div id="blockuser-result-status-container" class="ui-form-box hidden">
 <div class="ui-text"></div>
 </div>
 
-<div id="blockuser-userinfo-box">
-    ${ target_user.blocks.length === 0 ? not_blocked_text : blocked_text }
+<div class="ui-form-box no-title">
+    <div class="ui-form-container ui-keyvalue-container">
+        <div class="item">
+            <div class="key">Current status</div>
+            <div class="value ui-text w-icon">${ target_user.blocks.length === 0 ? not_blocked_text : blocked_text }</div>
+        </div>
+        ${ (target_user.blocks.length === 0 && log_entries.length !== 0) ?
+        `<div class="item">
+            <div class="key">Past blocks</div>
+            <div class="value ui-text w-icon">${ blocked_before_text }</div>
+        </div>` : ""}
+        ${ target_user.blocks.length !== 0 ?
+        `<div class="item">
+            <div class="key">Current settings</div>
+            <div class="value ui-text w-icon monospace">${ target_user.blocks.join(", ") }</div>
+        </div>` : ""}
+    </div>
 </div>
 
 <form name="blockuser-form">
     <div class="ui-form-box">
-        ${ UI.constructFormBoxTitleBar("restrictions", "Access restrictions") }
-
-        <div class="ui-text margin-bottom">Select actions that will be restricted for this user.</div>
-
+        ${ UI.constructFormBoxTitleBar("restrictions", "Access restrictions", "Select actions that will be restricted for this user") }
         <div input name="restriction;lockout" data-checked="${ target_user.blocks.includes("lockout") ? "true" : "false" }" class="ui-checkbox-1">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">Completely lock out (destroy sessions and disable logging in)</div>
@@ -350,10 +376,8 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
                 } break;
                 case "block": {
                     const page_js = fs.readFileSync("./content/pages/System/User/block.js", "utf8");
-                    const page_css = fs.readFileSync("./content/pages/System/User/block.css", "utf8");
 
                     page_config.page.additional_js = [page_js];
-                    page_config.page.additional_css = [page_css];
 
                     page_config.breadcrumbs_data.push(["Block"]);
                     page_config.body_html = await block_page(queried_user, client, client_groups || undefined);

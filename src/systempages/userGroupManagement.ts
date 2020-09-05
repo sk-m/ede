@@ -181,11 +181,14 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
                 // HTML snippet for a single right (with arguments)
                 available_rights_html += `\
-<div class="right${ arguments_count ? " w-arguments" : "" }">
+<div id="right-${ right_name }" class="right${ arguments_count ? " w-arguments" : "" }">
     <div class="left-container">
         <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights.includes(right_name) ? "true" : "false" }">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-            <div class="text">${ right_name }</div>
+            <div class="text">
+                <div class="name">${ right_name }</div>
+                ${ right.risk_text ? `<div class="tag">${ right.risk_text }</div>` : "" }
+            </div>
         </div>
     </div>
     <div class="right-container" style="width: 100%">
@@ -251,6 +254,16 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             },
         ] };
 
+        let assigned_rights_html = "";
+
+        for(const right_name of queried_group.added_rights) {
+            assigned_rights_html += `<a href="#right-${ right_name }">&rarr;${ right_name }</a>, `;
+        }
+
+        // Remove the last ', '
+        // TODO @cleanup
+        assigned_rights_html = assigned_rights_html.substring(0, assigned_rights_html.length - 2);
+
         // TODO "Main information" block should be moved to the systempage header box
         page_config.body_html = `\
 <form name="usergroupmanagement" data-onsubmit="test">
@@ -261,9 +274,19 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="ui-form-box">
         ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
 
-        <div class="ui-form-container column">
-            <div class="ui-text">Name: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
-            <div class="ui-text">Short description: <i class="gray">(not set)</i> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
+        <div class="ui-form-container ui-keyvalue-container">
+            <div class="item">
+                <div class="key">Name</div>
+                <div class="value ui-text"><span class="gray">(not set)</span> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
+            </div>
+            <div class="item">
+                <div class="key">Short description</div>
+                <div class="value ui-text"><span class="gray">(not set)</span> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
+            </div>
+            <div class="item">
+                <div class="key">Currently assigned rights</div>
+                <div class="value ui-text monospace">${ assigned_rights_html || "<i>(none)</i>" }</div>
+            </div>
         </div>
     </div>
 

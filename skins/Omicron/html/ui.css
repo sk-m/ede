@@ -66,18 +66,30 @@
 }
 
 .ui-form-box > .form-top {
+    padding: 8px 9px 8px 15px;
+    margin-bottom: 15px;
+    
+    background-color: hsl(0, 0%, 98%);
+}
+
+.ui-form-box > .form-top > .title {
     display: flex;
     justify-content: space-between;
 
-    padding: 8px 9px 8px 15px;
-    margin-bottom: 15px;
+    width: 100%;
 
     color: hsl(0, 0%, 4%);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.1px;
-    
-    background-color: hsl(0, 0%, 98%);
+}
+
+.ui-form-box > .form-top > .description {
+    margin-top: 8px;
+
+    color: hsl(0, 0%, 40%);
+    font-family: "Roboto", sans-serif;
+    font-size: 12px;
 }
 
 @keyframes formbox-highlighted {
@@ -103,22 +115,22 @@
     }
 }
 
-.ui-form-box > .form-top.highlighted > .form-label::before,
+.ui-form-box > .form-top.highlighted .form-label::before,
 .ui-form-box > .form-top.highlighted {
     animation: formbox-highlighted-w-bkg 3s ease-out running;
 }
 
-.ui-form-box > .form-top.highlighted > .right-side > .button {
+.ui-form-box > .form-top.highlighted .right-side > .button {
     animation: formbox-highlighted 3s ease-out running;
 }
 
-.ui-form-box > .form-top > .form-label {
+.ui-form-box > .form-top > .title > .form-label {
     position: relative;
 
     margin-left: 22px;
 }
 
-.ui-form-box > .form-top > .form-label::before {
+.ui-form-box > .form-top > .title > .form-label::before {
     display: block;
     position: absolute;
 
@@ -135,11 +147,11 @@
     border-radius: 3px;
 }
 
-.ui-form-box > .form-top > .right-side {
+.ui-form-box > .form-top > .title > .right-side {
     display: flex;
 }
 
-.ui-form-box > .form-top > .right-side > .button {
+.ui-form-box > .form-top > .title > .right-side > .button {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -154,17 +166,17 @@
     text-decoration: none;
 }
 
-.ui-form-box > .form-top > .right-side > .button:hover {
+.ui-form-box > .form-top > .title > .right-side > .button:hover {
     color: hsl(0, 0%, 25%);
 }
 
-.ui-form-box > .form-top > .right-side > .button.collapse i {
+.ui-form-box > .form-top > .title > .right-side > .button.collapse i {
     transform: rotate(0deg);
     
     transition: transform 0.15s;
 }
 
-.ui-form-box.collapsed > .form-top > .right-side > .button.collapse i {
+.ui-form-box.collapsed > .form-top > .title > .right-side > .button.collapse i {
     transform: rotate(180deg);
 }
 
@@ -232,6 +244,40 @@
     font-size: 14px;
 }
 
+.ui-keyvalue-container {
+    display: block;
+}
+
+.ui-keyvalue-container > .item {
+    display: flex;
+    align-items: center;
+
+    margin-bottom: 5px;
+
+    font-family: "Roboto", sans-serif;
+}
+
+.ui-keyvalue-container > .item:last-child {
+    margin-bottom: 0;
+}
+
+.ui-keyvalue-container > .item > .key {
+    width: 180px;
+    flex-shrink: 0;
+
+    margin-right: 5px;
+
+    color: hsl(0, 0%, 40%);
+    font-weight: 500;
+    text-align: right;
+}
+
+.ui-keyvalue-container > .item > .value {
+    width: 100%;
+
+    margin-left: 5px;
+}
+
 .ui-form-spacer {
     height: 18px;
 }
@@ -293,6 +339,40 @@ a.ui-text[href]:focus:not(:hover),
     outline: none;
     background-color: var(--color-blue2-transparent-1);
     border-radius: 3px;
+}
+
+.ui-text.w-icon {
+    display: flex;
+    align-items: center;
+}
+
+.ui-text.w-icon > .icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 12px;
+
+    margin-right: 6px;
+
+    color: var(--color-green);
+    font-size: 12px;
+    /* background-color: rgba(12, 207, 0, 0.1); */
+}
+
+.ui-text.w-icon > .icon.red {
+    color: var(--color-red);
+    /* background-color: rgba(232, 32, 0, 0.1); */
+}
+
+.ui-text.w-icon > .icon.orange {
+    color: var(--color-orange);
+    /* background-color: rgba(255, 163, 0, 0.1); */
+}
+
+.ui-text.w-icon > .text {
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto", sans-serif;
 }
 
 /* Popups input boxes */
