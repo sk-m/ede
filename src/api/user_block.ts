@@ -36,6 +36,9 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
         final_restrictions = req.body.restrictions.split(";");
     }
 
+    // Remove the last element, if it's just an empty string
+    if(final_restrictions[final_restrictions.length - 1] === "") final_restrictions.pop();
+
     // Get the target user
     User.getFromUsername(req.body.username)
     .then(async (target_user: User.User) => {

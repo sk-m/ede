@@ -91,7 +91,9 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
                         current_usergroup.right_arguments[right_name][argument_name] = arguments_obj[right_name][argument_name];
                     }
                 } else {
-                    // current_usergroup.right_arguments[right_name] = {};
+                    // Delete the argument from the object if the right is not assigned
+                    // TODO @bug test for bugs
+                    if(current_usergroup.right_arguments.hasOwnProperty(right_name)) delete current_usergroup.right_arguments[right_name];
                 }
             }
         }
