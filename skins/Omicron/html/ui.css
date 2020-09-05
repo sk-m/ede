@@ -17,8 +17,12 @@
 }
 
 .ui-form-box.collapsed > .form-top {
-    display: flex !important;
+    display: block !important;
     margin: 0;
+}
+
+.ui-form-box.collapsed > .form-top > .description {
+    display: none;
 }
 
 .ui-form-box.collapsed {
