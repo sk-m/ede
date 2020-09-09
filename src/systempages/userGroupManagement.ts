@@ -4,6 +4,7 @@ import * as Page from "../page";
 import * as User from "../user";
 import * as Log from "../log";
 import * as UI from "../ui";
+import * as SystemMessage from "../system_message";
 import { registry_usergroups, registry_rights } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
@@ -108,6 +109,15 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         let available_rights_html = "";
         const registry_rights_snapshot = registry_rights.get();
+        const sysmsgs_query_arr: string[] = [];
+
+        // Get all system messages
+        // tslint:disable-next-line: forin
+        for(const rigth_name in registry_rights_snapshot) {
+            sysmsgs_query_arr.push(`right-description-${ rigth_name }`);
+        }
+
+        const sysmsgs = await SystemMessage.get(sysmsgs_query_arr) as SystemMessage.SystemMessagesObject;
 
         // Get logs for this group
         const log_entries = await Log.getEntries("groupupdate", undefined, queried_group_name);
@@ -194,7 +204,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="right-container" style="width: 100%">
         <div class="description-container">
             <div>
-                <div class="ui-text">${ right.description }</div>
+                <div class="ui-text">${ sysmsgs[`right-description-${ right_name }`].value }</div>
                 <div class="ui-text small gray i"><i class="ui-text small gray fas fa-caret-down"></i> ${ arguments_count || "no" } arguments</div>
             </div>
             <div class="icon">${ arguments_count ? '<i class="fas fa-chevron-down"></i>' : "" }</div>

@@ -70,6 +70,8 @@ have permission to modify it"));
         // Update the registry config
         registry_config.update();
 
+        // TODO! log
+
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch((error: Error) => {

@@ -2,11 +2,13 @@ import fs from "fs";
 
 import * as User from "../user";
 import * as Page from "../page";
+import * as SystemMessages from "../system_message";
 import { registry_systempages } from "../registry";
 
 // TODO @performance
-function constructSystemPagesListHTML(): string {
+async function constructSystemPagesListHTML(): Promise<string> {
     const systempages_snapshot = registry_systempages.get();
+    const sysmsgs = await SystemMessages.get_all(undefined, undefined, "dashboard-categoryname");
     const categories: { [category_name: string]: string } = {};
     let final_html = "";
 
@@ -39,10 +41,12 @@ function constructSystemPagesListHTML(): string {
     // Construct sections
     // tslint:disable-next-line: forin
     for(const cat_name in categories) {
+        const sysmsg_name = `dashboard-categoryname-${ cat_name }`;
+
         final_html += `\
 <div class="section">
     <div class="section-name">
-        <div class="name">${ cat_name }</div>
+        <div class="name">${ sysmsgs[sysmsg_name] ? sysmsgs[sysmsg_name].value : `[! SYSMSG ${ sysmsg_name } !]` }</div>
         <div class="line"></div>
     </div>
     ${ categories[cat_name] }
@@ -89,7 +93,7 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
 </div>
 
 <div id="systempage-dashboard-root">
-    ${ constructSystemPagesListHTML() }
+    ${ await constructSystemPagesListHTML() }
 </div>`;
 
         resolve(page);

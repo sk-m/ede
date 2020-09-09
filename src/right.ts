@@ -9,7 +9,6 @@ export interface Group {
 export type RightsObject = { [right_name: string]: Right };
 export interface Right {
     name: string;
-    description: string;
     risk_text?: string;
 
     /** Name of the extension that provided the right */

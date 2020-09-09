@@ -1,5 +1,6 @@
 import { sql } from "./server";
 import * as Util from "./utils";
+import he from "he";
 
 export type SystemMessagesObject = { [name: string]: SystemMessage };
 export interface SystemMessage {
@@ -11,8 +12,66 @@ export interface SystemMessage {
     is_default: boolean;
 
     rev_history: any; // TODO rev_history type
+}
 
-    deletable: boolean;
+/**
+ * Get all existing system messages
+ *
+ * @param from offset, 0 if not provided
+ * @param n number of records to return, 100 if not provided
+ * @param startswith only return records, whose name start with a specific string
+ */
+export async function get_all(from: number = 0, n: number = 100, startswith?: string): Promise<SystemMessagesObject> {
+    return new Promise((resolve: any) => {
+        let query = `SELECT * FROM \`system_messages\` WHERE id >= ${ from }`;
+
+        if(startswith) {
+            query += ` AND \`name\` LIKE '${ Util.sanitize(startswith) }%'`;
+        }
+
+        query += ` LIMIT ${ n }`
+
+        sql.query(query, (error: Error, results: any) => {
+            if(error || results.length === 0) {
+                resolve({});
+
+                return;
+            }
+
+            const final_results: SystemMessagesObject = {};
+
+            for(const sysmsg of results) {
+                final_results[sysmsg.name] = {
+                    ...sysmsg,
+
+                    value: he.decode(sysmsg.value || sysmsg.default_value),
+                    is_default: !sysmsg.value
+                };
+            }
+
+            resolve(final_results);
+        });
+    });
+}
+
+/**
+ * Set a new value for the system message
+ *
+ * @param name name of the system message
+ * @param value value for the system message
+ */
+export async function set(name: string, value: string): Promise<boolean> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`UPDATE \`system_messages\` SET \`value\` = '${ Util.sanitize(value) }' WHERE \`name\` = '${ Util.sanitize(name) }'`,
+        (error: Error) => {
+            if(error) {
+                reject(error);
+                return;
+            }
+
+            resolve(true);
+        });
+    });
 }
 
 /**
@@ -45,19 +104,39 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
             let final_results: SystemMessage | SystemMessagesObject = {};
 
             if(getting_multiple) {
-                for(const sysmsg of results) {
-                    final_results[sysmsg.name] = {
-                        ...sysmsg,
+                const results_obj: any = {};
 
-                        value: sysmsg.value || sysmsg.default_value,
-                        is_default: !sysmsg.value
-                    };
+                for(const result of results) {
+                    results_obj[result.name] = result;
+                }
+
+                for(const name of names) {
+                    const sysmsg = results_obj[name];
+
+                    if(sysmsg) {
+                        final_results[sysmsg.name] = {
+                            ...sysmsg,
+
+                            value: he.decode(sysmsg.value || sysmsg.default_value),
+                            is_default: !sysmsg.value
+                        };
+                    } else {
+                        final_results[name] = {
+                            name,
+
+                            value: `<code>[! SYSMSG ${ name } !]</code>`,
+                            default_value: "",
+                            is_default: false,
+
+                            rev_history: {}
+                        };
+                    }
                 }
             } else {
                 final_results = {
                     ...results[0],
 
-                    value: results[0].value || results[0].default_value,
+                    value: he.decode(results[0].value || results[0].default_value),
                     is_default: !results[0].value
                 };
             }

@@ -1,0 +1,85 @@
+#systempage-systemmessages-list > .systemmessage {
+    margin: 10px 0;
+
+    border: 1px solid var(--color-gray2);
+    border-radius: 3px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 15px 20px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .top > .name-container {
+    display: flex;
+    align-items: center;
+
+    color: hsl(0, 0%, 18%);
+    font-family: "Roboto Mono", monospace;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle {
+    padding: 0 20px 15px 20px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .current-value-container {
+    font-size: 14px;
+    font-family: "Roboto", sans-serif;
+
+    padding: 8px 12px;
+    border-radius: 3px;
+
+    cursor: pointer;
+
+    font-family: monospace;
+
+    transition: all 0s, color 0.2s, background-color 0.2s;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .current-value-container.disabled {
+    pointer-events: none;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .current-value-container.hidden {
+    display: none;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .current-value-container:hover {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-05);
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .edit-form {
+    margin-bottom: 0;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle > .edit-form.hidden {
+    display: none;
+}
+
+#systempage-systemmessages-list > .systemmessage > .middle textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .bottom {
+    padding: 15px 20px;
+}
+
+#systempage-systemmessages-list > .systemmessage > .bottom > .info-container {
+    display: flex;
+    align-items: center;
+    
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+    font-family: "Roboto", sans-serif !important;
+}
+
+#systempage-systemmessages-list > .systemmessage > .info-container > .item {
+    margin-right: 15px;
+}

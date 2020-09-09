@@ -786,7 +786,7 @@ a.ui-text[href]:focus:not(:hover),
     font-family: "Open Sans";
     font-size: 13px;
 
-    transition: 0.2s;
+    transition: all 0.2s, width 0s, height 0s;
 }
 
 .ui-input1[disabled],

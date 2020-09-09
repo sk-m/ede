@@ -113,26 +113,29 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `value` mediumtext,
   `default_value` mediumtext,
   `rev_history` json NOT NULL,
-  `deletable` bit(1) DEFAULT b'1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~12 rows (approximately)
+-- Dumping data for table ede_dev.system_messages: ~16 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
-INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
-	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
-	(2, 'page-actionname-viewhistory', NULL, 'History', '{}', b'0'),
-	(4, 'page-badge-protection-admin', NULL, '<i class="material-icons">lock</i> <i>Admin protected</i>', '{}', b'0'),
-	(5, 'page-badge-systemmessage', NULL, '<div style="color: #E82000"><i class="material-icons">texture</i> <i>System message page</i></div>', '{}', b'0'),
-	(6, 'page-error-notfound', NULL, 'This page does not exist.', '{}', b'0'),
-	(7, 'page-badge-pagenotfound', NULL, '<i class="material-icons">close</i> Nonexistent page', '{}', b'0'),
-	(8, 'page-badge-namespacenotfound', NULL, '<i class="material-icons">close</i> Nonexistent namespace', '{}', b'0'),
-	(9, 'systempage-error-notfound', NULL, '<span style="color: crimson; font-weight: bold">This system page does not exist.</span>', '{}', b'0'),
-	(10, 'page-badge-stylespage', NULL, '<div style="color: #005de8"><i class="material-icons">format_italic</i>Styles page</div>', '{}', b'0'),
-	(11, 'page-badge-scriptpage', NULL, '<div style="color: #005de8"><i class="fab fa-js"></i> Script page</div>', '{}', b'0'),
-	(12, 'page-badge-htmlpage', NULL, '<div style="color: #005de8"><i class="material-icons">insert_drive_file</i> HTML page</div>', '{}', b'0'),
-	(13, 'page-badge-systempage', NULL, '<div><i class="material-icons">build</i> <i>System page</i></div>', '{}', b'0');
+INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`) VALUES
+	(1, 'page-actionname-edit', NULL, 'Edit', '{}'),
+	(2, 'page-actionname-viewhistory', NULL, 'History', '{}'),
+	(3, 'page-error-notfound', NULL, 'This page does not exist.', '{}'),
+	(4, 'page-badge-pagenotfound', NULL, '<i class="material-icons">close</i> Nonexistent page', '{}'),
+	(5, 'page-badge-namespacenotfound', NULL, '<i class="material-icons">close</i> Nonexistent namespace', '{}'),
+	(6, 'systempage-error-notfound', NULL, '<span style="color: crimson; font-weight: bold">This system page does not exist.</span>', '{}'),
+	(7, 'page-badge-systempage', NULL, '<div><i class="material-icons">build</i> <i>System page</i></div>', '{}'),
+	(8, 'right-description-modifyusergroupmembership', NULL, 'Modify user\'s group membership', '{}'),
+	(9, 'right-description-modifyusergroups', NULL, 'Complete control over user groups', '{}'),
+	(10, 'right-description-renameuser', NULL, 'Rename a user', '{}'),
+	(11, 'right-description-blockuser', NULL, 'Block a user', '{}'),
+	(12, 'right-description-modifyconfig', NULL, 'Modify EDE Configuration', '{}'),
+	(13, 'right-description-editsystemmessages', NULL, 'Modify system messages', '{}'),
+	(14, 'dashboard-categoryname-users_and_groups', NULL, 'Users and groups', '{}'),
+	(15, 'dashboard-categoryname-ede_config', NULL, 'EDE configuration', '{}'),
+	(16, 'dashboard-categoryname-other', NULL, 'Other', '{}');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.users

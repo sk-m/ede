@@ -16,9 +16,11 @@ import { config } from "./systempages/config";
 import { dashboard } from "./systempages/dashboard";
 import { configSetItemRoute } from "./api/config_setitem";
 import { configResetItemRoute } from "./api/config_resetitem";
+import { systemMessages } from "./systempages/systemMessages";
 import { login } from "./systempages/login";
 import { createUserGroupRoute } from "./api/usergroup_create";
 import { blockUserRoute } from "./api/user_block";
+import { systemmessageSetRoute } from "./api/systemmessage_set";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -150,7 +152,6 @@ export const registry_usergroups = new RegistryContainer<GroupsObject>("ede", Us
 export const registry_rights = new RegistryContainer<{ [right_name: string]: Right }>("ede", undefined, {
     modifyusergroupmembership: {
         name: "modifyusergroupmembership",
-        description: "Modify user's group membership",
         risk_text: "Dangerous",
 
         source: "ede",
@@ -172,7 +173,6 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     modifyusergroups: {
         name: "modifyusergroups",
-        description: "Complete control over user groups",
         risk_text: "Very dangerous",
 
         source: "ede",
@@ -181,7 +181,6 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     renameuser: {
         name: "renameuser",
-        description: "Rename a user",
         risk_text: "Dangerous",
 
         source: "ede",
@@ -190,7 +189,6 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     blockuser: {
         name: "blockuser",
-        description: "Block a user",
         risk_text: "Dangerous",
 
         source: "ede",
@@ -206,7 +204,6 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     modifyconfig: {
         name: "modifyconfig",
-        description: "Modify EDE Configuration",
         risk_text: "Very dangerous",
 
         source: "ede",
@@ -219,6 +216,14 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
                 default_value: ""
             }
         }
+    },
+    editsystemmessages: {
+        name: "editsystemmessages",
+        risk_text: "Dangerous",
+
+        source: "ede",
+
+        arguments: {}
     }
 });
 
@@ -274,6 +279,18 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
 
         dynamic_content: login
     },
+    systemmessages: {
+        name: "SystemMessages",
+
+        display_title: "System Messages",
+        display_category: "ede_config",
+        display_description: "System Messages configuration",
+        display_icon: "fas fa-list",
+
+        source: "ede",
+
+        systempage_config: systemMessages
+    },
 });
 
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
@@ -312,6 +329,12 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: configResetItemRoute
+    },
+    "systemmessage/set": {
+        name: "systemmessage/set",
+        method: "POST",
+
+        handler: systemmessageSetRoute
     },
     "user/block": {
         name: "user/block",
