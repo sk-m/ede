@@ -1,13 +1,14 @@
 function SystemMessagesPageScript() {
     // Disable submit on enter key
-    // window.addEventListener("keydown", e => {
-    //     if(e.keyCode === 13) {
-    //         e.preventDefault();
-    //         return false;
-    //     }
-    // });
+    window.addEventListener("keydown", e => {
+        if(e.keyCode === 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     const query_form = ede.form.list["systemmessages-query"];
+    const create_form = document.getElementById("systempage-systemmessages-create-form");
 
     // Check if query form is available
     if(query_form) {
@@ -19,6 +20,41 @@ function SystemMessagesPageScript() {
                 ede.navigate("/System:SystemMessages/" + query_form.message_name.value);
             }
         }
+
+        // On create
+        query_form.create.onclick = () => {
+            const validation_result = ede.form.validate("systemmessages-query");
+
+            if(!validation_result.invalid) {
+                create_form.classList.remove("hidden");
+                create_form.dataset.systemmessageName = query_form.message_name.value;
+                create_form.querySelector(".name-container > .text").innerText = query_form.message_name.value;
+            }
+        }
+    }
+
+    // Create form close
+    create_form.querySelector(".edit-form .close-btn").onclick = () => {
+        create_form.classList.add("hidden");
+    }
+
+    // Create form create
+    create_form.querySelector(".edit-form .create-btn").onclick = e => {
+        const systemmessage_name = create_form.dataset.systemmessageName;
+        const new_value = create_form.getElementsByTagName("textarea")[0].value;
+
+        // Disable the button
+        e.target.classList.add("disabled");
+
+        // Create a system message
+        ede.apiCall("systemmessage/create", { name: systemmessage_name, value: new_value }, true)
+        .then(() => {
+            ede.refresh();
+        })
+        .catch(response => {
+            // TODO error
+            console.log(response)
+        });
     }
 
     // Event handlers for systemmessage items
@@ -60,12 +96,37 @@ function SystemMessagesPageScript() {
                     current_value_container_el.classList.remove("hidden");
                     edit_form_el.classList.add("hidden");
 
-                    item_el.querySelector(".current-value-container > .text").innerHTML = new_value;
+                    item_el.querySelector(".current-value-container > .text").innerText = new_value;
                 })
                 .catch(response => {
                     // TODO error
                     console.log(response)
                 });
+            }
+
+            // Delete click
+            const delete_btn = item_el.querySelector(".top > .buttons-container > .delete-btn");
+
+            if(delete_btn) {
+                delete_btn.onclick = e => {
+                    const systemmessage_name = item_el.dataset.systemmessageName;
+
+                    // TODO @ui make something prettier than confirm()
+                    if(confirm(`Are you sure you want to delete ${ systemmessage_name }?`)) {
+                        // Disable the button
+                        e.target.classList.add("disabled");
+
+                        // Delete the system message
+                        ede.apiCall("systemmessage/delete", { name: systemmessage_name }, true)
+                        .then(() => {
+                            item_el.remove();
+                        })
+                        .catch(response => {
+                            // TODO error
+                            console.log(response)
+                        });
+                    }
+                }
             }
         }
     }

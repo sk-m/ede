@@ -117,6 +117,12 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             sysmsgs_query_arr.push(`right-description-${ rigth_name }`);
         }
 
+        // Also load a name and a description for this group
+        sysmsgs_query_arr.push(`usergroupmanagement-toptext`);
+        sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-name`);
+        sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-shortdescription`);
+        sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-fulldescription`);
+
         const sysmsgs = await SystemMessage.get(sysmsgs_query_arr) as SystemMessage.SystemMessagesObject;
 
         // Get logs for this group
@@ -250,7 +256,8 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             {
                 type: "link",
                 text: "Related system messages",
-                icon: "fas fa-list"
+                icon: "fas fa-list",
+                href: `/System:SystemMessages/usergroup-${ queried_group_name }`
             },
             {
                 type: "heading",
@@ -281,17 +288,19 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         <div class="ui-text"></div>
     </div>
 
+    ${ sysmsgs["usergroupmanagement-toptext"].value !== "" ? `<div class="ui-text roboto margin-bottom">${ sysmsgs["usergroupmanagement-toptext"].value }</div>` : "" }
+
     <div class="ui-form-box">
         ${ UI.constructFormBoxTitleBar("main-info", "Main information") }
 
         <div class="ui-form-container ui-keyvalue-container">
             <div class="item">
                 <div class="key">Name</div>
-                <div class="value ui-text"><span class="gray">(not set)</span> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-name">edit</a>)</i></div>
+                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-name`].value }</div>
             </div>
             <div class="item">
                 <div class="key">Short description</div>
-                <div class="value ui-text"><span class="gray">(not set)</span> <i>(<a href="/System:SystemMessage/group-${ queried_group_name }-description">edit</a>)</i></div>
+                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-shortdescription`].value }</div>
             </div>
             <div class="item">
                 <div class="key">Currently assigned rights</div>
@@ -302,6 +311,8 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
     <div class="ui-form-box user-group-management-rights-root">
         ${ UI.constructFormBoxTitleBar("rights", "Rights") }
+
+        ${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`].value !== "" ? `<div class="ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`].value }</div>` : "" }
 
         <div class="text-container">${ client_can_alter ? "You can modify rights for this group" : "You don't have permission to modify\
 rights for this group" }</div>

@@ -21,6 +21,8 @@ import { login } from "./systempages/login";
 import { createUserGroupRoute } from "./api/usergroup_create";
 import { blockUserRoute } from "./api/user_block";
 import { systemmessageSetRoute } from "./api/systemmessage_set";
+import { systemmessageCreateRoute } from "./api/systemmessage_create";
+import { systemmessageDeleteRoute } from "./api/systemmessage_delete";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -335,6 +337,18 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: systemmessageSetRoute
+    },
+    "systemmessage/create": {
+        name: "systemmessage/create",
+        method: "POST",
+
+        handler: systemmessageCreateRoute
+    },
+    "systemmessage/delete": {
+        name: "systemmessage/delete",
+        method: "POST",
+
+        handler: systemmessageDeleteRoute
     },
     "user/block": {
         name: "user/block",

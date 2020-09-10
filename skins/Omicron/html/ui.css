@@ -282,6 +282,10 @@
     margin-left: 5px;
 }
 
+.ui-keyvalue-container > .item > .value.ui-text {
+    font-family: "Roboto", sans-serif;
+}
+
 .ui-form-spacer {
     height: 18px;
 }
@@ -296,6 +300,10 @@
     color: hsl(0, 0%, 10%);
     font-family: "Open sans", sans-serif;
     font-size: 14px;    
+}
+
+.ui-text.roboto {
+    font-family: "Roboto", sans-serif;
 }
 
 .ui-text.monospace {

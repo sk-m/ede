@@ -10,6 +10,7 @@ export interface SystemMessage {
     value: string;
     default_value: string;
     is_default: boolean;
+    is_deletable: boolean;
 
     rev_history: any; // TODO rev_history type
 }
@@ -44,8 +45,9 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
                 final_results[sysmsg.name] = {
                     ...sysmsg,
 
-                    value: he.decode(sysmsg.value || sysmsg.default_value),
-                    is_default: !sysmsg.value
+                    value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
+                    is_default: !sysmsg.value,
+                    is_deletable: sysmsg.deletable.readInt8(0) === 1
                 };
             }
 
@@ -63,6 +65,45 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
 export async function set(name: string, value: string): Promise<boolean> {
     return new Promise((resolve: any, reject: any) => {
         sql.query(`UPDATE \`system_messages\` SET \`value\` = '${ Util.sanitize(value) }' WHERE \`name\` = '${ Util.sanitize(name) }'`,
+        (error: Error) => {
+            if(error) {
+                reject(error);
+                return;
+            }
+
+            resolve(true);
+        });
+    });
+}
+
+/**
+ * Create a new the system message
+ *
+ * @param name name of the new system message
+ * @param value value for the new system message
+ */
+export async function create(name: string, value: string): Promise<boolean> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`INSERT INTO \`system_messages\` (\`name\`, \`value\`, \`rev_history\`, \`deletable\`) VALUES ('${ Util.sanitize(name) }', '${ Util.sanitize(value) }', '{}', b'1')`,
+        (error: Error) => {
+            if(error) {
+                reject(error);
+                return;
+            }
+
+            resolve(true);
+        });
+    });
+}
+
+/**
+ * Delete a system message
+ *
+ * @param name name of the system message to be deleted
+ */
+export async function remove(name: string): Promise<boolean> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`DELETE FROM \`system_messages\` WHERE \`name\` = '${ Util.sanitize(name) }'`,
         (error: Error) => {
             if(error) {
                 reject(error);
@@ -117,8 +158,9 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                         final_results[sysmsg.name] = {
                             ...sysmsg,
 
-                            value: he.decode(sysmsg.value || sysmsg.default_value),
-                            is_default: !sysmsg.value
+                            value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
+                            is_default: !sysmsg.value,
+                            is_deletable: sysmsg.deletable.readInt8(0) === 1
                         };
                     } else {
                         final_results[name] = {
@@ -127,6 +169,7 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                             value: `<code>[! SYSMSG ${ name } !]</code>`,
                             default_value: "",
                             is_default: false,
+                            is_deletable: false,
 
                             rev_history: {}
                         };
@@ -136,8 +179,9 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                 final_results = {
                     ...results[0],
 
-                    value: he.decode(results[0].value || results[0].default_value),
-                    is_default: !results[0].value
+                    value: he.decode(results[0].value !== null ? results[0].value : results[0].default_value),
+                    is_default: !results[0].value,
+                    is_deletable: results[0].deletable.readInt8(0) === 1
                 };
             }
 
