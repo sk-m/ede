@@ -11,6 +11,7 @@ export interface SystemMessage {
     default_value: string;
     is_default: boolean;
     is_deletable: boolean;
+    does_exist: boolean;
 
     rev_history: any; // TODO rev_history type
 }
@@ -47,7 +48,8 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
 
                     value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
                     is_default: !sysmsg.value,
-                    is_deletable: sysmsg.deletable.readInt8(0) === 1
+                    is_deletable: sysmsg.deletable.readInt8(0) === 1,
+                    does_exist: true
                 };
             }
 
@@ -135,7 +137,7 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
         }
 
         sql.query(query, (error: Error, results: any) => {
-            if(error || results.length === 0) {
+            if(error) {
                 resolve({});
                 Util.log(`Could not load '${ names }' system message(s)`, 2);
 
@@ -160,7 +162,8 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
 
                             value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
                             is_default: !sysmsg.value,
-                            is_deletable: sysmsg.deletable.readInt8(0) === 1
+                            is_deletable: sysmsg.deletable.readInt8(0) === 1,
+                            does_exist: true,
                         };
                     } else {
                         final_results[name] = {
@@ -170,6 +173,7 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                             default_value: "",
                             is_default: false,
                             is_deletable: false,
+                            does_exist: false,
 
                             rev_history: {}
                         };
@@ -181,7 +185,8 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
 
                     value: he.decode(results[0].value !== null ? results[0].value : results[0].default_value),
                     is_default: !results[0].value,
-                    is_deletable: results[0].deletable.readInt8(0) === 1
+                    is_deletable: results[0].deletable.readInt8(0) === 1,
+                    does_exist: true
                 };
             }
 

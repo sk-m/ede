@@ -5,6 +5,7 @@ import * as User from "./user";
 import * as Log from "./log";
 import * as Util from "./utils";
 import * as UI from "./ui";
+import * as SystemMessages from "./system_message";
 import { systempageBuilder } from "./systempage";
 import { GroupsAndRightsObject, GroupsObject } from "./right";
 import { registry_usergroups } from "./registry";
@@ -52,6 +53,19 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
             // TODO we should use Typescript's utility types more often
             const registry_usergroups_snapshot: Readonly<GroupsObject> = registry_usergroups.get();
 
+            const sysmsgs_query_arr: string[] = [];
+
+            // Query all needed system messages
+            // tslint:disable-next-line: forin
+            for(const group_name in registry_usergroups_snapshot) {
+                sysmsgs_query_arr.push(`usergroup-${ group_name }-name`);
+            }
+
+            sysmsgs_query_arr.push("usergroupmembership-toptext");
+            sysmsgs_query_arr.push("usergroupmembership-savetext");
+
+            const sysmsgs = await SystemMessages.get(sysmsgs_query_arr) as SystemMessages.SystemMessagesObject;
+
             // For every available group
             for(const group_name in registry_usergroups_snapshot) {
                 if(registry_usergroups_snapshot[group_name]) {
@@ -82,7 +96,7 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
 <div input class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
 data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-<div class="text">${ group_name }</div>
+<div class="text">${ sysmsgs[`usergroup-${ group_name }-name`].does_exist ? sysmsgs[`usergroup-${ group_name }-name`].value : group_name }</div>
 </div>`;
                 }
             }
@@ -96,10 +110,11 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
 <form class="ui-form-box" name="usergroupmembership-groups">
 ${ UI.constructFormBoxTitleBar("groups", "Groups", "Select groups this user will be a member of. Keep in mind that there could be groups that you won't be able to remove after assigning them") }
 
+${ sysmsgs["usergroupmembership-toptext"].value !== "" ? `<div class="ui-text roboto margin-bottom">${ sysmsgs["usergroupmembership-toptext"].value }</div>` : "" }
+
 ${ client_can_modify_groups ? `\
-<div class="ui-text">You have permission to modify this user's groups</div>
-<div class="ui-form-container column margin-top">${ checkboxes_html }</div>`
-: `<div class="ui-text">You don't have permission to modify this user's groups</div>` }
+<div class="ui-text">You have permission to modify this user's groups</div>` : `<div class="ui-text">You don't have permission to modify this user's groups</div>` }
+<div class="ui-form-container column margin-top">${ checkboxes_html }</div>
 </form>
 
 ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembership-save">
@@ -110,7 +125,8 @@ ${ UI.constructFormBoxTitleBar("save", "Save") }
 <div class="ui-input-name1">Summary</div>
 <input type="text" name="summary" data-handler="summary" class="ui-input1">
 </div>
-<div class="ui-form-container right margin-top">
+<div class="ui-form-container between margin-top">
+<div class="ui-text">${ sysmsgs["usergroupmembership-savetext"].value }</div>
 <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save groups</button>
 </div>
 </form>` : "" }

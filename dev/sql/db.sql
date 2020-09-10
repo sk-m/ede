@@ -84,7 +84,8 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
 INSERT INTO `namespaces` (`id`, `name`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
 	(1, 'System', '{}', '{}', b'1'),
-	(2, 'Main', '{}', '{}', b'0');
+	(2, 'Main', '{}', '{}', b'0'),
+	(3, 'User', '{}', '{}', b'0');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.pages
@@ -137,7 +138,10 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(14, 'dashboard-categoryname-users_and_groups', 'Users and groups', 'Users and groups', '{}', b'0'),
 	(15, 'dashboard-categoryname-ede_config', NULL, 'EDE configuration', '{}', b'0'),
 	(16, 'dashboard-categoryname-other', NULL, 'Other', '{}', b'0'),
-	(17, 'usergroupmanagement-toptext', NULL, 'You can use this page to edit user groups. Be careful, though — this is a dangerous tool, so use it with caution and review your changes before saving.<br><br>\r\nYou can create new groups on the root <a href="/System:UserGroupManagement">User Group Management</a> page.', '{}', b'0');
+	(17, 'usergroupmanagement-toptext', NULL, 'You can use this page to edit user groups. Be careful, though — this is a dangerous tool, so use it with caution and review your changes before saving.<br><br>\r\nYou can create new groups on the root <a href="/System:UserGroupManagement">User Group Management</a> page.', '{}', b'0'),
+	(18, 'usergroupmembership-toptext', NULL, 'Groups tip:\r\n<ul>\r\n<li><i>Sysadmin</i>. Has pretty much unrestricted access to everything. Assign to system administrators only.</li>\r\n<li><i>Verified</i>. You can assign this right to verifiy people you trust and grant them a bit more rights.</li>\r\n</ul>', '{}', b'0'),
+	(19, 'usergroupmanagement-savetext', NULL, 'Don\'t forget the summary', '{}', b'0'),
+	(20, 'usergroupmembership-savetext', NULL, 'Don\'t forget the summary', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.users
@@ -171,7 +175,8 @@ CREATE TABLE IF NOT EXISTS `user_groups` (
 -- Dumping data for table ede_dev.user_groups: ~1 rows (approximately)
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;
 INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALUES
-	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}');
+	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}'),
+	(2, 'verified', '', '{}');
 /*!40000 ALTER TABLE `user_groups` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.user_group_membership

@@ -119,6 +119,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Also load a name and a description for this group
         sysmsgs_query_arr.push(`usergroupmanagement-toptext`);
+        sysmsgs_query_arr.push(`usergroupmanagement-savetext`);
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-name`);
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-shortdescription`);
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-fulldescription`);
@@ -333,7 +334,7 @@ rights for this group" }</div>
         </div>
 
         <div class="ui-form-container between margin-top">
-            <div class="ui-text"><i class="gray">Tip:</i> Arrays are separated by comma.</div>
+            <div class="ui-text">${ sysmsgs["usergroupmanagement-savetext"].value }</div>
             <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
         </div>
     </div>` : "" }
