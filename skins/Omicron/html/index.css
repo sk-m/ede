@@ -428,3 +428,26 @@
 #ede-page-content {
     font-size: 14px;
 }
+
+#ede-popups-container {
+    position: fixed;
+    z-index: 9;
+    
+    pointer-events: none;
+
+    top: 0;
+    left: 0;
+
+    opacity: 0;
+
+    width: 100%;
+    height: 100%;
+    transition: 0.15s ease-in-out;
+}
+
+#ede-popups-container.active {
+    pointer-events: all;
+
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.25);
+}

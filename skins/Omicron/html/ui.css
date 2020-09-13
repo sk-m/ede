@@ -884,6 +884,10 @@ a.ui-text[href]:focus:not(:hover),
     font-size: 12px;
 }
 
+.ui-button1.w-500 {
+    font-weight: 500;
+}
+
 .ui-button1:hover {
     color: hsl(0, 0%, 5%);
 
@@ -1332,4 +1336,88 @@ table.ui-table td {
 .ui-systempage-breadcrumbs > .item > i {
     color: hsl(0, 0%, 22%);
     margin-right: 5px;
+}
+
+/* Popups */
+.ui-popup {
+    position: fixed;
+    z-index: 10;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    top: 50%;
+    left: 50%;
+
+    font-family: "Roboto", sans-serif;
+
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.1);
+}
+
+.ui-popup > .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 14px;
+}
+
+.ui-popup > .top > .title-container {
+    margin-left: 8px;
+
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.ui-popup > .top > .buttons-container {
+    display: flex;
+    align-items: center;
+}
+
+.ui-popup > .top > .buttons-container > .button-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    user-select: none;
+    cursor: pointer;
+
+    width: 32px;
+    height: 32px;
+
+    color: hsl(0, 0%, 20%);
+    font-size: 14px;
+
+    background-color: hsl(0, 0%, 96%);
+    border-radius: 50%;
+
+    transition: 0.1s;
+}
+
+.ui-popup > .top > .buttons-container > .button-close:hover {
+    color: hsl(0, 0%, 10%);
+    background-color: hsl(0, 0%, 90%);
+}
+
+.ui-popup > .middle {
+    padding: 4px 22px;
+
+    font-size: 14px;
+}
+
+.ui-popup > .bottom {
+    padding: 14px;
+}
+
+.ui-popup > .bottom > .buttons-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.ui-popup > .bottom > .buttons-container > .left,
+.ui-popup > .bottom > .buttons-container > .right {
+    display: flex;
 }
