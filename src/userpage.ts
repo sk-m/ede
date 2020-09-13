@@ -299,14 +299,11 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
             // Get blocked status
             const queried_user_blocked = queried_user.blocks.length !== 0;
 
-            let client_logged_in = true;
             let client_groups;
 
             // Get client's groups
             if(client) {
-                client_groups = await User.getUserGroupRights(client.id).catch(() => { client_logged_in = false });
-            } else {
-                client_logged_in = false;
+                client_groups = await User.getUserGroupRights(client.id).catch(() => undefined);
             }
 
             // Create a list of groups, assigned to target user

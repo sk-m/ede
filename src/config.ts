@@ -1,7 +1,7 @@
 // Local imports
 import { sql } from "./server";
 import * as Util from "./utils";
-import { registry_config, registry_usergroups } from "./registry";
+import { registry_config } from "./registry";
 
 // All allowed value types for database config item (as string names)
 type ConfigItemValueTypeName = "bool" | "int" | "string" | "json" | "array" | "allowed_values";

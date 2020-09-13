@@ -650,8 +650,8 @@ export async function joinRoute(req: any, res: any): Promise<void> {
         : SECRETS.tokens.recaptcha_dev }&response=${ req.body.captcha_token }`,
         async (captcha_error: any, _: any, captcha_response: string): Promise<void> => {
             // Captcha check failed
-            // TODO CAPTCHA DISABLED
-            if(false && captcha_error || !JSON.parse(captcha_response).success) {
+            // TODO! CAPTCHA DISABLED!
+            if(false && (captcha_error || !JSON.parse(captcha_response).success)) {
                 res.status(403).send({ error: "captcha_error" });
                 return;
             }
@@ -744,7 +744,8 @@ export function loginRoute(req: any, res: any): void {
         (captcha_error: any, _: any, captcha_response: string): void => {
 
         // Captcha check failed
-        if(captcha_error || !JSON.parse(captcha_response).success) {
+        // TODO! capcha disabled
+        if(false && (captcha_error || !JSON.parse(captcha_response).success)) {
             res.status(403).send({ error: "captcha_error" });
             return;
         }
@@ -758,7 +759,7 @@ export function loginRoute(req: any, res: any): void {
             }
 
             // Check if user is blocked from logging in
-            if(results[0].blocks.indexOf(";") !== -1) {
+            if(results[0].blocks && results[0].blocks.indexOf(";") !== -1) {
                 const blocks = results[0].blocks.split(";");
 
                 if(blocks.includes("lockout")) {

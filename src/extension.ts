@@ -25,8 +25,10 @@ export interface ExtensionManifest {
  */
 export async function load(extension_name: string): Promise<ExtensionManifest> {
     return new Promise((resolve: any, reject: any) => {
+        const file_extension = process.env.EDE_DEV === "1" ? "ts" : "js";
+
         const manifest_path = path.join(__dirname, `../extensions/${ extension_name }/\
-${ extension_name }.extension.ts`);
+${ extension_name }.extension.${ file_extension }`);
 
         import(manifest_path)
         .then((extension: any) => {

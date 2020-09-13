@@ -36,9 +36,10 @@
   "scripts": {
     "tsc": "tsc",
     "dev": "set EDE_DEV=1&&ts-node-dev --respawn --transpileOnly ./src/server.ts",
-    "build": "tsc",
-    "start": "node ./build/server.js",
+    "start": "node ./build/src/server.js",
     "lint": "tslint --project .",
-    "docs": "typedoc --mode modules --excludeNotExported --excludeExternals --readme none --ignoreCompilerErrors --out docs src"
+    "docs": "typedoc --mode modules --excludeNotExported --excludeExternals --readme none --ignoreCompilerErrors --out docs src",
+    "build-win": "tsc && xcopy /E /I content build\\content && xcopy /E /I skins build\\skins && xcopy /E /I lib build\\lib",
+    "build-src": "tsc"
   }
 }

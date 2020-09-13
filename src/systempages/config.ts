@@ -2,7 +2,6 @@ import fs from "fs";
 
 import * as User from "../user";
 import * as Page from "../page";
-import * as UI from "../ui";
 import { ConfigItemsObject, ConfigItemAccessLevel } from "../config";
 import { registry_config } from "../registry";
 import { GroupsAndRightsObject } from "../right";
