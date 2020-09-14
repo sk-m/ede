@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `namespace_name` (`name`),
   KEY `NOT_EDITABLE` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 -- Dumping data for table ede_dev.namespaces: ~2 rows (approximately)
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
@@ -117,9 +117,9 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~17 rows (approximately)
+-- Dumping data for table ede_dev.system_messages: ~19 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
 	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
@@ -128,20 +128,22 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(4, 'page-badge-pagenotfound', NULL, '<i class="material-icons">close</i> Nonexistent page', '{}', b'0'),
 	(5, 'page-badge-namespacenotfound', NULL, '<i class="material-icons">close</i> Nonexistent namespace', '{}', b'0'),
 	(6, 'systempage-error-notfound', NULL, '<span style="color: crimson; font-weight: bold">This system page does not exist.</span>', '{}', b'0'),
-	(7, 'page-badge-systempage', '&#x3C;div&#x3E;&#x3C;i class=&#x22;material-icons&#x22;&#x3E;build&#x3C;&#47;i&#x3E; &#x3C;i&#x3E;System page&#x3C;&#47;i&#x3E;&#x3C;&#47;div&#x3E;', '<div><i class="material-icons">build</i> <i>System page</i></div>', '{}', b'0'),
+	(7, 'page-badge-systempage', NULL, '<div><i class="material-icons">build</i> <i>System page</i></div>', '{}', b'0'),
 	(8, 'right-description-modifyusergroupmembership', NULL, 'Modify user\'s group membership', '{}', b'0'),
 	(9, 'right-description-modifyusergroups', NULL, 'Complete control over user groups', '{}', b'0'),
 	(10, 'right-description-renameuser', NULL, 'Rename a user', '{}', b'0'),
 	(11, 'right-description-blockuser', NULL, 'Block a user', '{}', b'0'),
 	(12, 'right-description-modifyconfig', NULL, 'Modify EDE Configuration', '{}', b'0'),
 	(13, 'right-description-editsystemmessages', NULL, 'Modify system messages', '{}', b'0'),
-	(14, 'dashboard-categoryname-users_and_groups', 'Users and groups', 'Users and groups', '{}', b'0'),
+	(14, 'dashboard-categoryname-users_and_groups', NULL, 'Users and groups', '{}', b'0'),
 	(15, 'dashboard-categoryname-ede_config', NULL, 'EDE configuration', '{}', b'0'),
 	(16, 'dashboard-categoryname-other', NULL, 'Other', '{}', b'0'),
 	(17, 'usergroupmanagement-toptext', NULL, 'You can use this page to edit user groups. Be careful, though — this is a dangerous tool, so use it with caution and review your changes before saving.<br><br>\r\nYou can create new groups on the root <a href="/System:UserGroupManagement">User Group Management</a> page.', '{}', b'0'),
 	(18, 'usergroupmembership-toptext', NULL, 'Groups tip:\r\n<ul>\r\n<li><i>Sysadmin</i>. Has pretty much unrestricted access to everything. Assign to system administrators only.</li>\r\n<li><i>Verified</i>. You can assign this right to verifiy people you trust and grant them a bit more rights.</li>\r\n</ul>', '{}', b'0'),
 	(19, 'usergroupmanagement-savetext', NULL, 'Don\'t forget the summary', '{}', b'0'),
-	(20, 'usergroupmembership-savetext', NULL, 'Don\'t forget the summary', '{}', b'0');
+	(20, 'usergroupmembership-savetext', NULL, 'Don\'t forget the summary', '{}', b'0'),
+	(21, 'login-message-blocked', NULL, 'This account is currenly blocked, logging in is disallowed.<br><br>', '{}', b'0'),
+	(22, 'login-message-invalidcredentials', NULL, 'This combination of username and password is incorrect.', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.users
@@ -170,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `user_groups` (
   `right_arguments` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 -- Dumping data for table ede_dev.user_groups: ~1 rows (approximately)
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;

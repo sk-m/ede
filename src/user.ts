@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import cookie from "cookie";
 
 import { sql } from "./server";
+import * as SystemMessage from "./system_message";
 import * as Util from "./utils";
 
 import * as SECRETS from "../secrets.json";
@@ -752,9 +753,11 @@ export function loginRoute(req: any, res: any): void {
 
         // Get user
         sql.query(`SELECT id, \`username\`, \`password\`, \`blocks\` FROM \`users\` WHERE username = '${ Util.sanitize(req.body.username) }'`,
-        (error: any, results: any) => {
+        async (error: any, results: any) => {
             if(error || results.length !== 1) {
-                res.status(403).send({ error: "invalid_credentials" });
+                const msg = await SystemMessage.get("login-message-invalidcredentials") as SystemMessage.SystemMessage;
+
+                res.status(403).send({ error: "invalid_credentials", message: msg.value });
                 return;
             }
 
@@ -762,8 +765,11 @@ export function loginRoute(req: any, res: any): void {
             if(results[0].blocks && results[0].blocks.indexOf(";") !== -1) {
                 const blocks = results[0].blocks.split(";");
 
+                // User is locked out, get the appropriate system message
                 if(blocks.includes("lockout")) {
-                    res.status(403).send({ error: "blocked" });
+                    const msg = await SystemMessage.get("login-message-blocked") as SystemMessage.SystemMessage;
+
+                    res.status(403).send({ error: "blocked", message: msg.value });
                     return;
                 }
             }
@@ -782,9 +788,11 @@ export function loginRoute(req: any, res: any): void {
                 db_password_iterations,
                 db_password_keylen
             )
-            .then((password_hash: Hash) => {
+            .then(async (password_hash: Hash) => {
                 if(db_password_hash !== password_hash.key) {
-                    res.status(403).send({ error: "invalid_credentials" });
+                    const msg = await SystemMessage.get("login-message-invalidcredentials") as SystemMessage.SystemMessage;
+
+                    res.status(403).send({ error: "invalid_credentials", message: msg.value });
                     return;
                 }
 

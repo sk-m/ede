@@ -8,6 +8,8 @@ function loginPageScript() {
 
     // On form submit
     function login_form_submit() {
+        document.getElementById("systempage-login-apiresponse").innerText = "";
+
         if(login_form_state_is_login) {
             // Login
 
@@ -27,8 +29,16 @@ function loginPageScript() {
                     }
                 })
                 .catch(error => {
-                    // TODO show an error
-                    console.log(error);
+                    if(error.message) {
+                        // User is blocked
+                        if(error.error === "blocked") {
+                            ede.showPopup("login-blocked", "Account is blocked", error.message);
+                        } else {
+                            document.getElementById("systempage-login-apiresponse").innerText = error.message;
+                        }
+                    } else {
+                        document.getElementById("systempage-login-apiresponse").innerText = `Unknown error occured: ${ error.error }`;
+                    }
                 });
             }
         } else {
@@ -60,8 +70,14 @@ function loginPageScript() {
                     }
                 })
                 .catch((error) => {
-                    if(error === "username_taken") {
+                    if(error.error === "username_taken") {
                         ede.form.showPopup("join", "username", "Username is already taken");
+                    }
+                    else if(error.error === "username_forbidden") {
+                        ede.form.showPopup("join", "username", "Username is forbidden");
+                    }
+                    else {
+                        ede.showPopup("join-unknown", "Unknown error", `Unknown error occured: ${ error.message }`);
                     }
 
                     // TODO show error from API response

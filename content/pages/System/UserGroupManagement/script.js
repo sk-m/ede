@@ -69,7 +69,7 @@ function userGroupManagementPageScript() {
     // Check if the main form is available
     const main_form = ede.form.list.usergroupmanagement;
 
-    if(!main_form) return;
+    if(!main_form || !main_form.submit) return;
 
     // Result text container
     const result_status_container = main_form._form.querySelector(".result-status-container");

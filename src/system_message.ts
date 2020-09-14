@@ -180,14 +180,30 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                     }
                 }
             } else {
-                final_results = {
-                    ...results[0],
+                if(results.length === 0) {
+                    const name = names as string;
 
-                    value: he.decode(results[0].value !== null ? results[0].value : results[0].default_value),
-                    is_default: !results[0].value,
-                    is_deletable: results[0].deletable.readInt8(0) === 1,
-                    does_exist: true
-                };
+                    final_results = {
+                        name,
+
+                        value: `<code>[! SYSMSG ${ name } !]</code>`,
+                        default_value: "",
+                        is_default: false,
+                        is_deletable: false,
+                        does_exist: false,
+
+                        rev_history: {}
+                    };
+                } else {
+                    final_results = {
+                        ...results[0],
+
+                        value: he.decode(results[0].value !== null ? results[0].value : results[0].default_value),
+                        is_default: !results[0].value,
+                        is_deletable: results[0].deletable.readInt8(0) === 1,
+                        does_exist: true
+                    };
+                }
             }
 
             resolve(final_results);
