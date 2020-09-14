@@ -87,3 +87,59 @@
     height: auto;
     margin-top: 6px;
 }
+
+/* Popup */
+#popupid-usergroupmanagement-save .body > .section {
+    color: hsl(0, 0%, 15%);
+    font-weight: 500;
+}
+
+#popupid-usergroupmanagement-save .body > ul {
+    margin-top: 8px;
+}
+
+#popupid-usergroupmanagement-save .body > ul .argument-name {
+    margin-top: 6px;
+
+    font-family: monospace;
+    font-style: italic;
+}
+
+#popupid-usergroupmanagement-save .body > ul .argument-change {
+    margin-top: 2px;
+}
+
+#popupid-usergroupmanagement-save .body > ul .argument-change > code {
+    margin: 0 3px;
+    padding: 1px 3px;
+    
+    border-radius: 2px;
+    background-color: hsl(0, 0%, 95%);
+}
+
+#popupid-usergroupmanagement-save .body > ul > i {
+    color: hsl(0, 0%, 50%);
+}
+
+#popupid-usergroupmanagement-save .body > .warnings {
+    margin-top: 20px;
+}
+
+#popupid-usergroupmanagement-save .body > .warnings:empty {
+    display: none;
+}
+
+#popupid-usergroupmanagement-save .body > .warnings > div {
+    margin: 5px 0;
+}
+
+#popupid-usergroupmanagement-save .body > .warnings > div:last-child {
+    margin: 0;
+}
+
+#popupid-usergroupmanagement-save .body > .warnings > div i {
+    margin-right: 3px;
+
+    color: hsl(0, 0%, 25%);
+    font-size: 12px;
+}

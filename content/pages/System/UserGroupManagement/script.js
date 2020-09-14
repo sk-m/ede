@@ -71,6 +71,9 @@ function userGroupManagementPageScript() {
 
     if(!main_form || !main_form.submit) return;
 
+    // Get group's state before changes
+    const before_params_raw = ede.form.getParams("usergroupmanagement");
+
     // Result text container
     const result_status_container = main_form._form.querySelector(".result-status-container");
 
@@ -85,7 +88,8 @@ function userGroupManagementPageScript() {
 
         const params_final = {
             rights: {},
-            right_arguments: {}
+            right_arguments: {},
+            summary: params_raw.summary
         };
 
         // Correctly format the params object
@@ -121,32 +125,115 @@ function userGroupManagementPageScript() {
         // Take the current group name from the url
         params_final.group_name = location.pathname.split("/")[2];
 
-        // Disable the button
-        e.target.classList.add("disabled");
+        // Function that will save the group
+        const save_function = function() {
+            // Close the save popup
+            ede.closePopup();
 
-        // Update the group
-        ede.apiCall("usergroup/update", params_final, true)
-        .then(() => {
-            result_status_container.querySelector(".ui-text").innerHTML = `\
-<div class="ui-text b">Success</div>
-<div class="ui-text small i">Group saved successfully</div>`;
+            // Disable the button
+            e.target.classList.add("disabled");
 
-            result_status_container.classList.add("green");
-            result_status_container.classList.remove("red");
+            // Update the group
+            ede.apiCall("usergroup/update", params_final, true)
+            .then(() => {
+                result_status_container.querySelector(".ui-text").innerHTML = `\
+            <div class="ui-text b">Success</div>
+            <div class="ui-text small i">Group saved successfully</div>`;
 
-            result_status_container.classList.remove("hidden");
-        })
-        .catch(response => {
-            result_status_container.querySelector(".ui-text").innerHTML = `\
-<div class="ui-text b">Failed to save the group <code>(${ response.status })</code></div>
-<div class="ui-text small i">${ response.error }</div>`;
+                result_status_container.classList.add("green");
+                result_status_container.classList.remove("red");
 
-            result_status_container.classList.add("red");
-            result_status_container.classList.remove("hidden");
+                result_status_container.classList.remove("hidden");
+            })
+            .catch(response => {
+                result_status_container.querySelector(".ui-text").innerHTML = `\
+            <div class="ui-text b">Failed to save the group <code>(${ response.status })</code></div>
+            <div class="ui-text small i">${ response.error }</div>`;
 
-            // Enable the button
-            e.target.classList.remove("disabled");
-        });
+                result_status_container.classList.add("red");
+                result_status_container.classList.remove("hidden");
+
+                // Enable the button
+                e.target.classList.remove("disabled");
+            });
+        };
+
+        let review_changes_html_rights = "";
+        let review_changes_html_arguments = "";
+
+        let no_changes_made = true;
+
+        // Check the changes the user made
+        for(const param_name in params_raw) {
+            // Check if this param was changed
+            if(params_raw[param_name] !== before_params_raw[param_name]) {
+                const param_split = param_name.split(";");
+                const param_type = param_split[0];
+
+                // A right was assigned or removed
+                if(param_type === "right") {
+                    no_changes_made = false;
+
+                    const changed_right_name = param_split[1];
+
+                    if(before_params_raw[param_name] === false) {
+                        // The right was assigned
+                        review_changes_html_rights += `<li><div class="right assigned">Assigned <code>${ changed_right_name }</code></div></li>`;
+                    } else {
+                        // The right was removed
+                        review_changes_html_rights += `<li><div class="right removed">Removed <code>${ changed_right_name }</code></div></li>`;
+                    }
+                }
+                // An argument was changed
+                else if(param_type === "right_argument") {
+                    const before_string = before_params_raw[param_name].toString();
+                    const after_string = params_raw[param_name].toString();
+
+                    // TODO @performance
+                    if(before_string !== after_string) {
+                        no_changes_made = false;
+
+                        const changed_argument_right_name = param_split[1];
+                        const changed_argument_name = param_split[2];
+
+                        review_changes_html_arguments += `\
+<li>
+    <div class="argument-name">${ changed_argument_right_name }.${ changed_argument_name }</div>
+    <div class="argument-change">changed from <code>${ before_string || "(none)" }</code> to <code>${ after_string || "(none)" }</code></div>
+</li>`;
+
+                    }
+                }
+            }
+        }
+
+        const review_changes_html = `\
+<div class="ui-text margin-bottom">Please, review your changes before saving.</div>
+<div class="section">Group name</div>
+<ul><code>${ params_final.group_name }</code></ul>
+<div class="section">Rights</div>
+<ul>${ review_changes_html_rights || "<i>(no changes)</i>" }</ul>
+<div class="section">Right arguments</div>
+<ul>${ review_changes_html_arguments || "<i>(no changes)</i>" }</ul>
+<div class="section">Summary</div>
+<ul>${ params_raw.summary || "<i>(no summary)</i>" }</ul>
+<div class="warnings">\
+${ no_changes_made ? "<div><i class=\"fas fa-info-circle\"></i> No changes were made, nothing to save.</div>" : "" }\
+${ !params_raw.summary ? "<div><i class=\"fas fa-info-circle\"></i> Please, provide a summary to save the group.</div>" : "" }\
+</div>`;
+
+        const popup_buttons_html = `\
+<div class="left">
+    <button name="close" class="ui-button1 t-frameless w-500">BACK</button>
+</div>
+<div class="right">
+    <button name="save" class="${ (no_changes_made || !params_raw.summary) ? "disabled " : "" }ui-button1 t-frameless c-blue w-500">CONFIRM & SAVE</button>
+</div>`;
+
+        ede.showPopup("usergroupmanagement-save", "Confirm save", review_changes_html, popup_buttons_html, {
+            close: ede.closePopup,
+            save: save_function
+        }, 600);
     };
 }
 

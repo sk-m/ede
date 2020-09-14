@@ -223,6 +223,12 @@
     margin-bottom: 15px;
 }
 
+.ui-input-box.margin-top,
+.ui-text.margin-top,
+.ui-form-container.margin-top {
+    margin-top: 15px;
+}
+
 .ui-form-container.center {
     justify-content: center;
 }
