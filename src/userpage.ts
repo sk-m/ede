@@ -159,6 +159,8 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
             return;
         }
 
+        const client_can_lock_out = client_rights.rights.blockuser.allow_lockout;
+
         const log_entries = await Log.getEntries("blockuser", undefined, target_user.id);
 
         // Some strings
@@ -199,7 +201,9 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
 <form name="blockuser-form">
     <div class="ui-form-box">
         ${ UI.constructFormBoxTitleBar("restrictions", "Access restrictions", "Select actions that will be restricted for this user") }
-        <div input name="restriction;lockout" data-checked="${ target_user.blocks.includes("lockout") ? "true" : "false" }" class="ui-checkbox-1">
+
+        <div input name="restriction;lockout" data-checked="${ target_user.blocks.includes("lockout") ? "true" : "false" }" \
+        class="ui-checkbox-1${ (client_can_lock_out || target_user.blocks.includes("lockout")) ? "" : " disabled" }">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">Completely lock out (destroy sessions and disable logging in)</div>
         </div>

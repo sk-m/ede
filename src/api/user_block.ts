@@ -11,6 +11,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     }
 
     let client_permissions_error = true;
+    let client_allow_lockout = false;
     let client_restricted_groups: string[] = [];
 
     // Check if client has the rights to block users
@@ -19,6 +20,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
         if(client_grouprights.rights.blockuser) {
             client_permissions_error = false;
             client_restricted_groups = client_grouprights.rights.blockuser.restricted_user_groups;
+            client_allow_lockout = client_grouprights.rights.blockuser.allow_lockout;
         }
     })
     .catch(() => undefined);
@@ -34,6 +36,12 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
 
     if(req.body.restrictions && req.body.restrictions.indexOf(";") !== -1) {
         final_restrictions = req.body.restrictions.split(";");
+    }
+
+    // Check if client has a right to lock users out
+    if(final_restrictions.includes("lockout") && !client_allow_lockout) {
+        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You are not allowed to lock users out"));
+        return;
     }
 
     // Remove the last element, if it's just an empty string
@@ -55,7 +63,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
             }
 
             if(error_group) {
-                res.status("403").send(apiResponse(ApiResponseStatus.permissiondenied, `You are not allowed to block members of ${ error_group } group`));
+                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `You are not allowed to block members of ${ error_group } group`));
             } else {
                 const user_id = Number.parseInt(target_user.id, 10);
                 const destroy_sessions = final_restrictions.includes("lockout");
@@ -74,14 +82,14 @@ ${ destroy_sessions ? " and invalidated their sessions" : "" }`, req.body.summar
                     res.send(apiResponse(ApiResponseStatus.success));
                 })
                 .catch(() => {
-                    res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
+                    res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
                     // TODO log this incident to file
                     // TODO also might be nice to have a systempage with such incidents
                 });
             }
         })
         .catch(() => {
-            res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
+            res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
         });
     })
     .catch(() => {

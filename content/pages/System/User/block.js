@@ -60,6 +60,12 @@ function userBlockingPageScript() {
         // Check if lockout confirmation is checked
         if(final_params.restrictions.includes("lockout") && !final_params.confirm_lockout_checkbox) return;
 
+        // Check if summary was given
+        if(!final_params.summary) {
+            ede.form.showPopup("blockuser-form", "summary", "Please, provide a summary");
+            return;
+        }
+
         // Take the querried username from the url
         final_params.username = ede.current_page.address.url_params[0].split(":", 2)[1];
 

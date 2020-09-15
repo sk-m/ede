@@ -150,8 +150,25 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                                 argument_value = argument.default_value;
                             }
 
-                            // Input can be an array
-                            if(argument.type.includes("array")) {
+                            if(argument.type.includes("boolean")) {
+                                // Input can be a boolean
+
+                                arguments_html += `\
+<div class="ui-form-container" style="margin-top: 5px">
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">${ argument.description } (${ argument.type.join(" or ") })</div>
+
+        <div input class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" name="right_argument;${ right_name };${ argument_name }" \
+        data-checked="${ argument_value === true ? "true" : "false" }">
+        <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+        <div class="text">${ argument.description }</div>
+        </div>
+    </div>
+</div>`;
+                            } else if(argument.type.includes("array")) {
+                                // Input can be an array
+
                                 let current_values_html = "";
 
                                 // Check if current value is actually an array

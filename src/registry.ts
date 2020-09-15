@@ -201,6 +201,12 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
                 description: "Disallow blocking users, that are members of these groups",
 
                 default_value: ["sysadmin"]
+            },
+            allow_lockout: {
+                type: ["boolean"],
+                description: "Allow locking users out",
+
+                default_value: false
             }
         }
     },
