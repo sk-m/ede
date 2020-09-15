@@ -282,6 +282,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                 text: "Danger zone"
             },
             {
+                id: "deletegroup",
                 type: "link",
                 additional_classes: "red",
                 text: "Delete group",

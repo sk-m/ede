@@ -180,6 +180,25 @@ export async function createUserGroup(name: string): Promise<true> {
     });
 }
 
+/**
+ * Delete user group
+ *
+ * @param name Internal name of the group to be deleted
+ */
+export async function deleteUserGroup(name: string): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query(`DELETE FROM \`user_groups\` WHERE \`name\` = '${ Util.sanitize(name) }'`, (error: any) => {
+            if(error) {
+                Util.log(`Could not delete '${ name }' user group`, 3, error);
+
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
 // TODO @performance
 /**
  * Get user's groups and rights with parameters
@@ -188,6 +207,8 @@ export async function createUserGroup(name: string): Promise<true> {
  */
 export async function getUserGroupRights(user_id: string | number): Promise<GroupsAndRightsObject> {
     return new Promise((resolve: any, reject: any) => {
+        console.log("getUserGroupRights!", user_id);
+
         const result: GroupsAndRightsObject = {
             groups: [],
             rights: {}
@@ -237,7 +258,14 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                                         ) {
                                             const argument_value = group.right_arguments[right_name][argument_name];
 
-                                            if(argument_value instanceof Array) {
+                                            if(argument_value instanceof Boolean) {
+                                                // Boolean
+                                                // If the argument is already set to false in some other group, but is is set to true in
+                                                // this one, set the final value to true
+                                                if(argument_value === true) {
+                                                    result.rights[right_name][argument_name] = true;
+                                                }
+                                            } else if(argument_value instanceof Array) {
                                                 // Push array item only if not already included
                                                 for(const array_el of argument_value) {
                                                     // Add empty arguments array, if there isn't one
@@ -250,9 +278,11 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                                                     }
                                                 }
                                             } else if(argument_value instanceof Object) {
+                                                // Object
                                                 result.rights[right_name][argument_name] = { ...result.rights[right_name][argument_name],
                                                 ...argument_value };
                                             } else {
+                                                // Any other type
                                                 result.rights[right_name][argument_name] = argument_value;
                                             }
                                         }

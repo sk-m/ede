@@ -25,13 +25,11 @@ function profile_page(target_user: User.User, client: User.User): string {
 </div>`;
 }
 
-async function groups_page(target_user: User.User, client: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+async function groups_page(target_user: User.User, client: User.User, client_rights?: GroupsAndRightsObject, target_grouprights?: GroupsAndRightsObject): Promise<string> {
     return new Promise(async (resolve: any) => {
         const log_entries = await Log.getEntries("usergroupsupdate", undefined, target_user.id);
 
-        // Get groups for target user
-        User.getUserGroupRights(target_user.id)
-        .then(async (target_grouprights: GroupsAndRightsObject) => {
+        if(target_grouprights) {
             let client_can_modify_groups = false;
 
             let client_modifiable_groups_add: string[] = [];
@@ -136,11 +134,10 @@ ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
 
 <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`);
-        })
-        .catch((error: any) => {
-            Util.log(`Error occured trying to get groups and rights for user id ${ target_user.id }`, 3, error);
+        } else {
+            Util.log(`Error occured trying to get groups and rights for user id ${ target_user.id }`, 3);
             resolve("Some error occured!");
-        });
+        }
     });
 }
 
@@ -297,7 +294,8 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         const queried_user = await User.getFromUsername(address.name).catch(error => { queried_user_error = error });
 
         if(queried_user && !queried_user_error) {
-            // Get user's groups
+            // Get queried user's groups
+            // TODO just get the groups, we don't need the rights
             const queried_user_groups = await User.getUserGroupRights(queried_user.id);
 
             // Get blocked status
@@ -385,7 +383,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
                     page_config.page.additional_js = [page_js];
 
                     page_config.breadcrumbs_data.push(["Manage groups"]);
-                    page_config.body_html = await groups_page(queried_user, client, client_groups || undefined);
+                    page_config.body_html = await groups_page(queried_user, client, client_groups || undefined, queried_user_groups || undefined);
                 } break;
                 case "rename": {
                     page_config.breadcrumbs_data.push(["Rename"]);

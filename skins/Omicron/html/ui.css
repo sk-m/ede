@@ -1414,6 +1414,14 @@ table.ui-table td {
     font-size: 14px;
 }
 
+.ui-popup > .middle > .body p:first-child {
+    margin-top: 0;
+}
+
+.ui-popup > .middle > .body p:last-child {
+    margin-bottom: 0;
+}
+
 .ui-popup > .bottom {
     padding: 14px;
 }

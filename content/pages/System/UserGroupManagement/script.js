@@ -71,6 +71,46 @@ function userGroupManagementPageScript() {
 
     if(!main_form || !main_form.submit) return;
 
+    // Delete group link
+    document.getElementById("sidelink-deletegroup").onclick = () => {
+        const delete_function = () => {
+            // Delete the group
+            ede.apiCall("usergroup/delete", { group_name: location.pathname.split("/")[2] }, true)
+            .then(() => {
+                ede.closePopup();
+                ede.navigate("/System:UserGroupManagement");
+            })
+            .catch(response => {
+                ede.closePopup();
+
+                result_status_container.querySelector(".ui-text").innerHTML = `\
+<div class="ui-text b">Failed to delete the group <code>(${ response.status })</code></div>
+<div class="ui-text small i">${ response.error }</div>`;
+
+                result_status_container.classList.add("red");
+                result_status_container.classList.remove("hidden");
+            });
+        };
+
+        const delete_group_html = `\
+<p>Are you sure you want to delete this group?</p>
+<p>Keep in mind that the members of this group will <u>not</u> be removed from it.</p>
+<p>If you wish to remove this group from everyone, you can do it manually, or hit up a fellow sysadmin with access to CLI tools to do it for you.</p>`;
+
+        const popup_buttons_html = `\
+<div class="left">
+    <button name="close" class="ui-button1 t-frameless w-500">BACK</button>
+</div>
+<div class="right">
+    <button name="delete" class="ui-button1 t-frameless c-red w-500">DELETE GROUP</button>
+</div>`;
+
+        ede.showPopup("usergroupmanagement-delete", `Delete ${ location.pathname.split("/")[2] } group`, delete_group_html, popup_buttons_html, {
+            close: ede.closePopup,
+            delete: delete_function
+        }, 460);
+    }
+
     // Get group's state before changes
     const before_params_raw = ede.form.getParams("usergroupmanagement");
 

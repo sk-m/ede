@@ -23,6 +23,7 @@ import { blockUserRoute } from "./api/user_block";
 import { systemmessageSetRoute } from "./api/systemmessage_set";
 import { systemmessageCreateRoute } from "./api/systemmessage_create";
 import { systemmessageDeleteRoute } from "./api/systemmessage_delete";
+import { deleteUserGroupRoute } from "./api/usergroup_delete";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -175,7 +176,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     modifyusergroups: {
         name: "modifyusergroups",
-        risk_text: "Very dangerous",
+        risk_text: "Extremely dangerous",
 
         source: "ede",
 
@@ -319,6 +320,12 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         method: "POST",
 
         handler: createUserGroupRoute
+    },
+    "usergroup/delete": {
+        name: "usergroup/delete",
+        method: "POST",
+
+        handler: deleteUserGroupRoute
     },
     "user/updategroups": {
         name: "user/updategroups",
