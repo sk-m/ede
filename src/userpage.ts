@@ -87,14 +87,35 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
                         }
                     }
 
-                    // TODO Replace group_name in .text element with the real name of the group that is user configurable via
-                    // System Messages
-
                     checkboxes_html += `\
 <div input class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
 data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
 <div class="text">${ sysmsgs[`usergroup-${ group_name }-name`].does_exist ? sysmsgs[`usergroup-${ group_name }-name`].value : group_name }</div>
+</div>`;
+                }
+            }
+
+            let nonexistent_groups_checkbox_included = false;
+
+            // For every deleted group
+            // For now, any user with modifyusergroups can remove deleted groups
+            for(const group_name of target_grouprights.groups) {
+                if(!registry_usergroups_snapshot[group_name]) {
+                    if(!nonexistent_groups_checkbox_included) {
+                        checkboxes_html += `\
+<div input class="ui-checkbox-1 margin-top${ client_can_modify_groups ? "" : " disabled" }" name="all_nonexistent_groups" data-checked="true">
+<div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+<div class="text">Groups that are no longer existent, but still assigned to the user (uncheck to remove all)</div>
+</div>`;
+
+                        nonexistent_groups_checkbox_included = true;
+                    }
+
+                    checkboxes_html += `\
+<div input class="ui-checkbox-1 second-level${ client_can_modify_groups ? "" : " disabled" }" data-nonexistent="true" name="group;${ group_name }" data-checked="true">
+<div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+<div class="text"><i>${ group_name }</i></div>
 </div>`;
                 }
             }

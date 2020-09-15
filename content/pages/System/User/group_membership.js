@@ -10,6 +10,25 @@ function userGroupMembershipPageScript() {
         }
     });
 
+    // All nonexistent groups handler
+    const nonexistent_groups_checkbox = ede.form.list["usergroupmembership-groups"].all_nonexistent_groups;
+
+    if(nonexistent_groups_checkbox) {
+        const nonexistent_groups_els = ede.form.list["usergroupmembership-groups"]._form.querySelectorAll("[data-nonexistent=\"true\"]");
+
+        nonexistent_groups_checkbox.onclick = () => {
+            if(nonexistent_groups_checkbox.dataset.checked === "true") {
+                for(const el of nonexistent_groups_els) {
+                    el.dataset.checked = "true";
+                }
+            } else {
+                for(const el of nonexistent_groups_els) {
+                    el.dataset.checked = "false";
+                }
+            }
+        }
+    }
+
     // Groups submit handler
     if(save_form) {
         save_form.submit.onclick = e => {
@@ -23,7 +42,8 @@ function userGroupMembershipPageScript() {
                     const param_name_split = param_name.split(";");
 
                     final_params.groups[param_name_split[1]] = raw_params[param_name];
-                } else {
+                } else if(param_name !== "all_nonexistent_groups") {
+                    // We skip the all_nonexistent_groups checkbox
                     final_params[param_name] = raw_params[param_name];
                 }
             }
@@ -33,6 +53,12 @@ function userGroupMembershipPageScript() {
 
             // Get the summary
             final_params.summary = ede.form.list["usergroupmembership-save"].summary.value;
+
+            // Check if summary was given
+            if(!final_params.summary) {
+                ede.form.showPopup("usergroupmembership-save", "summary", "Please, provide a summary");
+                return;
+            }
 
             // Disable the button
             e.target.classList.add("disabled");

@@ -458,6 +458,11 @@ a.ui-text[href]:focus:not(:hover),
     cursor: pointer;
 }
 
+/* TODO create a ui-margin-top */
+.ui-checkbox-1.margin-top {
+    margin-top: 15px;
+}
+
 .ui-checkbox-1.second-level {
     margin-left: 26px;
 }
