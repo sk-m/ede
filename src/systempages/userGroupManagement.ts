@@ -83,25 +83,11 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         if(!queried_group) {
             page_config.header_config = {
                 icon: "fas fa-users-cog",
-                title: "User Group Management",
-                description: "Please, select a group"
+                title: queried_group_name,
+                description: "Group not found"
             };
 
-            page_config.body_html = `\
-<form class="ui-form-box" name="usergroupmanagement-query">
-    ${ UI.constructFormBoxTitleBar("query", "Group query") }
-
-    <div class="ui-input-box">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Group name</div>
-        <input type="text" value="${ queried_group_name || "" }" name="group_name" data-handler="group_name" class="ui-input1">
-    </div>
-    <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query group</button>
-    </div>
-</form>
-
-<div class="ui-text">such group does not exist!</div>`;
+            page_config.body_html = `<div class="ui-text">Sorry, but such group does not exist.</div>`;
 
             resolve(page_config);
             return;

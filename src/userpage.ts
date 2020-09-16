@@ -91,7 +91,10 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
 <div input class="ui-checkbox-1${ is_modifiable ? "" : " disabled" }" name="group;${ group_name }" \
 data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-<div class="text">${ sysmsgs[`usergroup-${ group_name }-name`].does_exist ? sysmsgs[`usergroup-${ group_name }-name`].value : group_name }</div>
+<div class="text">\
+    ${ sysmsgs[`usergroup-${ group_name }-name`].does_exist ? sysmsgs[`usergroup-${ group_name }-name`].value : group_name }
+    <a class="ui-text small" style="margin-left: 3px" href="/System:UserGroupManagement/${ group_name }"><i class="fas fa-arrow-right"></i></a>
+</div>
 </div>`;
                 }
             }
@@ -106,7 +109,7 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
                         checkboxes_html += `\
 <div input class="ui-checkbox-1 margin-top${ client_can_modify_groups ? "" : " disabled" }" name="all_nonexistent_groups" data-checked="true">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-<div class="text">Groups that are no longer existent, but still assigned to the user (uncheck to remove all)</div>
+<div class="text">Groups that are no longer existent, but still assigned to the user (uncheck all)</div>
 </div>`;
 
                         nonexistent_groups_checkbox_included = true;
