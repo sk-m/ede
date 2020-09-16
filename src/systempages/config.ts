@@ -2,6 +2,7 @@ import fs from "fs";
 
 import * as User from "../user";
 import * as Page from "../page";
+import * as SystemMessages from "../system_message";
 import { ConfigItemsObject, ConfigItemAccessLevel } from "../config";
 import { registry_config } from "../registry";
 import { GroupsAndRightsObject } from "../right";
@@ -11,7 +12,8 @@ interface CategoriesConstructorResponse {
     categories: string[];
 }
 
-function constructCategoriesHTML(registry_config_snapshot: ConfigItemsObject, selected_category?: string): CategoriesConstructorResponse {
+function constructCategoriesHTML(registry_config_snapshot: ConfigItemsObject, system_messages: SystemMessages.SystemMessagesObject,
+selected_category?: string): CategoriesConstructorResponse {
     const added_categories: string[] = [];
     let result_html = "";
 
@@ -23,11 +25,14 @@ function constructCategoriesHTML(registry_config_snapshot: ConfigItemsObject, se
         if(!added_categories.includes(category_name)) {
             added_categories.push(category_name);
 
-            // TODO @sysmsg
+            // TODO @cleanup
+            const icon_class = system_messages[`edeconfig-category-${ category_name }-iconclass`].does_exist ?
+            system_messages[`edeconfig-category-${ category_name }-iconclass`].value : "fas fa-cog";
+
             result_html += `\
 <div class="category${ selected_category === category_name ? " selected" : "" }" data-name="${ category_name }">
-    <div class="icon"><i class="fas fa-cog"></i></div>
-    <div class="name">${ category_name }</div>
+    <div class="icon"><i class="${ icon_class }"></i></div>
+    <div class="name">${ system_messages[`edeconfig-category-${ category_name }-name`].value }</div>
 </div>`;
         }
     }
@@ -39,12 +44,13 @@ function constructCategoriesHTML(registry_config_snapshot: ConfigItemsObject, se
 }
 
 // TODO @cleanup
-function constructItemsHTML(category_name: string, registry_config_snapshot: ConfigItemsObject, client_can_alter: boolean, restricted_permits: string[]): string {
+function constructItemsHTML(category_name: string, registry_config_snapshot: ConfigItemsObject, client_can_alter: boolean,
+restricted_permits: string[], system_messages: SystemMessages.SystemMessagesObject): string {
     // TODO @sysmsg
     let result_html = `\
 <div class="category-intro">
-    <div class="name">Category name</div>
-    <div class="description">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris eu dolor vel sem finibus vehicula. Vivamus in arcu tristique, ultricies elit in, tristique orci. Aenean venenatis dictum elit, ut imperdiet sem fermentum lacinia. Ut sit amet dolor eget ligula cursus scelerisque nec non lectus. Aliquam a iaculis ipsum, vitae porta enim.</div>
+    <div class="name">${ system_messages[`edeconfig-category-${ category_name }-name`].value }</div>
+    <div class="description">${ system_messages[`edeconfig-category-${ category_name }-description`].value }</div>
 </div>
 `;
 
@@ -203,12 +209,31 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
         // Get the current config
         const registry_config_snapshot = registry_config.get();
 
+        // Get systemmessages
+        const sysmsgs_query: string[] = [];
+        const discovered_categories: string[] = [];
+
+        // tslint:disable-next-line: forin
+        for(const key in registry_config_snapshot) {
+            const cat_name = key.split(".", 2)[0];
+
+            if(!discovered_categories.includes(cat_name)) {
+                discovered_categories.push(cat_name);
+
+                sysmsgs_query.push(`edeconfig-category-${ cat_name }-name`);
+                sysmsgs_query.push(`edeconfig-category-${ cat_name }-description`);
+                sysmsgs_query.push(`edeconfig-category-${ cat_name }-iconclass`);
+            }
+        }
+
+        const sysmsgs = await SystemMessages.get(sysmsgs_query) as SystemMessages.SystemMessagesObject;
+
         let options_html = "";
-        const categories_response = constructCategoriesHTML(registry_config_snapshot, selected_category);
+        const categories_response = constructCategoriesHTML(registry_config_snapshot, sysmsgs, selected_category);
 
         for(const category of categories_response.categories) {
             options_html += `<div class="config-options${ selected_category === category ? " shown" : "" }" data-category="${ category }">\
-${ constructItemsHTML(category, registry_config_snapshot, client_can_alter, client_restricted_permits) }</div>`;
+${ constructItemsHTML(category, registry_config_snapshot, client_can_alter, client_restricted_permits, sysmsgs) }</div>`;
         }
 
         page.parsed_content = `\

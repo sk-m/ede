@@ -117,9 +117,9 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~19 rows (approximately)
+-- Dumping data for table ede_dev.system_messages: ~27 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
 	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
@@ -143,7 +143,13 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(19, 'usergroupmanagement-savetext', NULL, 'Don\'t forget the summary', '{}', b'0'),
 	(20, 'usergroupmembership-savetext', NULL, 'Don\'t forget the summary', '{}', b'0'),
 	(21, 'login-message-blocked', NULL, 'This account is currenly blocked, logging in is disallowed.<br><br>', '{}', b'0'),
-	(22, 'login-message-invalidcredentials', NULL, 'This combination of username and password is incorrect.', '{}', b'0');
+	(22, 'login-message-invalidcredentials', NULL, 'This combination of username and password is incorrect.', '{}', b'0'),
+	(23, 'edeconfig-category-instance-name', NULL, 'Instance', '{}', b'0'),
+	(24, 'edeconfig-category-instance-description', NULL, 'General instance configuration', '{}', b'0'),
+	(25, 'edeconfig-category-auth-name', NULL, 'Authentication', '{}', b'0'),
+	(26, 'edeconfig-category-auth-description', NULL, 'Authentication and security related configuration items', '{}', b'0'),
+	(27, 'edeconfig-category-auth-iconclass', NULL, 'fas fa-user-cog', '{}', b'0'),
+	(28, 'edeconfig-category-instance-iconclass', NULL, 'fas fa-server', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.users
