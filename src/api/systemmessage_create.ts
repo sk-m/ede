@@ -41,6 +41,6 @@ export async function systemmessageCreateRoute(req: any, res: any, client_user?:
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch(() => {
-        res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when creating a system message"));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when creating a system message"));
     });
 }

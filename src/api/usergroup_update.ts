@@ -100,7 +100,7 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     }
 
     if(!req.body.rights && req.body.right_arguments) {
-        res.status("403").send(apiResponse(ApiResponseStatus.invaliddata, "rights and/or right_arguments JSON objects must be provided"));
+        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "rights and/or right_arguments JSON objects must be provided"));
         return;
     }
 
@@ -126,7 +126,7 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch(() => {
-        res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when saving the group"));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when saving the group"));
         // TODO log this incident to file
         // TODO also might be nice to have a systempage with such incidents
     });

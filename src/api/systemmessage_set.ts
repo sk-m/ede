@@ -40,6 +40,6 @@ export async function systemmessageSetRoute(req: any, res: any, client_user?: Us
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch(() => {
-        res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when updating a system message"));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when updating a system message"));
     });
 }

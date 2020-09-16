@@ -34,7 +34,7 @@ export async function systemmessageDeleteRoute(req: any, res: any, client_user?:
     SystemMessage.get(req.body.name)
     .then((sysmsg: any) => {
         if(!sysmsg.is_deletable) {
-            res.status("403").send(apiResponse(ApiResponseStatus.invaliddata, "Requested system message is not deletable"));
+            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested system message is not deletable"));
         } else {
             SystemMessage.remove(req.body.name)
             .then(() => {
@@ -45,11 +45,11 @@ export async function systemmessageDeleteRoute(req: any, res: any, client_user?:
                 res.send(apiResponse(ApiResponseStatus.success));
             })
             .catch(() => {
-                res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when deleting a system message"));
+                res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when deleting a system message"));
             });
         }
     })
     .catch(() => {
-        res.status("403").send(apiResponse(ApiResponseStatus.invaliddata, "Requested system message does not exist"));
+        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested system message does not exist"));
     });
 }

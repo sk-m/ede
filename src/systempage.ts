@@ -90,7 +90,8 @@ ${ item[0] }</a>`;
                             // Element types
                             if(el.type === "heading") links_html += `<div class="heading">${ el.text }</div>`
                             else if(el.type === "spacer") links_html += `<div class="spacer${ el.invisible ? " invisible" : "" }"></div>`
-                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } href="${ (!el.disabled && el.href) || "#" }" class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
+                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } \
+                            ${ (!el.disabled && el.href) ? `href="${ el.href }"` : "" } class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
                         }
 
                         sidebar_html += `<div class="links">${ links_html }</div>`;

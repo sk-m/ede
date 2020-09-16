@@ -49,7 +49,7 @@ export async function createUserGroupRoute(req: any, res: any, client_user?: Use
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch(() => {
-        res.status("403").send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when creating a new user group"));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when creating a new user group"));
         // TODO log this incident to file
         // TODO also might be nice to have a systempage with such incidents
     });
