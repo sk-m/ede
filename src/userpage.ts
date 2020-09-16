@@ -125,10 +125,6 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
 
             // Page is ready
             resolve(`\
-<div id="usergroupmembership-result-status-container" class="ui-form-box hidden">
-<div class="ui-text"></div>
-</div>
-
 <form class="ui-form-box" name="usergroupmembership-groups">
 ${ UI.constructFormBoxTitleBar("groups", "Groups", "Select groups this user will be a member of. Keep in mind that there could be groups that you won't be able to remove after assigning them") }
 
@@ -196,10 +192,6 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
 
 
         resolve(`\
-<div id="blockuser-result-status-container" class="ui-form-box hidden">
-<div class="ui-text"></div>
-</div>
-
 <div class="ui-form-box no-title">
     <div class="ui-form-container ui-keyvalue-container">
         <div class="item">

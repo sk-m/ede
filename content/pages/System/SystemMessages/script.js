@@ -50,10 +50,11 @@ function SystemMessagesPageScript() {
         ede.apiCall("systemmessage/create", { name: systemmessage_name, value: new_value }, true)
         .then(() => {
             ede.refresh();
+
+            ede.showNotification("systemmessages-create-success", "Success", "Successfully created a new system message.");
         })
         .catch(response => {
-            // TODO error
-            console.log(response)
+            ede.showNotification("systemmessages-create-error", "Error", `Failed to create a new system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
         });
     }
 
@@ -97,10 +98,11 @@ function SystemMessagesPageScript() {
                     edit_form_el.classList.add("hidden");
 
                     item_el.querySelector(".current-value-container > .text").innerText = new_value;
+
+                    ede.showNotification("systemmessages-set-success", "Success", "Successfully updated a system message.");
                 })
                 .catch(response => {
-                    // TODO error
-                    console.log(response)
+                    ede.showNotification("systemmessages-set-error", "Error", `Failed to update a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
                 });
             }
 
@@ -120,10 +122,11 @@ function SystemMessagesPageScript() {
                         ede.apiCall("systemmessage/delete", { name: systemmessage_name }, true)
                         .then(() => {
                             item_el.remove();
+
+                            ede.showNotification("systemmessages-delete-success", "Success", "Successfully deleted a system message.");
                         })
                         .catch(response => {
-                            // TODO error
-                            console.log(response)
+                            ede.showNotification("systemmessages-delete-error", "Error", `Failed to delete a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
                         });
                     }
                 }

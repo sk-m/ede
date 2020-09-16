@@ -1,6 +1,5 @@
 function userBlockingPageScript() {
     const block_form = ede.form.list["blockuser-form"];
-    const result_status_container = document.getElementById("blockuser-result-status-container");
 
     // Disable submit on enter key
     window.addEventListener("keydown", e => {
@@ -75,22 +74,13 @@ function userBlockingPageScript() {
         // Block the user
         ede.apiCall("user/block", final_params, true)
         .then(() => {
-            result_status_container.querySelector(".ui-text").innerHTML = `\
-<div class="ui-text b">Success</div>
-<div class="ui-text small i">User blocked updated successfully</div>`;
+            // TODO implement quickrefresh (maybe)
+            ede.refresh();
 
-            result_status_container.classList.add("green");
-            result_status_container.classList.remove("red");
-
-            result_status_container.classList.remove("hidden");
+            ede.showNotification("userblock-success", "Error", "User blocked successfully.");
         })
         .catch(response => {
-            result_status_container.querySelector(".ui-text").innerHTML = `\
-<div class="ui-text b">Failed to block user <code>(${ response.status })</code></div>
-<div class="ui-text small i">${ response.error }</div>`;
-
-            result_status_container.classList.add("red");
-            result_status_container.classList.remove("hidden");
+            ede.showNotification("userblock-error", "Error", `Failed to block the user (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
             // Enable the button
             e.target.classList.remove("disabled");

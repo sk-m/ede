@@ -289,10 +289,6 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         // TODO "Main information" block should be moved to the systempage header box
         page_config.body_html = `\
 <form name="usergroupmanagement" data-onsubmit="test">
-    <div class="ui-form-box result-status-container hidden">
-        <div class="ui-text"></div>
-    </div>
-
     ${ sysmsgs["usergroupmanagement-toptext"].value !== "" ? `<div class="ui-text roboto margin-bottom">${ sysmsgs["usergroupmanagement-toptext"].value }</div>` : "" }
 
     <div class="ui-form-box">

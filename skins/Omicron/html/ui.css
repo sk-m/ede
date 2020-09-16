@@ -1440,3 +1440,79 @@ table.ui-table td {
 .ui-popup > .bottom > .buttons-container > .right {
     display: flex;
 }
+
+/* Notifications */
+@keyframes ui-notification-show {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0%);
+    }
+}
+
+.ui-notification {
+    min-width: 250px;
+    max-width: 360px;
+    width: 20vw;
+
+    margin-top: 10px;
+
+    font-family: "Roboto", sans-serif;
+
+    cursor: pointer;
+
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+
+    animation: ui-notification-show 0.25s ease-in-out;
+    animation-play-state: running;
+    transition: 0.15s;
+}
+
+.ui-notification:hover {
+    background-color: hsl(0, 0%, 99%);
+    transform: translateX(-5px);
+}
+
+.ui-notification > .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin: 13px 13px 7px 14px;
+}
+
+.ui-notification > .top > .title-container {
+    color: hsl(0, 0%, 12%);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.ui-notification > .top .status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 20px;
+    height: 20px;
+
+    background-color: rgba(12, 207, 0, 0.1);
+    color: var(--color-green);
+
+    border-radius: 50%;
+
+    font-size: 8px;
+}
+
+.ui-notification > .top .status.red {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-05);
+}
+
+.ui-notification > .middle {
+    margin: 7px 13px 13px 14px;
+    font-size: 14px;
+}

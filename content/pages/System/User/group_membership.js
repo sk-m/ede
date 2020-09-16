@@ -1,6 +1,5 @@
 function userGroupMembershipPageScript() {
     const save_form = ede.form.list["usergroupmembership-save"];
-    const result_status_container = document.getElementById("usergroupmembership-result-status-container");
 
     // Disable submit on enter key
     window.addEventListener("keydown", e => {
@@ -66,22 +65,13 @@ function userGroupMembershipPageScript() {
             // Update the group
             ede.apiCall("user/updategroups", final_params, true)
             .then(() => {
-                result_status_container.querySelector(".ui-text").innerHTML = `\
-    <div class="ui-text b">Success</div>
-    <div class="ui-text small i">User's groups updated successfully</div>`;
+                // TODO implement quickrefresh (maybe)
+                ede.refresh();
 
-                result_status_container.classList.add("green");
-                result_status_container.classList.remove("red");
-
-                result_status_container.classList.remove("hidden");
+                ede.showNotification("usergroupmembership-update-success", "Success", "Successfully updated user's groups.");
             })
             .catch(response => {
-                result_status_container.querySelector(".ui-text").innerHTML = `\
-    <div class="ui-text b">Failed to update user's groups <code>(${ response.status })</code></div>
-    <div class="ui-text small i">${ response.error }</div>`;
-
-                result_status_container.classList.add("red");
-                result_status_container.classList.remove("hidden");
+                ede.showNotification("usergroupmembership-update-error", "Error", `Failed to update user's groups (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
                 // Enable the button
                 e.target.classList.remove("disabled");

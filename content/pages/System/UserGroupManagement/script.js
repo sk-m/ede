@@ -57,10 +57,13 @@ function userGroupManagementPageScript() {
                 }, true)
                 .then(() => {
                     ede.navigate("/System:UserGroupManagement/" + create_form.new_group_name.value);
+
+                    ede.showNotification("usergroupmanagement-create-success", "Success", "Group successfully created.");
                 })
-                .catch(error => {
-                    // TODO show error
-                    console.log(error);
+                .catch(response => {
+                    console.log(response);
+
+                    ede.showNotification("usergroupmanagement-create-error", "Error", `Failed to create a new group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
                 });
             }
         }
@@ -79,16 +82,13 @@ function userGroupManagementPageScript() {
             .then(() => {
                 ede.closePopup();
                 ede.navigate("/System:UserGroupManagement");
+
+                ede.showNotification("usergroupmanagement-delete-success", "Success", "Group successfully deleted.");
             })
             .catch(response => {
                 ede.closePopup();
 
-                result_status_container.querySelector(".ui-text").innerHTML = `\
-<div class="ui-text b">Failed to delete the group <code>(${ response.status })</code></div>
-<div class="ui-text small i">${ response.error }</div>`;
-
-                result_status_container.classList.add("red");
-                result_status_container.classList.remove("hidden");
+                ede.showNotification("usergroupmanagement-delete-error", "Error", `Failed to delete the group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
             });
         };
 
@@ -113,9 +113,6 @@ function userGroupManagementPageScript() {
 
     // Get group's state before changes
     const before_params_raw = ede.form.getParams("usergroupmanagement");
-
-    // Result text container
-    const result_status_container = main_form._form.querySelector(".result-status-container");
 
     // On save
     main_form.submit.onclick = e => {
@@ -176,22 +173,10 @@ function userGroupManagementPageScript() {
             // Update the group
             ede.apiCall("usergroup/update", params_final, true)
             .then(() => {
-                result_status_container.querySelector(".ui-text").innerHTML = `\
-            <div class="ui-text b">Success</div>
-            <div class="ui-text small i">Group saved successfully</div>`;
-
-                result_status_container.classList.add("green");
-                result_status_container.classList.remove("red");
-
-                result_status_container.classList.remove("hidden");
+                ede.showNotification("usergroupmanagement-update-success", "Success", "Group saved successfully.");
             })
             .catch(response => {
-                result_status_container.querySelector(".ui-text").innerHTML = `\
-            <div class="ui-text b">Failed to save the group <code>(${ response.status })</code></div>
-            <div class="ui-text small i">${ response.error }</div>`;
-
-                result_status_container.classList.add("red");
-                result_status_container.classList.remove("hidden");
+                ede.showNotification("usergroupmanagement-update-error", "Error", `Failed to save the group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
                 // Enable the button
                 e.target.classList.remove("disabled");
