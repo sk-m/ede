@@ -77,7 +77,7 @@ function userBlockingPageScript() {
             // TODO implement quickrefresh (maybe)
             ede.refresh();
 
-            ede.showNotification("userblock-success", "Error", "User blocked successfully.");
+            ede.showNotification("userblock-success", "Success", "User blocked successfully.");
         })
         .catch(response => {
             ede.showNotification("userblock-error", "Error", `Failed to block the user (${ response.error || `<code>${ response.status }</code>` }).`, "error");

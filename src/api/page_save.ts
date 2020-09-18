@@ -13,16 +13,6 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
         return;
     }
 
-    if(!req.body.page_namespace || !req.body.page_name) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Page's namespace and name were not provided`));
-        return;
-    }
-
-    if(!req.body.page_content) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Content was not provided`));
-        return;
-    }
-
     // Check if namespace exists
     const registry_namespaces_snapshot = registry_namespaces.get();
     const clean_namespace_name = Util.sanitize(req.body.page_namespace);

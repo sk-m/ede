@@ -93,9 +93,20 @@ export async function RootRoute(req: any, res: any): Promise<void> {
 
     if(api_route_object) {
         if(api_route_object.method === req.raw.method) {
-            // Check if body was provided for POST requests
-            if(api_route_object.method === "POST" && !req.body) {
-                res.status(403).send(apiResponse(ApiResponseStatus.nopostbody, "No POST body provided"));
+            if(api_route_object.method === "POST") {
+                // Check if a body was provided
+                if(!req.body) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.nopostbody, "No POST body provided"));
+                    return;
+                }
+
+                // Check for required arguments
+                for(const required_arg of api_route_object.required_arguments) {
+                    if(!req.body.hasOwnProperty(required_arg)) {
+                        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Parameter '${ required_arg }' is required`));
+                        return;
+                    }
+                }
             }
 
             api_route_object.handler(req, res, client_user);
@@ -103,6 +114,6 @@ export async function RootRoute(req: any, res: any): Promise<void> {
             res.status(403).send(apiResponse(ApiResponseStatus.invalidrequestmethod, "Invalid request method (did you make a GET request, instead of POST?)"));
         }
     } else {
-        res.status(403).send(apiResponse(ApiResponseStatus.invalidroute, "That API route does not exist"));
+        res.status(403).send(apiResponse(ApiResponseStatus.invalidroute, "Requested API route does not exist"));
     }
 }
