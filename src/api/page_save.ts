@@ -33,12 +33,19 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     }
 
     let client_permissions_error = true;
+    let client_can_create_pages = false;
 
     // Check if client has the rights to update this page's content
     await User.getUserGroupRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
-        if(grouprights.rights.edit && grouprights.rights.edit.namespaces.includes(clean_namespace_name)) {
+        // Page editing
+        if(grouprights.rights.wiki_edit && grouprights.rights.wiki_edit.namespaces.includes(clean_namespace_name)) {
             client_permissions_error = false;
+        }
+
+        // Page creation
+        if(grouprights.rights.wiki_createpage && grouprights.rights.wiki_createpage.namespaces.includes(clean_namespace_name)) {
+            client_can_create_pages = true;
         }
     })
     .catch(() => undefined);
@@ -57,11 +64,18 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
         url_params: []
     }
 
-    Page.createRevision(page_address, req.body.page_content, client_user, req.body.summary || "")
+    Page.createRevision(page_address, req.body.page_content, client_user, req.body.summary || "", undefined, client_can_create_pages)
     .then(() => {
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch((error: any) => {
+        if(typeof error === "string") {
+            if(error === "page_not_found") {
+                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to create new pages in this namespace"));
+                return;
+            }
+        }
+
         // TODO save error to a log
         res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
     })

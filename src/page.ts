@@ -196,7 +196,18 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
     });
 }
 
-export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string, tags?: string[]): Promise<void> {
+/**
+ * Create a new revision (edit)
+ *
+ * @param page_address [[PageAddress]] object
+ * @param new_raw_content new raw content
+ * @param user user that created a revision
+ * @param summary a short summary
+ * @param tags tags for the revision
+ * @param allow_page_creation if true, will reject, if the target page does not exist. If false, will create that page
+ */
+export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string,
+    tags?: string[], allow_page_creation: boolean = false): Promise<void> {
     return new Promise(async (resolve: any, reject: any) => {
         // TODO @performance @cleanup yeah...
 
@@ -227,6 +238,11 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
         // Page does not exist, create it
         if(target_page_id === false) {
+            if(!allow_page_creation) {
+                reject("page_not_found");
+                return;
+            }
+
             page_created = true;
 
             target_page_id = await new Promise((resolve_new_page: any) => {

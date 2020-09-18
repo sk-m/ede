@@ -154,8 +154,8 @@ export const registry_hooks = new RegistryContainer<HooksObject>("ede", undefine
 
 export const registry_usergroups = new RegistryContainer<GroupsObject>("ede", User.getAllUserGroups, {});
 export const registry_rights = new RegistryContainer<{ [right_name: string]: Right }>("ede", undefined, {
-    edit: {
-        name: "edit",
+    wiki_edit: {
+        name: "wiki_edit",
         risk_text: "",
 
         source: "ede",
@@ -170,8 +170,8 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
         }
     },
     // TODO @placeholder
-    createpage: {
-        name: "createpage",
+    wiki_createpage: {
+        name: "wiki_createpage",
         risk_text: "",
 
         source: "ede",
