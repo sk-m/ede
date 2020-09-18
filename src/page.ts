@@ -213,6 +213,7 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
         const created_on = Math.floor(new Date().getTime() / 1000);
 
         // Check if the page exisists
+        let page_created = false;
         let target_page_id = await new Promise((resolve_page: any) => {
             sql.query(`SELECT id FROM \`wiki_pages\` WHERE \`namespace\` = '${ clean_namespace }' AND \`name\` = '${ clean_name }'`,
             (error: any, results: any) => {
@@ -226,6 +227,8 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
         // Page does not exist, create it
         if(target_page_id === false) {
+            page_created = true;
+
             target_page_id = await new Promise((resolve_new_page: any) => {
                 sql.query(`INSERT INTO \`wiki_pages\` (\`namespace\`, \`name\`, \`revision\`, \`page_info\`, \`action_restrictions\`) \
                 VALUES ('${ clean_namespace }', '${ clean_name }', NULL, '{}', '{}')`, (error: any, results: any) => {
@@ -244,13 +247,15 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
             return;
         }
 
+        const bytes_change_str = page_created ? content_size : `${ content_size } - @last_rev_size`;
+
         // Create a new revision and update the page
         // TODO @cleanup there is probably a better way to do this
         sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ${ target_page_id } \
 ORDER BY id DESC LIMIT 1); \
 INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \
 \`bytes_change\`) VALUES (${ target_page_id }, ${ user.id }, '${ clean_content }', '${ shasum.digest("hex") }', \
-'${ Util.sanitize(summary) }', ${ created_on }, ${ content_size },${ content_size }- @last_rev_size); \
+'${ Util.sanitize(summary) }', ${ created_on }, ${ content_size }, ${ bytes_change_str }); \
 UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ${ target_page_id }`,
 (error: any) => {
             if(!error) {

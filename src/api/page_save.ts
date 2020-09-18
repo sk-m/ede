@@ -62,6 +62,7 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
         res.send(apiResponse(ApiResponseStatus.success));
     })
     .catch((error: any) => {
+        // TODO save error to a log
         res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
     })
 }
