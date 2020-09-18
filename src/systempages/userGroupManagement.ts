@@ -23,8 +23,8 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         }
 
         // Load css and js files for this system page
-        const page_css = fs.readFileSync("./content/pages/System/UserGroupManagement/styles.css", "utf8");
-        const page_js = fs.readFileSync("./content/pages/System/UserGroupManagement/script.js", "utf8");
+        const page_css = fs.readFileSync("./static/UserGroupManagement/styles.css", "utf8");
+        const page_js = fs.readFileSync("./static/UserGroupManagement/script.js", "utf8");
 
         page.additional_css = [page_css];
         page.additional_js = [page_js];

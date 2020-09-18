@@ -59,8 +59,8 @@ async function constructSystemPagesListHTML(): Promise<string> {
 export async function dashboard(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
         // Load css and js files for this system page
-        const page_css = fs.readFileSync("./content/pages/System/Dashboard/styles.css", "utf8");
-        const page_js = fs.readFileSync("./content/pages/System/Dashboard/script.js", "utf8");
+        const page_css = fs.readFileSync("./static/Dashboard/styles.css", "utf8");
+        const page_js = fs.readFileSync("./static/Dashboard/script.js", "utf8");
 
         page.additional_css = [page_css];
         page.additional_js = [page_js];

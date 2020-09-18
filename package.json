@@ -40,7 +40,7 @@
     "start": "node ./build/src/server.js",
     "lint": "tslint --project .",
     "docs": "typedoc --mode modules --excludeNotExported --excludeExternals --readme none --ignoreCompilerErrors --out docs src",
-    "build-win": "tsc && xcopy /E /I content build\\content && xcopy /E /I skins build\\skins && xcopy /E /I lib build\\lib",
+    "build-win": "tsc && xcopy /E /I static build\\static && xcopy /E /I skins build\\skins && xcopy /E /I lib build\\lib",
     "build-src": "tsc"
   }
 }

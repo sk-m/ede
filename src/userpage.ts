@@ -394,7 +394,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
 
             switch(address.url_params[1]) {
                 case "groups": {
-                    const page_js = fs.readFileSync("./content/pages/System/User/group_membership.js", "utf8");
+                    const page_js = fs.readFileSync("./static/User/group_membership.js", "utf8");
 
                     page_config.page.additional_js = [page_js];
 
@@ -406,7 +406,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
                     page_config.body_html = rename_page(queried_user, client, client_groups || undefined);
                 } break;
                 case "block": {
-                    const page_js = fs.readFileSync("./content/pages/System/User/block.js", "utf8");
+                    const page_js = fs.readFileSync("./static/User/block.js", "utf8");
 
                     page_config.page.additional_js = [page_js];
 

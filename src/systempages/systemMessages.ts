@@ -18,8 +18,8 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
         }
 
         // Load css and js files for this system page
-        const page_css = fs.readFileSync("./content/pages/System/SystemMessages/styles.css", "utf8");
-        const page_js = fs.readFileSync("./content/pages/System/SystemMessages/script.js", "utf8");
+        const page_css = fs.readFileSync("./static/SystemMessages/styles.css", "utf8");
+        const page_js = fs.readFileSync("./static/SystemMessages/script.js", "utf8");
 
         page.additional_css = [page_css];
         page.additional_js = [page_js];
