@@ -8,7 +8,23 @@ export interface ApiRoute {
     name: string;
     method: "GET" | "POST";
 
+    description: string;
+
+    required_arguments: string[];
+    required_rights: string[];
+
+    arguments?: { [argument_name: string]: ApiArgument };
+
     handler: (req: any, res: any, client?: User.User) => void;
+}
+
+export interface ApiArgument {
+    name: string;
+    display_name: string;
+    description?: string;
+
+    // ex. 'boolean', 'number', 'string', etc.
+    type: string;
 }
 
 export enum ApiResponseStatus {

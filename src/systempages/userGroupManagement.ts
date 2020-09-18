@@ -9,6 +9,7 @@ import { registry_usergroups, registry_rights } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 
+// TODO add summary field for create and delete actions
 export async function userGroupManagement(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
         const queried_group_name = page.address.url_params[1];

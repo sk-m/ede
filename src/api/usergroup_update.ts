@@ -121,7 +121,7 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         // Log the update
         // TODO more detailed log message
         Log.createEntry("groupupdate", client_user.id, req.body.group_name,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`, Util.sanitize(req.body.summary));
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`, Util.sanitize(req.body.summary || ""));
 
         res.send(apiResponse(ApiResponseStatus.success));
     })

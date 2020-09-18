@@ -34,6 +34,7 @@ export async function systemmessageSetRoute(req: any, res: any, client_user?: Us
     SystemMessage.set(req.body.name, req.body.value)
     .then(() => {
         // TODO add summary
+        // TODO sanitize the value?
         Log.createEntry("updatesystemmessage", client_user.id, req.body.name,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> updated <a href="/System:SystemMessages/${ req.body.name }">${ req.body.name }</a> system message. Set to "<code>${ req.body.value }</code>"`, "");
 

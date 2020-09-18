@@ -336,9 +336,23 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
 
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
     // TODO rename to page/get
-    "get/page": {
-        name: "get/page",
+    "page/get": {
+        name: "page/get",
         method: "GET",
+
+        description: "Get page's parsed and ready to serve content",
+
+        required_arguments: ["title"],
+        required_rights: [],
+
+        arguments: {
+            title: {
+                name: "title",
+                display_name: "Page title",
+
+                type: "string"
+            }
+        },
 
         handler: getPageRoute
     },
@@ -346,11 +360,82 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         name: "page/save",
         method: "POST",
 
+        description: "Save thae page, creating a new revision",
+
+        required_arguments: ["page_namespace", "page_name", "page_content", "csrf_token"],
+        required_rights: ["wiki_edit", "?wiki_createpage"],
+
+        arguments: {
+            page_namespace: {
+                name: "page_namespace",
+                display_name: "Page namespace",
+                description: "Namespace of the target page (use with <code>page_name</code>)",
+
+                type: "string"
+            },
+            page_name: {
+                name: "page_name",
+                display_name: "Page name",
+                description: "Name of the target page, without the namespace part (use with <code>page_namespace</code>)",
+
+                type: "string"
+            },
+            page_content: {
+                name: "page_content",
+                display_name: "New content",
+                description: "Raw wikitext content",
+
+                type: "string"
+            },
+            summary: {
+                name: "summary",
+                display_name: "Summary",
+
+                type: "string"
+            }
+        },
+
         handler: pageSaveRoute
     },
     "usergroup/update": {
         name: "usergroup/update",
         method: "POST",
+
+        description: "Update a usergroup",
+
+        required_arguments: ["group_name", "rights", "right_arguments", "csrf_token"],
+        required_rights: ["modifyusergroups"],
+
+        arguments: {
+            group_name: {
+                name: "group_name",
+                display_name: "Group name",
+                description: "Internal name of the target group",
+
+                type: "string"
+            },
+            rights: {
+                name: "rights",
+                display_name: "Assigned rights",
+                description: "Object, where the key is the name of the right and the value is a boolean, indicating, whether or not the \
+right is assigned to the group",
+
+                type: "object"
+            },
+            right_arguments: {
+                name: "right_arguments",
+                display_name: "Right arguments",
+                description: "Object, where the key is the name of the right argument and the value is it's value",
+
+                type: "object"
+            },
+            summary: {
+                name: "summary",
+                display_name: "Summary",
+
+                type: "string"
+            }
+        },
 
         handler: updateUserGroupRoute
     },
@@ -358,11 +443,41 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         name: "usergroup/create",
         method: "POST",
 
+        description: "Create a new usergroup",
+
+        required_arguments: ["new_group_name", "csrf_token"],
+        required_rights: ["modifyusergroups"],
+
+        arguments: {
+            new_group_name: {
+                name: "new_group_name",
+                display_name: "Group name",
+                description: "Name of the new group",
+
+                type: "string"
+            }
+        },
+
         handler: createUserGroupRoute
     },
     "usergroup/delete": {
         name: "usergroup/delete",
         method: "POST",
+
+        description: "Delete a usergroup",
+
+        required_arguments: ["group_name", "csrf_token"],
+        required_rights: ["modifyusergroups"],
+
+        arguments: {
+            group_name: {
+                name: "group_name",
+                display_name: "Group name",
+                description: "Name of the group to be deleted",
+
+                type: "string"
+            }
+        },
 
         handler: deleteUserGroupRoute
     },
@@ -370,11 +485,46 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         name: "user/updategroups",
         method: "POST",
 
+        description: "Update user's assigned groups",
+
+        required_arguments: ["username", "groups", "csrf_token"],
+        required_rights: ["modifyusergroupmembership"],
+
+        arguments: {
+            username: {
+                name: "username",
+                display_name: "Username",
+                description: "Username of the target user",
+
+                type: "string"
+            },
+            groups: {
+                name: "groups",
+                display_name: "Groups",
+                description: "Object, where the key is the internal name of the group and the value is a boolean, indicating, whether or \
+not it is assigned to the user",
+
+                type: "object"
+            },
+            summary: {
+                name: "summary",
+                display_name: "Summary",
+
+                type: "string"
+            }
+        },
+
         handler: updateUserGroupMembershipRoute
     },
     "config/setitem": {
         name: "config/setitem",
         method: "POST",
+
+        description: "Set a config item",
+
+        required_arguments: ["csrf_token"],
+        required_rights: ["modifyconfig"],
+
 
         handler: configSetItemRoute
     },
@@ -382,11 +532,46 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         name: "config/resetitem",
         method: "POST",
 
+        description: "Reset a config item to it's default value",
+
+        required_arguments: ["key", "csrf_token"],
+        required_rights: ["modifyconfig"],
+
+        arguments: {
+            key: {
+                name: "key",
+                display_name: "Config item key",
+                description: "Key of the item to be reset to it's default value",
+
+                type: "string"
+            },
+        },
+
         handler: configResetItemRoute
     },
     "systemmessage/set": {
         name: "systemmessage/set",
         method: "POST",
+
+        description: "Set a new value for a System Message",
+
+        required_arguments: ["name", "value", "csrf_token"],
+        required_rights: ["editsystemmessages"],
+
+        arguments: {
+            name: {
+                name: "name",
+                display_name: "System message name",
+
+                type: "string"
+            },
+            value: {
+                name: "value",
+                display_name: "New value",
+
+                type: "string"
+            },
+        },
 
         handler: systemmessageSetRoute
     },
@@ -394,17 +579,80 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         name: "systemmessage/create",
         method: "POST",
 
+        description: "Create a new System Message with a value",
+
+        required_arguments: ["name", "value", "csrf_token"],
+        required_rights: ["editsystemmessages"],
+
+        arguments: {
+            name: {
+                name: "name",
+                display_name: "System message name",
+
+                type: "string"
+            },
+            value: {
+                name: "value",
+                display_name: "Value",
+
+                type: "string"
+            },
+        },
+
         handler: systemmessageCreateRoute
     },
     "systemmessage/delete": {
         name: "systemmessage/delete",
         method: "POST",
 
+        description: "Delete a System Message",
+
+        required_arguments: ["name", "csrf_token"],
+        required_rights: ["editsystemmessages"],
+
+        arguments: {
+            name: {
+                name: "name",
+                display_name: "System message name",
+
+                type: "string"
+            },
+        },
+
         handler: systemmessageDeleteRoute
     },
     "user/block": {
         name: "user/block",
         method: "POST",
+
+        description: "Block a user",
+
+        required_arguments: ["username", "restrictions", "csrf_token"],
+        required_rights: ["editsystemmessages"],
+
+        arguments: {
+            username: {
+                name: "username",
+                display_name: "Username",
+                description: "Target user's username",
+
+                type: "string"
+            },
+            restrictions: {
+                name: "restrictions",
+                display_name: "Restrictions",
+                description: "Object, where the key is the name of the restriction and the value is a boolean, indicating, whether or \
+not it is enabled",
+
+                type: "object"
+            },
+            summary: {
+                name: "summary",
+                display_name: "Summary",
+
+                type: "string"
+            }
+        },
 
         handler: blockUserRoute
     }
