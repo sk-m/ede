@@ -12,6 +12,10 @@
     transition: all 0s, opacity 0.33s, margin 0.1s;
 }
 
+.ui-form-box.margin-top {
+    margin-top: 15px;
+}
+
 .ui-form-box.collapsed > div {
     display: none !important;
 }

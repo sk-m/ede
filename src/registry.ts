@@ -24,6 +24,7 @@ import { systemmessageSetRoute } from "./api/systemmessage_set";
 import { systemmessageCreateRoute } from "./api/systemmessage_create";
 import { systemmessageDeleteRoute } from "./api/systemmessage_delete";
 import { deleteUserGroupRoute } from "./api/usergroup_delete";
+import { pageSaveRoute } from "./api/page_save";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -153,6 +154,37 @@ export const registry_hooks = new RegistryContainer<HooksObject>("ede", undefine
 
 export const registry_usergroups = new RegistryContainer<GroupsObject>("ede", User.getAllUserGroups, {});
 export const registry_rights = new RegistryContainer<{ [right_name: string]: Right }>("ede", undefined, {
+    edit: {
+        name: "edit",
+        risk_text: "",
+
+        source: "ede",
+
+        arguments: {
+            namespaces: {
+                type: ["array"],
+                description: "Allow editing pages in these namespaces",
+
+                default_value: "",
+            },
+        }
+    },
+    // TODO @placeholder
+    createpage: {
+        name: "createpage",
+        risk_text: "",
+
+        source: "ede",
+
+        arguments: {
+            namespaces: {
+                type: ["array"],
+                description: "Allow creating new pages in these namespaces",
+
+                default_value: "",
+            },
+        }
+    },
     modifyusergroupmembership: {
         name: "modifyusergroupmembership",
         risk_text: "Dangerous",
@@ -303,11 +335,18 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
 });
 
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
+    // TODO rename to page/get
     "get/page": {
         name: "get/page",
         method: "GET",
 
         handler: getPageRoute
+    },
+    "page/save": {
+        name: "page/save",
+        method: "POST",
+
+        handler: pageSaveRoute
     },
     "usergroup/update": {
         name: "usergroup/update",

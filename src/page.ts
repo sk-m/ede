@@ -1,4 +1,4 @@
-import fs from "fs";
+import crypto from "crypto";
 
 import { sql } from "./server";
 import * as Util from "./utils";
@@ -196,43 +196,91 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
     });
 }
 
-/**
- * Get info about a page from the database
- *
- * @returns resolves [[PageInfoItemsObject]] on success, rejects [[ErrorCode]] on error
- */
-export async function getDBInfo(address: PageAddress): Promise<PageInfoItemsObject> {
-    return new Promise((resolve: any, reject: any) => {
-        sql.query(`SELECT \`page_info\` FROM pages WHERE \`namespace\` = '${ Util.sanitize(address.namespace) }' \
-AND \`name\` = '${ Util.sanitize(address.name) }'`, (_: any, results: any) => {
-            // Page's page_info
-            // TODO values for params should be cast just like in cofig.ts
-            // TODO @draft
-            if(results[0] && results[0].page_info) {
-                resolve(results[0].page_info);
+export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string, tags?: string[]): Promise<void> {
+    return new Promise(async (resolve: any, reject: any) => {
+        // TODO @performance @cleanup yeah...
+
+        const clean_namespace = Util.sanitize(page_address.namespace);
+        const clean_name = Util.sanitize(page_address.name);
+        const clean_content = Util.sanitize(new_raw_content);
+        const content_size = clean_content.length;
+
+        // Create a content hash
+        const shasum = crypto.createHash("sha1");
+        shasum.update(clean_content);
+
+        // Create a timestamp
+        const created_on = Math.floor(new Date().getTime() / 1000);
+
+        // Check if the page exisists
+        let target_page_id = await new Promise((resolve_page: any) => {
+            sql.query(`SELECT id FROM \`wiki_pages\` WHERE \`namespace\` = '${ clean_namespace }' AND \`name\` = '${ clean_name }'`,
+            (error: any, results: any) => {
+                if(!error && results[0]) {
+                    resolve_page(results[0].id);
+                } else {
+                    resolve_page(false);
+                }
+            });
+        });
+
+        // Page does not exist, create it
+        if(target_page_id === false) {
+            target_page_id = await new Promise((resolve_new_page: any) => {
+                sql.query(`INSERT INTO \`wiki_pages\` (\`namespace\`, \`name\`, \`revision\`, \`page_info\`, \`action_restrictions\`) \
+                VALUES ('${ clean_namespace }', '${ clean_name }', NULL, '{}', '{}')`, (error: any, results: any) => {
+                    if(!error && results.insertId) {
+                        resolve_new_page(results.insertId);
+                    } else {
+                        resolve_new_page(error);
+                    }
+                });
+            });
+        }
+
+        // We could not create the page
+        if(target_page_id instanceof Error) {
+            reject(target_page_id);
+            return;
+        }
+
+        // Create a new revision and update the page
+        // TODO @cleanup there is probably a better way to do this
+        sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ${ target_page_id } \
+ORDER BY id DESC LIMIT 1); \
+INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \
+\`bytes_change\`) VALUES (${ target_page_id }, ${ user.id }, '${ clean_content }', '${ shasum.digest("hex") }', \
+'${ Util.sanitize(summary) }', ${ created_on }, ${ content_size },${ content_size }- @last_rev_size); \
+UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ${ target_page_id }`,
+(error: any) => {
+            if(!error) {
+                resolve();
             } else {
-                // TODO we should have descriptive error messages
-                reject("page_not_found");
+                reject(error);
             }
         });
     });
 }
 
 /**
- * Get raw page contents
- *
- * @param address
- * @param skip_db_info Do not query information about this page from the database
+ * Get raw page content
  */
-// TODO @refactor
-// TODO maybe we should be able to request a page using a stirng address like `System:Login/styles.css`
-// TODO do we readlly need this function to be this big? Definitely need to refactor
-export async function getRaw(address: PageAddress, skip_db_info: boolean = false): Promise<ResponsePage> {
+export async function getRaw(namespace: string, name: string): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
         const time_start = process.hrtime();
 
+        const clean_namespace = Util.sanitize(namespace);
+        const clean_name = Util.sanitize(name);
+
         const page: ResponsePage = {
-            address,
+            address: {
+                namespace: clean_namespace,
+                name: clean_name,
+
+                raw_url: "",
+                query: [],
+                url_params: []
+            },
 
             additional_css: [],
             additional_js: [],
@@ -243,64 +291,19 @@ export async function getRaw(address: PageAddress, skip_db_info: boolean = false
             status: []
         };
 
-        // Get the info from the database
-        if(!skip_db_info) {
-            await getDBInfo(address)
-            .then((page_info: PageInfoItemsObject) => {
-                page.info = page_info;
-            })
-            .catch(() => {
-                page.info = {};
-            });
-        }
+        // Get the page
+        const query = `
+SET @revid = (SELECT \`revision\` FROM \`wiki_pages\` WHERE \`namespace\` = '${ clean_namespace }' AND \`name\` = '${ clean_name }' LIMIT 1); \
+SELECT \`content\` FROM \`revisions\` WHERE id = @revid;`;
 
-        let path_name;
-        let code_page_lang = "none";
-
-        const last_param = address.url_params[address.url_params.length - 1];
-
-        const name_dot_pos = address.name.indexOf(".");
-        const params_dot_pos = last_param.indexOf(".");
-
-        if(name_dot_pos > -1 || params_dot_pos > -1) {
-            // Requesting a .css, .js, or .json content
-            // We don't have to worry about multiple dots in a name becase styles.css, script.js,
-            // content.html etc. all have only one dot, if the requested page has more than one dot, than it's
-            // not an html, css, js or json page
-
-            let format: string = "";
-
-            if(name_dot_pos > -1) {
-                format = address.name.substr(name_dot_pos);
-                path_name = `${ address.name }/${ address.name.replace(/&#47;/g, "/") }`;
-            } else if(params_dot_pos > -1) {
-                format = last_param.substr(params_dot_pos);
-                path_name = `${ address.name }/${ last_param.replace(/&#47;/g, "/") }`;
-            }
-
-            if( format !== "" &&
-                (format === ".html" || format === ".css" ||
-                format === ".js" || format === ".json")
-            ) {
-                code_page_lang = format.substring(1);
-            } else {
-                path_name = `${ address.name }/content.html`;
-            }
-        } else {
-            path_name = `${ address.name }/content.html`;
-        }
-
-        const full_address = `./content/pages/${ address.namespace }/${ path_name }`;
-
-        fs.readFile(full_address, "utf8",
-        async (error: any, data?: string) => {
+        sql.query(query, (error: any, results: any) => {
             // Page was not found
-            if(error) {
+            if(error || !results[1][0]) {
                 page.status.push("page_not_found");
             } else {
-                page.page_lang = code_page_lang;
+                const db_page = results[1][0];
 
-                page.raw_content = data;
+                page.raw_content = db_page.content;
             }
 
             page.access_time_ms = process.hrtime(time_start)[1] / 1000000;
@@ -314,9 +317,8 @@ export async function getRaw(address: PageAddress, skip_db_info: boolean = false
  * Get page (rendered and ready to be served to the client)
  *
  * @param address [[PageAddress]] object
- * @param skip_db_info Do not query information about this page from the database
  */
-export async function get(address: PageAddress, client: User.User, skip_db_info: boolean = false): Promise<ResponsePage> {
+export async function get(address: PageAddress, client: User.User): Promise<ResponsePage> {
     return new Promise((resolve: any) => {
         // Get the namespace handler
         const namespace = registry_namespaces.get()[address.namespace] as Namespace;
@@ -360,13 +362,13 @@ ${ address.name }`;
         // Namespace handler is available
         if(namespace && namespace.handler) {
             namespace.handler(address, client)
-            .then(async (page: ResponsePage) => {
+            .then((page: ResponsePage) => {
                 resolve(page);
                 return;
             });
         } else {
             // Main / nonexistent namespace
-            getRaw(address, skip_db_info)
+            getRaw(address.namespace, address.name)
             .then(async (page: ResponsePage) => {
                 resolve(await commonHandler(page));
             });

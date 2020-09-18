@@ -21,6 +21,7 @@ import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
 import { userNamespaceHandler } from "./userpage";
+import { getEditorRoute } from "./editor";
 
 // Fastify app
 const app: any = fastify();
@@ -40,6 +41,7 @@ const server_port: number =
 // Connect to the database
 export const sql: any = mysql.createConnection({
     trace: false,
+    multipleStatements: true,
     // debug: true,
 
     host: SECRETS["database.host"],
@@ -102,6 +104,7 @@ async function serverInit(db_error: Error): Promise<void> {
     app.post("/api*", Api.RootRoute);
     app.post("/api/auth/join", joinRoute);
     app.post("/api/auth/login", loginRoute);
+    app.get("/api/get_editor_html", getEditorRoute);
 
     // Start the fastify server
     app.listen(server_port, "0.0.0.0", (fastify_error: Error, address: string) => {

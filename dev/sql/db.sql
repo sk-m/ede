@@ -88,24 +88,29 @@ INSERT INTO `namespaces` (`id`, `name`, `action_restrictions`, `namespace_info`,
 	(3, 'User', '{}', '{}', b'0');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.pages
-CREATE TABLE IF NOT EXISTS `pages` (
-  `id` int(10) unsigned NOT NULL DEFAULT '0',
-  `namespace` varchar(64) NOT NULL,
-  `name` tinytext NOT NULL,
-  `page_info` json NOT NULL,
-  `action_restrictions` json NOT NULL,
+-- Dumping structure for table ede_dev.revisions
+CREATE TABLE IF NOT EXISTS `revisions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `page` int(10) unsigned DEFAULT NULL,
+  `user` int(10) unsigned DEFAULT NULL,
+  `content` mediumtext NOT NULL,
+  `content_hash` varchar(50) NOT NULL,
+  `summary` varchar(1024) DEFAULT NULL,
+  `visibility` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `tags` varchar(512) NOT NULL DEFAULT '',
+  `timestamp` int(10) unsigned NOT NULL,
+  `bytes_size` int(10) NOT NULL,
+  `bytes_change` int(10) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `page_namespace` (`namespace`),
-  CONSTRAINT `page_namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  KEY `revision_user` (`user`),
+  KEY `revision_page` (`page`),
+  CONSTRAINT `revision_page` FOREIGN KEY (`page`) REFERENCES `wiki_pages` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `revision_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
 
--- Dumping data for table ede_dev.pages: ~2 rows (approximately)
-/*!40000 ALTER TABLE `pages` DISABLE KEYS */;
-INSERT INTO `pages` (`id`, `namespace`, `name`, `page_info`, `action_restrictions`) VALUES
-	(1, 'Main', 'Test', '{}', '{}'),
-	(2, 'System', 'Login', '{"hidetitle": {"value": true, "source": "ede", "value_type": "boolean", "display_name": "Hidden title bar"}}', '{}');
-/*!40000 ALTER TABLE `pages` ENABLE KEYS */;
+-- Dumping data for table ede_dev.revisions: ~0 rows (approximately)
+/*!40000 ALTER TABLE `revisions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `revisions` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.system_messages
 CREATE TABLE IF NOT EXISTS `system_messages` (
@@ -117,9 +122,9 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~27 rows (approximately)
+-- Dumping data for table ede_dev.system_messages: ~26 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
 	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
@@ -222,6 +227,25 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 -- Dumping data for table ede_dev.user_sessions: ~0 rows (approximately)
 /*!40000 ALTER TABLE `user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
+
+-- Dumping structure for table ede_dev.wiki_pages
+CREATE TABLE IF NOT EXISTS `wiki_pages` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `namespace` varchar(64) NOT NULL,
+  `name` tinytext NOT NULL,
+  `revision` bigint(20) unsigned DEFAULT NULL,
+  `page_info` json NOT NULL,
+  `action_restrictions` json NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `revision` (`revision`),
+  KEY `page_namespace` (`namespace`),
+  CONSTRAINT `page_namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `page_revision` FOREIGN KEY (`revision`) REFERENCES `revisions` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+
+-- Dumping data for table ede_dev.wiki_pages: ~0 rows (approximately)
+/*!40000 ALTER TABLE `wiki_pages` DISABLE KEYS */;
+/*!40000 ALTER TABLE `wiki_pages` ENABLE KEYS */;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;

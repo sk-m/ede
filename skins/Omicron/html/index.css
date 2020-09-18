@@ -376,6 +376,10 @@
     transition: color 0.2s;
 }
 
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button.hidden {
+    display: none;
+}
+
 #ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button:hover {
     color: hsl(0, 0%, 5%);
 }
@@ -427,6 +431,25 @@
 
 #ede-page-content {
     font-size: 14px;
+}
+
+#ede-page-content.inactive {
+    display: none;
+}
+
+#ede-page-editor-root {
+    display: none;
+}
+
+#ede-page-editor-root.active {
+    display: block;
+}
+
+#ede-page-editor-root > .editor-main .editor-textarea {
+    height: 350px;
+    min-height: 200px;
+
+    resize: vertical;
 }
 
 #ede-popups-container {
