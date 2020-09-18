@@ -1,6 +1,6 @@
 import * as User from "../user";
 import * as Log from "../log";
-import { registry_usergroups } from "../registry";
+import { registry_config, registry_usergroups } from "../registry";
 import { GroupsAndRightsObject } from "../right";
 import { apiResponse, ApiResponseStatus } from "../api";
 
@@ -34,6 +34,15 @@ export async function deleteUserGroupRoute(req: any, res: any, client_user?: Use
     // Check if the group exsists
     if(!registry_usergroups.get()[req.body.group_name]) {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Group with such name does not exist"));
+        return;
+    }
+
+    // Check if group is protected
+    const registry_config_snapshot = registry_config.get();
+
+    if(registry_config_snapshot["security.protected_groups"].value instanceof Array
+    && registry_config_snapshot["security.protected_groups"].value.includes(req.body.group_name)) {
+        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "This group is protected and can not be deleted"));
         return;
     }
 

@@ -1,7 +1,7 @@
 import * as User from "../user";
 import * as Log from "../log";
 import * as Util from "../utils";
-import { registry_usergroups } from "../registry";
+import { registry_config, registry_usergroups } from "../registry";
 import { Group, GroupsAndRightsObject } from "../right";
 import { apiResponse, ApiResponseStatus } from "../api";
 
@@ -43,6 +43,8 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
 
     const current_usergroup = registry_usergroups.get()[req.body.group_name];
 
+    const registry_config_snapshot = registry_config.get();
+
     // Rights
     if(req.body.rights) {
         let rights_obj;
@@ -54,7 +56,15 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
             return;
         }
 
+        // tslint:disable-next-line: forin
         for(const right_name in rights_obj) {
+            // Check if the right is restricted
+            if(registry_config_snapshot["security.restricted_rights"].value instanceof Array
+            && registry_config_snapshot["security.restricted_rights"].value.includes(right_name)) {
+                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
+                return;
+            }
+
             // Right removed from group
             if(rights_obj[right_name] === false && current_usergroup.added_rights.includes(right_name)) {
                 current_usergroup.added_rights.splice(current_usergroup.added_rights.indexOf(right_name), 1);
@@ -97,11 +107,6 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
                 }
             }
         }
-    }
-
-    if(!req.body.rights && req.body.right_arguments) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "rights and/or right_arguments JSON objects must be provided"));
-        return;
     }
 
     // New usergroup object

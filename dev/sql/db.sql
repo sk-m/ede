@@ -44,9 +44,11 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(5, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'01'),
 	(6, 'auth.password_hash_iterations', NULL, 'int', NULL, '50000', NULL, NULL, 'Number of iterations to execute on the password', 'ede', b'01'),
 	(7, 'auth.password_hash_keylen', NULL, 'int', NULL, '256', NULL, NULL, 'Key length for the password', 'ede', b'01'),
-	(8, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'10'),
+	(8, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'11'),
 	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'01'),
-	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'01');
+	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'01'),
+	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'01'),
+	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'01');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.logs
@@ -80,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
   KEY `NOT_EDITABLE` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.namespaces: ~2 rows (approximately)
+-- Dumping data for table ede_dev.namespaces: ~3 rows (approximately)
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
 INSERT INTO `namespaces` (`id`, `name`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
 	(1, 'System', '{}', '{}', b'1'),
@@ -124,7 +126,7 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   UNIQUE KEY `system_message_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~26 rows (approximately)
+-- Dumping data for table ede_dev.system_messages: ~33 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
 	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
@@ -152,9 +154,14 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(23, 'edeconfig-category-instance-name', NULL, 'Instance', '{}', b'0'),
 	(24, 'edeconfig-category-instance-description', NULL, 'General instance configuration', '{}', b'0'),
 	(25, 'edeconfig-category-auth-name', NULL, 'Authentication', '{}', b'0'),
-	(26, 'edeconfig-category-auth-description', NULL, 'Authentication and security related configuration items', '{}', b'0'),
+	(26, 'edeconfig-category-auth-description', NULL, 'Authentication related configuration items', '{}', b'0'),
 	(27, 'edeconfig-category-auth-iconclass', NULL, 'fas fa-user-cog', '{}', b'0'),
-	(28, 'edeconfig-category-instance-iconclass', NULL, 'fas fa-server', '{}', b'0');
+	(28, 'edeconfig-category-instance-iconclass', NULL, 'fas fa-server', '{}', b'0'),
+	(29, 'right-description-wiki_edit', NULL, 'Edit wiki pages', '{}', b'0'),
+	(30, 'right-description-wiki_createpage', NULL, 'Create new wiki pages', '{}', b'0'),
+	(31, 'edeconfig-category-security-name', NULL, 'Security', '{}', b'0'),
+	(32, 'edeconfig-category-security-description', NULL, 'Security related configuration items', '{}', b'0'),
+	(33, 'edeconfig-category-security-iconclass', NULL, 'fas fa-shield-alt', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 -- Dumping structure for table ede_dev.users
@@ -185,7 +192,7 @@ CREATE TABLE IF NOT EXISTS `user_groups` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
--- Dumping data for table ede_dev.user_groups: ~1 rows (approximately)
+-- Dumping data for table ede_dev.user_groups: ~2 rows (approximately)
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;
 INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALUES
 	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}'),

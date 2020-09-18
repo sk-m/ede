@@ -30,6 +30,7 @@ import * as Page from "./page";
  *       },
  *       {
  *           type: "link",
+ *           title: "This is a title",
  *           additional_classes: "red",
  *           text: "Block this user",
  *           icon: "fas fa-minus-circle"
@@ -90,7 +91,7 @@ ${ item[0] }</a>`;
                             // Element types
                             if(el.type === "heading") links_html += `<div class="heading">${ el.text }</div>`
                             else if(el.type === "spacer") links_html += `<div class="spacer${ el.invisible ? " invisible" : "" }"></div>`
-                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } \
+                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } ${ el.title ? `title="${ el.title }"` : "" } \
                             ${ (!el.disabled && el.href) ? `href="${ el.href }"` : "" } class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
                         }
 

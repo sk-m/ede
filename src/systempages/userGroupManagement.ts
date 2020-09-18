@@ -5,7 +5,7 @@ import * as User from "../user";
 import * as Log from "../log";
 import * as UI from "../ui";
 import * as SystemMessage from "../system_message";
-import { registry_usergroups, registry_rights } from "../registry";
+import { registry_usergroups, registry_rights, registry_config } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 
@@ -96,7 +96,16 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         let available_rights_html = "";
         const registry_rights_snapshot = registry_rights.get();
+        const registry_config_snapshot = registry_config.get();
         const sysmsgs_query_arr: string[] = [];
+
+        let is_group_protected = false;
+
+        // Check if the group is deletable
+        if(registry_config_snapshot["security.protected_groups"].value instanceof Array
+        && registry_config_snapshot["security.protected_groups"].value.includes(queried_group_name)) {
+            is_group_protected = true;
+        }
 
         // Get all system messages
         // tslint:disable-next-line: forin
@@ -120,7 +129,14 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         for(const right_name in registry_rights_snapshot) {
             if(registry_rights_snapshot[right_name]) {
                 const right = registry_rights_snapshot[right_name];
+
                 let arguments_html = "";
+                let right_restricted = false;
+
+                // Check if the right is restricted (can not be assigned or removed using the web interface)
+                if(registry_config_snapshot["security.restricted_rights"].value instanceof Array) {
+                    if(registry_config_snapshot["security.restricted_rights"].value.includes(right_name)) right_restricted = true;
+                }
 
                 // Right takes argumens
                 if(right.arguments) {
@@ -173,10 +189,6 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         <div input class="ui-input-array1" name="right_argument;${ right_name };${ argument_name }">
             <div class="items">${ current_values_html }</div>
             <input text="text">
-            <div class="buttons">
-                <div title="Undo changes" class="reset-button"><i class="fas fa-undo"></i></div>
-                <div title="Remove all" class="red clean-button"><i class="fas fa-trash"></i></div>
-            </div>
         </div>
     </div>
 </div>`;
@@ -204,11 +216,12 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                 available_rights_html += `\
 <div id="right-${ right_name }" class="right${ arguments_count ? " w-arguments" : "" }">
     <div class="left-container">
-        <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights.includes(right_name) ? "true" : "false" }">
+        <div input name="right;${ right_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ (!right_restricted && client_can_alter) ? "" : " disabled" }" data-checked="${ queried_group.added_rights.includes(right_name) ? "true" : "false" }">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">
                 <div class="name">${ right_name }</div>
-                ${ right.risk_text ? `<div class="tag">${ right.risk_text }</div>` : "" }
+                ${ right_restricted ? `<div class="tag">Restricted right</div>`
+                : (right.risk_text ? `<div class="tag">${ right.risk_text }</div>` : "") }
             </div>
         </div>
     </div>
@@ -270,6 +283,8 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             },
             {
                 id: "deletegroup",
+                disabled: is_group_protected,
+                title: is_group_protected ? "This group is protected and can not be deleted" : undefined,
                 type: "link",
                 additional_classes: "red",
                 text: "Delete group",
