@@ -207,8 +207,6 @@ export async function deleteUserGroup(name: string): Promise<true> {
  */
 export async function getUserGroupRights(user_id: string | number): Promise<GroupsAndRightsObject> {
     return new Promise((resolve: any, reject: any) => {
-        console.log("getUserGroupRights!", user_id);
-
         const result: GroupsAndRightsObject = {
             groups: [],
             rights: {}

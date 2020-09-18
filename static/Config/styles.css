@@ -141,7 +141,7 @@
 #systempage-config-root > .right-panel > .config-options > .config-option > .left {
     width: 33%;
     min-width: 200px;
-    max-width: 350px;
+    max-width: 450px;
     
     flex-shrink: 0;
 }
@@ -188,7 +188,7 @@
 
 #systempage-config-root > .right-panel > .config-options > .config-option > .right {
     width: 100%;
-    max-width: 300px;
+    max-width: 400px;
 
     margin-left: 20px;
 }

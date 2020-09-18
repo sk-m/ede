@@ -81,7 +81,7 @@ only"><i class="fas fa-eye-slash"></i> CLI Only</div>`;
 
                 indicator_html = `<div class="indicator" title="This config item is CLI-locked and can be changed using CLI \
 only"><i class="fas fa-lock"></i> CLI Only</div>`;
-            } else if(config_item.access_level === ConfigItemAccessLevel.rRwR) {
+            } else if(config_item.access_level === ConfigItemAccessLevel.rPwP) {
                 if(restricted_permits.includes(key)) {
                     indicator_html = `<div class="indicator" title="This config item is restricted, but you have permission to view and \
 change it"><i class="fas fa-lock-open"></i> Permitted</div>`;

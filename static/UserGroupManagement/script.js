@@ -61,8 +61,6 @@ function userGroupManagementPageScript() {
                     ede.showNotification("usergroupmanagement-create-success", "Success", "Group successfully created.");
                 })
                 .catch(response => {
-                    console.log(response);
-
                     ede.showNotification("usergroupmanagement-create-error", "Error", `Failed to create a new group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
                 });
             }

@@ -79,10 +79,6 @@ function loginPageScript() {
                     else {
                         ede.showPopup("join-unknown", "Unknown error", `Unknown error occured: ${ error.message }`);
                     }
-
-                    // TODO show error from API response
-
-                    console.log(error);
                 });
             }
         }

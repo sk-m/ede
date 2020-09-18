@@ -15,8 +15,8 @@ export enum ConfigItemAccessLevel {
     rAwR = 0,
     /** Read — all, write — CLI only. */
     rAwX = 1,
-    /** Read — users with a right, write — users with a right. */
-    rRwR = 2,
+    /** Read — users with a permit, write — users with a permit. */
+    rPwP = 2,
     /** Read — CLI only, write — CLI only. */
     rXwX = 3,
 }

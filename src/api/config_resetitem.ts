@@ -43,7 +43,7 @@ EDE configuration"));
     }
 
     // Restricted key with no permit
-    if( config_item.access_level === ConfigItemAccessLevel.rRwR &&
+    if( config_item.access_level === ConfigItemAccessLevel.rPwP &&
         !client_permits.includes(req.body.key)
     ) {
         res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "This config item is restricted and you don't \
