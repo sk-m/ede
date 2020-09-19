@@ -71,7 +71,7 @@ export class RegistryContainer<T> {
      *
      * Be really careful when copying the object!
      */
-    public get(): T {
+    public get(): Readonly<T> {
         return this.data;
     }
 

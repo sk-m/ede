@@ -41,9 +41,22 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         return;
     }
 
+    // Get the current group and create an object for an updated one
     const current_usergroup = registry_usergroups.get()[req.body.group_name];
+    const new_usergroup: Group = {
+        name: req.body.group_name,
+
+        added_rights: [],
+        right_arguments: {}
+    };
 
     const registry_config_snapshot = registry_config.get();
+
+    // Check if the right is restricted
+    function check_restricted(right_name: string): boolean {
+        return registry_config_snapshot["security.restricted_rights"].value instanceof Array
+            && registry_config_snapshot["security.restricted_rights"].value.includes(right_name);
+    }
 
     // Rights
     if(req.body.rights) {
@@ -58,21 +71,27 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
 
         // tslint:disable-next-line: forin
         for(const right_name in rights_obj) {
-            // Check if the right is restricted
-            if(registry_config_snapshot["security.restricted_rights"].value instanceof Array
-            && registry_config_snapshot["security.restricted_rights"].value.includes(right_name)) {
-                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
-                return;
-            }
-
-            // Right removed from group
+            // Right removed from group, so we don't have to push it to the new group object
             if(rights_obj[right_name] === false && current_usergroup.added_rights.includes(right_name)) {
-                current_usergroup.added_rights.splice(current_usergroup.added_rights.indexOf(right_name), 1);
+                if(check_restricted(right_name)) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
+                    return;
+                }
             }
 
-            // Right added to group
+            // Right added to group, push it to the new object
             else if(rights_obj[right_name] === true && !current_usergroup.added_rights.includes(right_name)) {
-                current_usergroup.added_rights.push(right_name);
+                if(check_restricted(right_name)) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
+                    return;
+                }
+
+                new_usergroup.added_rights.push(right_name);
+            }
+
+            // Right was already assigned. We don't have to check if it is restricted, because it already was there
+            else if(rights_obj[right_name] === true) {
+                new_usergroup.added_rights.push(right_name);
             }
         }
     }
@@ -91,31 +110,22 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         for(const right_name in arguments_obj) {
             if(arguments_obj[right_name]) {
                 // Change arguments only if the right is assigned to the group
-                if(current_usergroup.added_rights.includes(right_name)) {
-                    // tslint:disable-next-line: forin
-                    for(const argument_name in arguments_obj[right_name]) {
+                if(new_usergroup.added_rights.includes(right_name)) {
+                    if(check_restricted(right_name)) {
+                        // If the right is restricted, set args to current (not new), or to {}, if undefined
                         if(current_usergroup.right_arguments[right_name] === undefined) {
-                            current_usergroup.right_arguments[right_name] = {};
+                            new_usergroup.right_arguments[right_name] = {};
+                        } else {
+                            new_usergroup.right_arguments[right_name] = current_usergroup.right_arguments[right_name];
                         }
-
-                        current_usergroup.right_arguments[right_name][argument_name] = arguments_obj[right_name][argument_name];
+                    } else if(arguments_obj[right_name] !== undefined) {
+                        // If it is not, set the args to user-specified
+                        new_usergroup.right_arguments[right_name] = arguments_obj[right_name];
                     }
-                } else {
-                    // Delete the argument from the object if the right is not assigned
-                    // TODO @bug test for bugs
-                    if(current_usergroup.right_arguments.hasOwnProperty(right_name)) delete current_usergroup.right_arguments[right_name];
                 }
             }
         }
     }
-
-    // New usergroup object
-    const new_usergroup: Group = {
-        name: req.body.group_name,
-
-        added_rights: current_usergroup.added_rights,
-        right_arguments: current_usergroup.right_arguments
-    };
 
     // Write updated group to the database
     User.saveUserGroup(new_usergroup)
