@@ -262,6 +262,10 @@
     display: block;
 }
 
+.ui-keyvalue-container > .spacer {
+    margin: 14px 0;
+}
+
 .ui-keyvalue-container > .item {
     display: flex;
     align-items: center;

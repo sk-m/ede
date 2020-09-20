@@ -176,7 +176,7 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
             return;
         }
 
-        const client_can_lock_out = client_rights.rights.blockuser.allow_lockout;
+        const client_can_lock_out = client_rights.rights.blockuser.allow_lockout === true;
 
         const log_entries = await Log.getEntries("blockuser", undefined, target_user.id);
 

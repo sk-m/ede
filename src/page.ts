@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import { sql } from "./server";
+import * as Log from "./log";
 import * as Util from "./utils";
 import { registry_namespaces, registry_systempages } from "./registry";
 import * as SystemMessage from "./system_message";
@@ -239,7 +240,7 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
         // Check if the page exisists
         let page_created = false;
-        let target_page_id = await new Promise((resolve_page: any) => {
+        let target_page_id: any = await new Promise((resolve_page: any) => {
             sql.execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
             [page_address.namespace, page_address.name],
             (error: any, results: any) => {
@@ -260,10 +261,15 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
             page_created = true;
 
+            const page_info = {
+                created_on,
+                created_by: user.id
+            };
+
             target_page_id = await new Promise((resolve_new_page: any) => {
                 sql.execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
-VALUES (?, ?, NULL, '{}', '{}')",
-                [page_address.namespace, page_address.name],
+VALUES (?, ?, NULL, ?, '{}')",
+                [page_address.namespace, page_address.name, JSON.stringify(page_info)],
                 (error: any, results: any) => {
                     if(!error && results.insertId) {
                         resolve_new_page(results.insertId);
@@ -272,6 +278,12 @@ VALUES (?, ?, NULL, '{}', '{}')",
                     }
                 });
             });
+
+            const full_address = `${ page_address.namespace }:${ page_address.name }`;
+
+            // Log page creation
+            Log.createEntry("createwikipage", user.id, target_page_id,
+            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ full_address }">${ full_address }</a>`, "");
         }
 
         // We could not create the page
@@ -296,6 +308,33 @@ UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
                 reject(error);
             }
         });
+    });
+}
+
+/**
+ * Delete the page
+ *
+ * @param page_id internal page id
+ * @param completely_remove completely remove all related records (except logs) from the database?
+ */
+export async function deletePage(page_id: number, completely_remove: boolean = false): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        if(!completely_remove) {
+            sql.execute("UPDATE `wiki_pages` SET `is_deleted` = b'1' WHERE id = ?",
+            [page_id],
+            (error: any) => {
+                if(!error) resolve();
+                else reject(error);
+            });
+        } else {
+            sql.query("DELETE FROM `revisions` WHERE `page` = ?; DELETE FROM `wiki_pages` WHERE id = ?; \
+UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','deletewikipage') AND `target` = ?",
+            [page_id, page_id, page_id],
+            (error: any) => {
+                if(!error) resolve();
+                else reject(error);
+            });
+        }
     });
 }
 
@@ -326,17 +365,23 @@ export async function getRaw(namespace: string, name: string): Promise<ResponseP
         };
 
         // Get the page
-        sql.query("SET @revid = (SELECT `revision` FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ? LIMIT 1); \
-SELECT `content` FROM `revisions` WHERE id = @revid;",
+        // TODO setting vars to NULL might be unnecessary
+        sql.query("SET @revid = NULL; SET @is_deleted = NULL; SELECT `revision`, `is_deleted` INTO @revid, @is_deleted FROM `wiki_pages` \
+WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @is_deleted, `content` FROM `revisions` WHERE id = @revid;",
         [namespace, name],
         (error: any, results: any) => {
             // Page was not found
-            if(error || !results[1][0]) {
+            if(error || !results[3][0]) {
                 page.status.push("page_not_found");
             } else {
-                const db_page = results[1][0];
+                const db_page = results[3][0];
 
-                page.raw_content = db_page.content;
+                // Page is deleted
+                if(db_page["@is_deleted"] === 1) {
+                    page.status.push("page_not_found");
+                } else {
+                    page.raw_content = db_page.content;
+                }
             }
 
             page.access_time_ms = process.hrtime(time_start)[1] / 1000000;

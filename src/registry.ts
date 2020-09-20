@@ -25,6 +25,8 @@ import { systemmessageCreateRoute } from "./api/systemmessage_create";
 import { systemmessageDeleteRoute } from "./api/systemmessage_delete";
 import { deleteUserGroupRoute } from "./api/usergroup_delete";
 import { pageSaveRoute } from "./api/page_save";
+import { wikiPageManagement } from "./systempages/pageManagement";
+import { pageDeleteRoute } from "./api/page_delete";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -169,7 +171,6 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
             },
         }
     },
-    // TODO @placeholder
     wiki_createpage: {
         name: "wiki_createpage",
         risk_text: "",
@@ -182,6 +183,27 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
                 description: "Allow creating new pages in these namespaces",
 
                 default_value: "",
+            },
+        }
+    },
+    wiki_deletepage: {
+        name: "wiki_deletepage",
+        risk_text: "Dangerous",
+
+        source: "ede",
+
+        arguments: {
+            disallowed_namespaces: {
+                type: ["array"],
+                description: "Disallow deleting pages in these namespaces",
+
+                default_value: "",
+            },
+            allow_complete_erase: {
+                type: ["boolean"],
+                description: "Allow completely and irreversibly erasing the page and all related information from the database",
+
+                default_value: false,
             },
         }
     },
@@ -272,6 +294,18 @@ export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins
 export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getNamespacesFromDB);
 
 export const registry_systempages = new RegistryContainer<Page.SystemPageDescriptorsObject>("ede", undefined, {
+    wikipagemanagement: {
+        name: "WikiPageManagement",
+
+        display_title: "Page management",
+        display_category: "wiki",
+        display_description: "View information abot a page, delete it, protect, etc.",
+        display_icon: "fas fa-file-alt",
+
+        source: "ede",
+
+        systempage_config: wikiPageManagement
+    },
     usergroupmanagement: {
         name: "UserGroupManagement",
 
@@ -335,7 +369,6 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
 });
 
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
-    // TODO rename to page/get
     "page/get": {
         name: "page/get",
         method: "GET",
@@ -396,6 +429,32 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: pageSaveRoute
+    },
+    "page/delete": {
+        name: "page/delete",
+        method: "POST",
+
+        description: "Delete the page",
+
+        required_arguments: ["title", "csrf_token"],
+        required_rights: ["wiki_deletepage"],
+
+        arguments: {
+            title: {
+                name: "title",
+                display_name: "Page title",
+
+                type: "string"
+            },
+            db_removal: {
+                name: "db_removal",
+                display_name: "Completely remove the page from the database",
+
+                type: "boolean"
+            }
+        },
+
+        handler: pageDeleteRoute
     },
     "usergroup/update": {
         name: "usergroup/update",
