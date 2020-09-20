@@ -3,7 +3,6 @@ import * as Sqrl from "squirrelly";
 import * as Page from "./page";
 import { registry_skins, registry_config } from "./registry";
 import * as Util from "./utils";
-import he from "he";
 import * as User from "./user";
 
 export function pageTitleParser(raw_title: string): any {
@@ -16,11 +15,11 @@ export function pageTitleParser(raw_title: string): any {
     if(raw_title.indexOf(":") > -1) {
         const name_split = url_params[0].split(":", 2);
 
-        namespace = Util.sanitize(name_split[0]);
-        name = Util.sanitize(name_split[1]);
+        namespace = name_split[0];
+        name = name_split[1];
     } else {
         namespace = "Main";
-        name = Util.sanitize(raw_title);
+        name = raw_title;
     }
 
     return { name, namespace };
@@ -58,7 +57,7 @@ ede.current_page = ${ JSON.stringify(frontend_page_object) };
 ede.instance_display_name = \`${ current_instance_displayname }\`;`];
 
     return Sqrl.Render(current_skin.html, {
-        ede_page_title: (page.display_title && he.decode(page.display_title)) || "",
+        ede_page_title: (page.display_title && decodeURIComponent(page.display_title)) || "",
         ede_page_content: page.parsed_content || "",
         ede_page_additionalinfo_badges: page.badges,
         ede_page_subnametext: registry_config_snapshot["instance.page_subnametext"].value as string || "",
@@ -93,11 +92,11 @@ export async function directRoute(req: any, res: any): Promise<void> {
     if(url_split[0].indexOf(":") > -1) {
         const name_split = url_params[0].split(":", 2);
 
-        namespace = Util.sanitize(name_split[0]);
-        name = Util.sanitize(name_split[1]);
+        namespace = name_split[0];
+        name = name_split[1];
     } else {
         namespace = "Main";
-        name = Util.sanitize(url_split[0]);
+        name = url_split[0];
     }
 
     const address: Page.PageAddress = {

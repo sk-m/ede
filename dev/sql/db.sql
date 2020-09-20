@@ -1,44 +1,33 @@
--- --------------------------------------------------------
--- Host:                         web-vm.local
--- Server version:               5.7.30-0ubuntu0.18.04.1 - (Ubuntu)
--- Server OS:                    Linux
--- HeidiSQL Version:             10.3.0.5771
--- --------------------------------------------------------
-
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET NAMES utf8 */;
 /*!50503 SET NAMES utf8mb4 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
-
--- Dumping database structure for ede_dev
 CREATE DATABASE IF NOT EXISTS `ede_dev` /*!40100 DEFAULT CHARACTER SET utf8 */;
 USE `ede_dev`;
 
--- Dumping structure for table ede_dev.config
 CREATE TABLE IF NOT EXISTS `config` (
   `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `key` varchar(64) CHARACTER SET latin1 NOT NULL,
-  `value` text CHARACTER SET latin1,
-  `value_type` enum('bool','int','string','json','array','allowed_values') CHARACTER SET latin1 NOT NULL DEFAULT 'string',
-  `value_pattern` text CHARACTER SET latin1,
-  `default_value` text CHARACTER SET latin1,
-  `allowed_values` text CHARACTER SET latin1,
-  `tags` text CHARACTER SET latin1,
-  `description` text CHARACTER SET latin1,
-  `source` varchar(64) CHARACTER SET latin1 NOT NULL,
+  `key` varchar(64) NOT NULL,
+  `value` text,
+  `value_type` enum('bool','int','string','json','array','allowed_values') NOT NULL DEFAULT 'string',
+  `value_pattern` text,
+  `default_value` text,
+  `allowed_values` text,
+  `tags` varchar(256) DEFAULT NULL,
+  `description` text,
+  `source` varchar(64) NOT NULL,
   `access_level` bit(2) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.config: ~10 rows (approximately)
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
 	(1, 'instance.name', 'dev_instance', 'string', '[a-zA-Z0-9_]{1,128}', NULL, NULL, NULL, 'Internal name for the instance', 'ede', b'01'),
-	(2, 'instance.display_name', 'Dev Instance', 'string', NULL, NULL, NULL, NULL, 'Display name of this instance', 'ede', b'00'),
+	(2, 'instance.display_name', 'Dev instance', 'string', NULL, NULL, NULL, NULL, 'Display name of this instance', 'ede', b'00'),
 	(3, 'instance.current_skin', NULL, 'string', '[a-zA-Z0-9_]{1,128}', 'Omicron', NULL, NULL, 'Currently active skin', 'ede', b'00'),
 	(4, 'instance.page_subnametext', 'This is a subname text', 'string', NULL, NULL, NULL, NULL, 'The text under the page name', 'ede', b'00'),
 	(5, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'01'),
@@ -51,7 +40,6 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'01');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.logs
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
@@ -64,13 +52,11 @@ CREATE TABLE IF NOT EXISTS `logs` (
   PRIMARY KEY (`id`),
   KEY `logs_executor` (`executor`),
   CONSTRAINT `logs_executor` FOREIGN KEY (`executor`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.logs: ~0 rows (approximately)
 /*!40000 ALTER TABLE `logs` DISABLE KEYS */;
 /*!40000 ALTER TABLE `logs` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.namespaces
 CREATE TABLE IF NOT EXISTS `namespaces` (
   `id` smallint(6) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
@@ -82,20 +68,18 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
   KEY `NOT_EDITABLE` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.namespaces: ~3 rows (approximately)
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
 INSERT INTO `namespaces` (`id`, `name`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
 	(1, 'System', '{}', '{}', b'1'),
 	(2, 'Main', '{}', '{}', b'0'),
-	(3, 'User', '{}', '{}', b'0');
+	(3, 'User', '{}', '{}', b'1');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.revisions
 CREATE TABLE IF NOT EXISTS `revisions` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `page` int(10) unsigned DEFAULT NULL,
   `user` int(10) unsigned DEFAULT NULL,
-  `content` mediumtext NOT NULL,
+  `content` mediumtext CHARACTER SET utf16 COLLATE utf16_unicode_520_ci NOT NULL,
   `content_hash` varchar(50) NOT NULL,
   `summary` varchar(1024) DEFAULT NULL,
   `visibility` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -104,17 +88,15 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `bytes_size` int(10) NOT NULL,
   `bytes_change` int(10) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `revision_user` (`user`),
   KEY `revision_page` (`page`),
-  CONSTRAINT `revision_page` FOREIGN KEY (`page`) REFERENCES `wiki_pages` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `revision_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
+  KEY `revision_user` (`user`),
+  CONSTRAINT `revision_page` FOREIGN KEY (`page`) REFERENCES `wiki_pages` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION,
+  CONSTRAINT `revision_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.revisions: ~0 rows (approximately)
 /*!40000 ALTER TABLE `revisions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `revisions` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.system_messages
 CREATE TABLE IF NOT EXISTS `system_messages` (
   `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
@@ -124,9 +106,8 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.system_messages: ~33 rows (approximately)
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
 	(1, 'page-actionname-edit', NULL, 'Edit', '{}', b'0'),
@@ -164,7 +145,6 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(33, 'edeconfig-category-security-iconclass', NULL, 'fas fa-shield-alt', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.users
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(256) NOT NULL,
@@ -174,46 +154,36 @@ CREATE TABLE IF NOT EXISTS `users` (
   `blocks` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.users: ~1 rows (approximately)
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` (`id`, `username`, `email_address`, `password`, `stats`, `blocks`) VALUES
-	(1, 'admin', 'invalid@localhost.local', 'pbkdf2;tmB3hIWFDTdlwFNur69YlanFWiaD0TQ+dGNqcLkYA/6+Nmm6QRr0fPKRx9eiIN7IpacL/yIhvne/8sQdVFfS2sxGvDMiPO/ytPka/kNECUOX4i4gNIX8p5oa6vdjEjLuc23+I59d4uKM2rmiim30FpK1XJaOQvtv7rMkAAqorXRNSfwE6ZmKBTqg49n8NlR4e26L/GV9qjKFPr9mqlzTJzPisDl2qseZ8p1aotp5XAtIimmGiQ7s8mFGoe5AJ/2djGlRsRK1xbmM7Eaq4/751JUMikLPIsbrUBw/dRP2S60z4xPhUwFb13ItGyp21mwaXg5cz/UPRvcDzSIqeLJzdQ==;zBTztJqbt1AJ6EV04dPqGq2ylNeCJ7sI468giNK8t1LCYXHf4I3on4G8kQNdicP8ds_HTOQba2tJ9ZyjMyZ0X2XKzX_KxdTt_4gy2ZnFvwTlM1MjC7DbMnUSNp6kzkQiW4qQ0_RpNcC3VKiwnM6tuESKA_y5itagFwtIDR2s35_cU6l2DrEAFLNqDy_AmUcgVn0g5OoDTIfMd75LsJ_Uy71Wv6KEpKWSGxyEDpz1lpz1FWNJqsvIosPTBTdHo7dB8uUyVvGQpc_fEG59GnN_9S7iFHW4nYJA0WWGBMPX5NEiV3vI2PBo6zK4TXz4a1aDnkTxocNeC22DWLhR7I8dkQ==;50000;256', '{"created_on": 1586892000}', NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.user_groups
 CREATE TABLE IF NOT EXISTS `user_groups` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL DEFAULT '',
-  `added_rights` text,
+  `added_rights` varchar(8192) DEFAULT '',
   `right_arguments` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.user_groups: ~2 rows (approximately)
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;
 INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALUES
 	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}'),
 	(2, 'verified', '', '{}');
 /*!40000 ALTER TABLE `user_groups` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.user_group_membership
 CREATE TABLE IF NOT EXISTS `user_group_membership` (
   `user` int(10) unsigned NOT NULL,
   `group` varchar(128) NOT NULL DEFAULT '',
   PRIMARY KEY (`user`,`group`),
   CONSTRAINT `user_group_membership_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.user_group_membership: ~1 rows (approximately)
 /*!40000 ALTER TABLE `user_group_membership` DISABLE KEYS */;
-INSERT INTO `user_group_membership` (`user`, `group`) VALUES
-	(1, 'sysadmin');
 /*!40000 ALTER TABLE `user_group_membership` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.user_sessions
 CREATE TABLE IF NOT EXISTS `user_sessions` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user` int(11) unsigned NOT NULL,
@@ -231,26 +201,23 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   CONSTRAINT `user_sessions_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.user_sessions: ~0 rows (approximately)
 /*!40000 ALTER TABLE `user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
 
--- Dumping structure for table ede_dev.wiki_pages
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `namespace` varchar(64) NOT NULL,
+  `namespace` varchar(64) DEFAULT NULL,
   `name` tinytext NOT NULL,
   `revision` bigint(20) unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `revision` (`revision`),
-  KEY `page_namespace` (`namespace`),
-  CONSTRAINT `page_namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `page_revision` FOREIGN KEY (`revision`) REFERENCES `revisions` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+  KEY `namespace` (`namespace`),
+  CONSTRAINT `namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION,
+  CONSTRAINT `revision` FOREIGN KEY (`revision`) REFERENCES `revisions` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Dumping data for table ede_dev.wiki_pages: ~0 rows (approximately)
 /*!40000 ALTER TABLE `wiki_pages` DISABLE KEYS */;
 /*!40000 ALTER TABLE `wiki_pages` ENABLE KEYS */;
 

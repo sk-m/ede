@@ -47,7 +47,7 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
 
     const page_address: Page.PageAddress = {
         namespace: clean_namespace_name,
-        name: Util.sanitize(req.body.page_name),
+        name: req.body.page_name,
 
         raw_url: "",
         query: [],
