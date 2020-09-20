@@ -7,7 +7,7 @@ import * as SystemMessage from "./system_message";
 import { systempageBuilder } from "./systempage";
 import * as User from "./user";
 import { renderWikitext } from "./wikitext";
-import he from "he";
+import sanitizeHtml from "sanitize-html";
 
 export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
 
@@ -174,7 +174,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
  */
 export async function getNamespacesFromDB(): Promise<NamespacesObject> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query("SELECT * FROM `namespaces`", (error: Error, results: any) => {
+        sql.execute("SELECT * FROM `namespaces`", (error: Error, results: any) => {
             if(error) {
                 Util.log(`Failed to get namespaces from the database`, 3, error);
 
@@ -199,6 +199,22 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
 }
 
 /**
+ * Sanitize raw wikitext (remove disallowed HTML tags and attributes)
+ *
+ * @param input raw wikitext
+ */
+export function sanitizeWikitext(input: string): string {
+    return sanitizeHtml(input, {
+        allowedTags: ["div", "code", "small"],
+        allowedAttributes: {
+            div: ["class", "style"]
+        },
+
+        disallowedTagsMode: "recursiveEscape"
+    });
+}
+
+/**
  * Create a new revision (edit)
  *
  * @param page_address [[PageAddress]] object
@@ -211,11 +227,7 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
 export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string,
     tags?: string[], allow_page_creation: boolean = false): Promise<void> {
     return new Promise(async (resolve: any, reject: any) => {
-        // TODO @performance @cleanup yeah...
-
-        const clean_namespace = Util.sanitize(page_address.namespace);
-        const clean_name = Util.sanitize(page_address.name);
-        const clean_content = Util.sanitize(new_raw_content);
+        const clean_content = sanitizeWikitext(new_raw_content);
         const content_size = clean_content.length;
 
         // Create a content hash
@@ -228,7 +240,8 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
         // Check if the page exisists
         let page_created = false;
         let target_page_id = await new Promise((resolve_page: any) => {
-            sql.query(`SELECT id FROM \`wiki_pages\` WHERE \`namespace\` = '${ clean_namespace }' AND \`name\` = '${ clean_name }'`,
+            sql.execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
+            [page_address.namespace, page_address.name],
             (error: any, results: any) => {
                 if(!error && results[0]) {
                     resolve_page(results[0].id);
@@ -248,8 +261,10 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
             page_created = true;
 
             target_page_id = await new Promise((resolve_new_page: any) => {
-                sql.query(`INSERT INTO \`wiki_pages\` (\`namespace\`, \`name\`, \`revision\`, \`page_info\`, \`action_restrictions\`) \
-                VALUES ('${ clean_namespace }', '${ clean_name }', NULL, '{}', '{}')`, (error: any, results: any) => {
+                sql.execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
+VALUES (?, ?, NULL, '{}', '{}')",
+                [page_address.namespace, page_address.name],
+                (error: any, results: any) => {
                     if(!error && results.insertId) {
                         resolve_new_page(results.insertId);
                     } else {
@@ -269,12 +284,11 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
         // Create a new revision and update the page
         // TODO @cleanup there is probably a better way to do this
-        sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ${ target_page_id } \
-ORDER BY id DESC LIMIT 1); \
-INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \
-\`bytes_change\`) VALUES (${ target_page_id }, ${ user.id }, '${ clean_content }', '${ shasum.digest("hex") }', \
-'${ Util.sanitize(summary) }', ${ created_on }, ${ content_size }, ${ bytes_change_str }); \
-UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ${ target_page_id }`,
+        sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ? ORDER BY id DESC LIMIT 1); \
+INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \`bytes_change\`)\
+ VALUES (?, ?, ?, ?, ?, ?, ?, ${ bytes_change_str }); \
+UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
+[target_page_id, target_page_id, user.id, clean_content, shasum.digest("hex"), summary, created_on, content_size, target_page_id],
 (error: any) => {
             if(!error) {
                 resolve();
@@ -292,13 +306,10 @@ export async function getRaw(namespace: string, name: string): Promise<ResponseP
     return new Promise(async (resolve: any) => {
         const time_start = process.hrtime();
 
-        const clean_namespace = Util.sanitize(namespace);
-        const clean_name = Util.sanitize(name);
-
         const page: ResponsePage = {
             address: {
-                namespace: clean_namespace,
-                name: clean_name,
+                namespace,
+                name,
 
                 raw_url: "",
                 query: [],
@@ -315,11 +326,10 @@ export async function getRaw(namespace: string, name: string): Promise<ResponseP
         };
 
         // Get the page
-        const query = `
-SET @revid = (SELECT \`revision\` FROM \`wiki_pages\` WHERE \`namespace\` = '${ clean_namespace }' AND \`name\` = '${ clean_name }' LIMIT 1); \
-SELECT \`content\` FROM \`revisions\` WHERE id = @revid;`;
-
-        sql.query(query, (error: any, results: any) => {
+        sql.query("SET @revid = (SELECT `revision` FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ? LIMIT 1); \
+SELECT `content` FROM `revisions` WHERE id = @revid;",
+        [namespace, name],
+        (error: any, results: any) => {
             // Page was not found
             if(error || !results[1][0]) {
                 page.status.push("page_not_found");
@@ -376,7 +386,7 @@ ${ address.name }`;
                 }
 
                 // TODO parse here
-                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(he.decode(page.raw_content))).content;
+                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content)).content;
 
                 common_resolve(page);
             });

@@ -2,28 +2,15 @@ import * as Page from "./page";
 import { pageTitleParser } from "./routes";
 import * as Util from "./utils";
 
-import sanitizeHtml from "sanitize-html";
-
 export interface WikitextRendererOutput {
     content: string
 }
 
-function sanitizeWikitext(input: string): string {
-    return sanitizeHtml(input, {
-        allowedTags: ["div", "code", "small"],
-        allowedAttributes: {
-            div: ["class", "style"]
-        },
+export async function renderWikitext(input: string, skip_tag: boolean = false): Promise<WikitextRendererOutput> {
+    let final_content: string = "";
 
-        disallowedTagsMode: "recursiveEscape"
-    });
-}
-
-export async function renderWikitext(input: string): Promise<WikitextRendererOutput> {
-    let final_content: string = "<p>";
-
-    // First, sanitize the input
-    input = sanitizeWikitext(input);
+    if(!skip_tag) final_content += "<div class=\"wiki-content\">";
+    final_content += "<p>";
 
     let i = 0;
     let c;
@@ -342,7 +329,7 @@ export async function renderWikitext(input: string): Promise<WikitextRendererOut
                         if(page.parsed_content && !page.status.includes("page_not_found")) {
                             write(page.parsed_content);
                         } else {
-                            write(`<code style="color: var(--color-red)">! Template: page <a class="ui-a" href="${ template_params[0] }">${ Util.sanitize(template_params[0]) }</a> not found !</code>`);
+                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-a" href="${ template_params[0] }">${ Util.sanitize(template_params[0]) }</a> not found !</span>`);
                         }
 
                         flag_awaiting_template_info = false;
@@ -402,7 +389,7 @@ export async function renderWikitext(input: string): Promise<WikitextRendererOut
 
     // Add the last paragraph
     final_content += "</p>";
-
+    if(!skip_tag) final_content += "</div>";
 
     return {
         content: final_content
