@@ -100,7 +100,8 @@ export async function checkUsername(username: string): Promise<UsernameAvailabil
         }
 
         // TODO probably wont work because of toLowerCase(). Maybe we should have username and display_username in the database?
-        sql.query(`SELECT id FROM \`users\` WHERE username = '${Util.sanitize(username.toLowerCase())}'`,
+        sql.execute(`SELECT id FROM \`users\` WHERE username = ?`,
+        [username.toLowerCase()],
         (error: any, results: any) => {
             if(error || results.length !== 0) resolve(UsernameAvailability.Taken);
             else resolve(UsernameAvailability.Available);
@@ -113,7 +114,7 @@ export async function checkUsername(username: string): Promise<UsernameAvailabil
  */
 export async function getAllUserGroups(): Promise<any> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query("SELECT `name`, `added_rights`, `right_arguments` FROM `user_groups`", (error: any, results: any) => {
+        sql.execute("SELECT `name`, `added_rights`, `right_arguments` FROM `user_groups`", (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log("Could not get all user groups from the database", 3);
 
@@ -148,8 +149,9 @@ export async function getAllUserGroups(): Promise<any> {
  */
 export async function saveUserGroup(user_group: Group): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`UPDATE \`user_groups\` SET \`added_rights\` = '${ user_group.added_rights.join(";") }', \`right_arguments\` = \
-'${ JSON.stringify(user_group.right_arguments) }' WHERE \`name\` = '${ Util.sanitize(user_group.name) }'`, (error: any, results: any) => {
+        sql.execute("UPDATE `user_groups` SET `added_rights` = ?, `right_arguments` = ? WHERE `name` = ?",
+        [user_group.added_rights.join(";"), JSON.stringify(user_group.right_arguments), user_group.name],
+        (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not save user group '${ user_group.name }' to the database`, 3, error);
 
@@ -168,7 +170,9 @@ export async function saveUserGroup(user_group: Group): Promise<true> {
  */
 export async function createUserGroup(name: string): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`INSERT INTO \`user_groups\` (\`name\`,\`added_rights\`,\`right_arguments\`) VALUES ('${ Util.sanitize(name) }', '', '{}')`, (error: any, results: any) => {
+        sql.execute("INSERT INTO `user_groups` (`name`,`added_rights`,`right_arguments`) VALUES (?, '', '{}')",
+        [name],
+        (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not create a new user group '${ name }'`, 3, error);
 
@@ -187,7 +191,9 @@ export async function createUserGroup(name: string): Promise<true> {
  */
 export async function deleteUserGroup(name: string): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`DELETE FROM \`user_groups\` WHERE \`name\` = '${ Util.sanitize(name) }'`, (error: any) => {
+        sql.execute("DELETE FROM `user_groups` WHERE `name` = ?",
+        [name],
+        (error: any) => {
             if(error) {
                 Util.log(`Could not delete '${ name }' user group`, 3, error);
 
@@ -216,7 +222,8 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
         const rights_arr: string[] = [];
 
         // Get every group the requested user is in
-        sql.query(`SELECT \`group\` FROM \`user_group_membership\` WHERE \`user\` = ${ user_id };`,
+        sql.execute("SELECT `group` FROM `user_group_membership` WHERE `user` = ?",
+        [user_id],
         (group_error: any, group_results: any) => {
             if(group_error) {
                 reject(group_error);
@@ -310,7 +317,9 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
  */
 export async function getFromUsername(username: string): Promise<User> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`SELECT * FROM \`users\` WHERE username = '${ Util.sanitize(username) }'`, (error: any, results: any) => {
+        sql.execute("SELECT * FROM `users` WHERE username = ?",
+        [username],
+        (error: any, results: any) => {
             if(error || results.length !== 1) {
                 reject("User not found");
                 return;
@@ -339,7 +348,7 @@ export async function getFromUsername(username: string): Promise<User> {
     });
 }
 
-// TODO csrf_tokens are still disabled
+// TODO! @placeholder csrf_tokens are still disabled
 export async function getFromSession(http_request: any, csrf_token: string): Promise<User> {
     return new Promise(async (resolve: any, reject: any) => {
         if(!http_request.headers) {
@@ -366,7 +375,8 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
         const st_st: string = st_split[1];
 
         // Get and validate the session
-        sql.query(`SELECT * FROM user_sessions WHERE user = '${ st_uid }' AND session_token = '${ st_st }'`,
+        sql.execute("SELECT * FROM `user_sessions` WHERE `user` = ? AND `session_token` = ?",
+        [st_uid, st_st],
         async (session_error: any, session_results: any) => {
             if(session_error || session_results.length !== 1) {
                 reject("session_token_not_found");
@@ -393,7 +403,9 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
 
             if(cookie_sid_hash.key === session.sid_hash) {
                 // Get the user
-                sql.query(`SELECT * FROM users WHERE id = '${ st_uid }'`, (user_error: any, user_results: any) => {
+                sql.execute("SELECT * FROM `users` WHERE id = ?",
+                [st_uid],
+                (user_error: any, user_results: any) => {
                     if(user_error || !user_results) {
                         reject(user_error);
                         return;
@@ -478,9 +490,8 @@ export async function create(username: string, password: string, email_address: 
 ${ password_hash_keylen }`;
 
                 // Create a user
-                sql.query(
-`INSERT INTO users (username, email_address, password, stats) \
-VALUES ('${ username }', '${ email_address }', '${ database_password_string }', '${ JSON.stringify(user_stats) }')`,
+                sql.execute("INSERT INTO `users` (`username`, `email_address`, `password`, `stats`) VALUES (?, ?, ?, ?)",
+                [username, email_address, database_password_string, JSON.stringify(user_stats)],
                 (error: any, results: any) => {
                     if(error) {
                         reject(new Error(`User creation failed, username might be taken (${ error.message })`));
@@ -550,11 +561,9 @@ export async function createSession(user_id: string, ip_address: string, user_ag
                 };
 
                 // Create a session
-                sql.query(
-                    `INSERT INTO user_sessions (user, session_token, sid_hash, sid_salt, csrf_token, ip_address, \
-                    user_agent, expires_on, created_on) \
-                    VALUES ('${ user_id }', '${ session_token }', '${ sidHash.key }', '${ sidHash.salt }', \
-                    '${ csrf_token }', '${ ip_address }', '${ user_agent }', ${ expires_on }, ${ now })`,
+                sql.execute("INSERT INTO `user_sessions` (`user`, `session_token`, `sid_hash`, `sid_salt`, `csrf_token`, `ip_address`, \
+`user_agent`, `expires_on`, `created_on`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [user_id, session_token, sidHash.key, sidHash.salt, csrf_token, ip_address, user_agent, expires_on, now],
                 (error: any) => {
                     if(error) { reject(error) }
                     else resolve(session);
@@ -580,9 +589,11 @@ export async function updateUserBlocks(user_id: number, restrictions: string[]):
         let blocks_string;
 
         if(restrictions.length === 0) blocks_string = "null";
-        else blocks_string = `'${ Util.sanitize(restrictions.join(";")) }'`;
+        else blocks_string = Util.sanitize(restrictions.join(";"));
 
-        sql.query(`UPDATE \`users\` SET \`blocks\` = ${ blocks_string } WHERE id = ${ user_id }`, (error: any, results: any) => {
+        sql.execute("UPDATE `users` SET `blocks` = ? WHERE id = ?",
+        [blocks_string, user_id],
+        (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not update blocks for user id ${ user_id }`, 3, error);
 
@@ -601,7 +612,9 @@ export async function updateUserBlocks(user_id: number, restrictions: string[]):
  */
 export async function destroyUserSessions(user_id: number): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`UPDATE \`user_sessions\` SET \`invalid\` = 1 WHERE \`user\` = ${ user_id }`, (error: any, results: any) => {
+        sql.execute("UPDATE `user_sessions` SET `invalid` = 1 WHERE `user` = ?",
+        [user_id],
+        (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not destroy sessions for user id ${ user_id }`, 3, error);
 
@@ -780,7 +793,8 @@ export function loginRoute(req: any, res: any): void {
         }
 
         // Get user
-        sql.query(`SELECT id, \`username\`, \`password\`, \`blocks\` FROM \`users\` WHERE username = '${ Util.sanitize(req.body.username) }'`,
+        sql.execute("SELECT id, `username`, `password`, `blocks` FROM `users` WHERE username = ?",
+        [req.body.username],
         async (error: any, results: any) => {
             if(error || results.length !== 1) {
                 const msg = await SystemMessage.get("login-message-invalidcredentials") as SystemMessage.SystemMessage;

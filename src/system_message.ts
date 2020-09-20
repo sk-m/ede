@@ -66,7 +66,8 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
  */
 export async function set(name: string, value: string): Promise<boolean> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`UPDATE \`system_messages\` SET \`value\` = '${ Util.sanitize(value) }' WHERE \`name\` = '${ Util.sanitize(name) }'`,
+        sql.execute("UPDATE `system_messages` SET `value` = ? WHERE `name` = ?",
+        [value, name],
         (error: Error) => {
             if(error) {
                 reject(error);
@@ -86,7 +87,8 @@ export async function set(name: string, value: string): Promise<boolean> {
  */
 export async function create(name: string, value: string): Promise<boolean> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`INSERT INTO \`system_messages\` (\`name\`, \`value\`, \`rev_history\`, \`deletable\`) VALUES ('${ Util.sanitize(name) }', '${ Util.sanitize(value) }', '{}', b'1')`,
+        sql.execute("INSERT INTO `system_messages` (`name`, `value`, `rev_history`, `deletable`) VALUES (?, ?, '{}', b'1')",
+        [name, value],
         (error: Error) => {
             if(error) {
                 reject(error);
@@ -105,7 +107,8 @@ export async function create(name: string, value: string): Promise<boolean> {
  */
 export async function remove(name: string): Promise<boolean> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query(`DELETE FROM \`system_messages\` WHERE \`name\` = '${ Util.sanitize(name) }'`,
+        sql.execute("DELETE FROM `system_messages` WHERE `name` = ?",
+        [name],
         (error: Error) => {
             if(error) {
                 reject(error);
@@ -127,13 +130,15 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
         let query: string;
         let getting_multiple: boolean = false;
 
+        // TODO @cleanup @security proper sql.execute
+
         if(Array.isArray(names)) {
             // Get multiple messages
             getting_multiple = true;
 
             query = `SELECT * FROM \`system_messages\` WHERE \`name\` IN ('${ names.join("','") }')`;
         } else {
-            query = `SELECT * FROM \`system_messages\` WHERE \`name\` = '${ names }'`;
+            query = `SELECT * FROM \`system_messages\` WHERE \`name\` = '${ Util.sanitize(names) }'`;
         }
 
         sql.query(query, (error: Error, results: any) => {

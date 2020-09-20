@@ -92,7 +92,7 @@ function castValue(raw_value: string, type: ConfigItemValueTypeName): ConfigItem
  */
 export async function getConfigFromDB(): Promise<ConfigItemsObject> {
     return new Promise((resolve: any, reject: any) => {
-        sql.query("SELECT * FROM `config`", (error: Error, results: any) => {
+        sql.execute("SELECT * FROM `config`", (error: Error, results: any) => {
             if(error) {
                 Util.log(`Failed to get configuration from the database!`, 3, error);
 
@@ -255,7 +255,8 @@ export async function resetItem(key: string): Promise<void> {
             return;
         }
 
-        sql.query(`UPDATE \`config\` SET \`value\` = '${ config_item.default_value }' WHERE \`key\` = '${ config_item.key }'`,
+        sql.execute("UPDATE `config` SET `value` = ? WHERE `key` = ?",
+        [config_item.default_value, config_item.key],
         (error: any) => {
             if(error) reject(error);
             else resolve();
