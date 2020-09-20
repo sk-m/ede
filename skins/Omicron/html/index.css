@@ -430,8 +430,46 @@
 }
 
 #ede-page-content {
+    color: hsl(0, 0%, 8%);
+    font-family: 'Open Sans', sans-serif;
     font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
 }
+
+#ede-page-content strong {
+    font-weight: 600;
+}
+
+#ede-page-content code {
+    margin: 0 3px;
+    padding: 1px 3px;
+    
+    border-radius: 2px;
+    background-color: hsl(0, 0%, 95%);
+}
+
+#ede-page-content h1,
+#ede-page-content h2,
+#ede-page-content h3,
+#ede-page-content h4,
+#ede-page-content h5,
+#ede-page-content h6 {
+    font-family: 'Merriweather', serif;
+}
+
+#ede-page-content h2 {
+    color: hsl(0, 0%, 5%);
+    font-size: 1.5em;
+    font-weight: 600;
+
+    padding-bottom: 0.25em;
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
+    border-bottom: 1px solid var(--color-gray3);
+}
+
+/* TODO add h3-h5 */
 
 #ede-page-content.inactive {
     display: none;

@@ -23,8 +23,10 @@ import * as Api from "./api";
 import { userNamespaceHandler } from "./userpage";
 import { getEditorRoute } from "./editor";
 
-// Fastify app
+// Fastify apps
 const app: any = fastify();
+const local_app: any = fastify();
+
 // TODO add a handler for 404s
 
 // Register fastify modules
@@ -110,7 +112,14 @@ async function serverInit(db_error: Error): Promise<void> {
     app.listen(server_port, "0.0.0.0", (fastify_error: Error, address: string) => {
         if(fastify_error) throw fastify_error;
 
-        Util.log(`EDE Server listening on ${ address }`);
+        Util.log(`EDE main server listening on ${ address }`);
+    });
+
+    // Start the local server
+    local_app.listen(5380, "127.0.0.1", (fastify_error: Error, address: string) => {
+        if(fastify_error) throw fastify_error;
+
+        Util.log(`EDE local management server listening on ${ address } (should not be accessible from outside)`);
     });
 
     // Register ede hooks

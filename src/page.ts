@@ -6,6 +6,8 @@ import { registry_namespaces, registry_systempages } from "./registry";
 import * as SystemMessage from "./system_message";
 import { systempageBuilder } from "./systempage";
 import * as User from "./user";
+import { renderWikitext } from "./wikitext";
+import he from "he";
 
 export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
 
@@ -374,7 +376,7 @@ ${ address.name }`;
                 }
 
                 // TODO parse here
-                if(!page.parsed_content) page.parsed_content = page.raw_content;
+                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(he.decode(page.raw_content))).content;
 
                 common_resolve(page);
             });

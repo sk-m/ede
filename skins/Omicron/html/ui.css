@@ -397,6 +397,14 @@ a.ui-text[href]:focus:not(:hover),
     font-family: "Roboto", sans-serif;
 }
 
+.ui-code {
+    margin: 0 3px;
+    padding: 1px 3px;
+    
+    border-radius: 2px;
+    background-color: hsl(0, 0%, 95%);
+}
+
 /* Popups input boxes */
 .ui-input-box > .popup {
     position: absolute;
@@ -560,6 +568,16 @@ a.ui-text[href]:focus:not(:hover),
 
     background-color: var(--color-gray);
     filter: grayscale(1);
+}
+
+.ui-input-array1[disabled] > input,
+.ui-input-array1.disabled > input {
+    display: none;
+}
+
+.ui-input-array1[disabled] > .items,
+.ui-input-array1.disabled > .items {
+    width: 100%;
 }
 
 .ui-input-array1 > input {
