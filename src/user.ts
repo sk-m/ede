@@ -797,7 +797,7 @@ export function loginRoute(req: any, res: any): void {
         [req.body.username],
         async (error: any, results: any) => {
             if(error || results.length !== 1) {
-                const msg = await SystemMessage.get("login-message-invalidcredentials") as SystemMessage.SystemMessage;
+                const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
 
                 res.status(403).send({ error: "invalid_credentials", message: msg.value });
                 return;
@@ -809,7 +809,7 @@ export function loginRoute(req: any, res: any): void {
 
                 // User is locked out, get the appropriate system message
                 if(blocks.includes("lockout")) {
-                    const msg = await SystemMessage.get("login-message-blocked") as SystemMessage.SystemMessage;
+                    const msg = (await SystemMessage.get(["login-message-blocked"]))["login-message-blocked"];
 
                     res.status(403).send({ error: "blocked", message: msg.value });
                     return;
@@ -832,7 +832,7 @@ export function loginRoute(req: any, res: any): void {
             )
             .then(async (password_hash: Hash) => {
                 if(db_password_hash !== password_hash.key) {
-                    const msg = await SystemMessage.get("login-message-invalidcredentials") as SystemMessage.SystemMessage;
+                    const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
 
                     res.status(403).send({ error: "invalid_credentials", message: msg.value });
                     return;

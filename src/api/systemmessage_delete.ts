@@ -31,9 +31,9 @@ export async function systemmessageDeleteRoute(req: any, res: any, client_user?:
     }
 
     // Check if system message is deletable
-    SystemMessage.get(req.body.name)
-    .then((sysmsg: any) => {
-        if(!sysmsg.is_deletable) {
+    SystemMessage.get([req.body.name])
+    .then((sysmsgs: SystemMessage.SystemMessagesObject) => {
+        if(!sysmsgs[req.body.name].is_deletable) {
             res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested system message is not deletable"));
         } else {
             SystemMessage.remove(req.body.name)

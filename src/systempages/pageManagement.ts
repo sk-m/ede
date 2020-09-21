@@ -93,7 +93,7 @@ async function restore_page(queried_page: any, client?: User.User, client_rights
 
         const sysmsgs = await SystemMessage.get([
             "wikipagerestore-toptext"
-        ]) as SystemMessage.SystemMessagesObject;
+        ]);
 
         // Page is not deleted
         if(queried_page.is_deleted.readInt8(0) === 0) {
@@ -143,7 +143,7 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
 
         const sysmsgs = await SystemMessage.get([
             "wikipagedelete-toptext"
-        ]) as SystemMessage.SystemMessagesObject;
+        ]);
 
         resolve(`\
 <form name="deletepage-form" class="ui-form-box">

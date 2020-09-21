@@ -120,7 +120,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-shortdescription`);
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-fulldescription`);
 
-        const sysmsgs = await SystemMessage.get(sysmsgs_query_arr) as SystemMessage.SystemMessagesObject;
+        const sysmsgs = await SystemMessage.get(sysmsgs_query_arr);
 
         // Get logs for this group
         const log_entries = await Log.getEntries("groupupdate", undefined, queried_group_name);

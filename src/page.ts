@@ -112,7 +112,7 @@ export interface Namespace {
 // TODO This is not the right way to do it
 export async function systemNamespaceHandler(address: PageAddress, client: User.User): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
-        const systempage_badge_sysmsg = await SystemMessage.get("page-badge-systempage") as SystemMessage.SystemMessage;
+        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];
 
         // Sets the content to notfound system message and appends a notfound badge
         const notFound = (notfound_page: ResponsePage) => {
@@ -120,7 +120,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
                 const sysmsgs = await SystemMessage.get([
                     "systempage-error-notfound",
                     "page-badge-pagenotfound"
-                ]) as SystemMessage.SystemMessagesObject;
+                ]);
 
                 notfound_page.parsed_content = sysmsgs["systempage-error-notfound"].value;
                 notfound_page.badges.push(sysmsgs["page-badge-pagenotfound"].value);
@@ -425,7 +425,7 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
 
                 // Page was not found
                 if(page.status.includes("page_not_found")) {
-                    const sysmsgs_query = [
+                    const sysmsgs_query: any = [
                         "page-error-notfound",
                         "page-badge-pagenotfound",
                         "page-badge-namespacenotfound"
@@ -436,7 +436,7 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
                     }
 
                     // Get error system messages (we preload page-badge-namespacenotfound)
-                    error_sysmsgs = await SystemMessage.get(sysmsgs_query) as SystemMessage.SystemMessagesObject;
+                    error_sysmsgs = await SystemMessage.get(sysmsgs_query);
                     page.parsed_content = "";
 
                     if(page.status.includes("page_deleted")) {

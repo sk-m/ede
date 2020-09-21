@@ -226,7 +226,7 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
             }
         }
 
-        const sysmsgs = await SystemMessages.get(sysmsgs_query) as SystemMessages.SystemMessagesObject;
+        const sysmsgs = await SystemMessages.get(sysmsgs_query);
 
         let options_html = "";
         const categories_response = constructCategoriesHTML(registry_config_snapshot, sysmsgs, selected_category);

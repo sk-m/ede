@@ -62,7 +62,7 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
             sysmsgs_query_arr.push("usergroupmembership-toptext");
             sysmsgs_query_arr.push("usergroupmembership-savetext");
 
-            const sysmsgs = await SystemMessages.get(sysmsgs_query_arr) as SystemMessages.SystemMessagesObject;
+            const sysmsgs = await SystemMessages.get(sysmsgs_query_arr);
 
             // For every available group
             for(const group_name in registry_usergroups_snapshot) {

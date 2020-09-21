@@ -125,70 +125,69 @@ export async function remove(name: string): Promise<boolean> {
  *
  * @param name Name(s) of the system messsage(s)
  */
-export async function get(names: string[] | string): Promise<SystemMessage | SystemMessagesObject> {
+export async function get(query: string[] | string[][]): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
-        let query: string;
-        let getting_multiple: boolean = false;
+        const query_names: string[] = [];
+        const normalized_query: string[][] = [];
 
-        // TODO @cleanup @security proper sql.execute
-
-        if(Array.isArray(names)) {
-            // Get multiple messages
-            getting_multiple = true;
-
-            query = `SELECT * FROM \`system_messages\` WHERE \`name\` IN ('${ names.join("','") }')`;
-        } else {
-            query = `SELECT * FROM \`system_messages\` WHERE \`name\` = '${ Util.sanitize(names) }'`;
+        for(const el of query) {
+            if(Array.isArray(el)) {
+                // With parameters. el is an array, where first item is a name
+                if(!el[0].includes("'")) {
+                    query_names.push(el[0]);
+                    normalized_query.push(el);
+                }
+            } else {
+                // Without parameters. el is a name
+                if(!el.includes("'")) {
+                    query_names.push(el);
+                    normalized_query.push([el]);
+                }
+            }
         }
 
-        sql.query(query, (error: Error, results: any) => {
+        // TODO @cleanup @security
+        sql.query(`SELECT * FROM \`system_messages\` WHERE \`name\` IN ('${ query_names.join("','") }')`,
+        (error: Error, results: any) => {
             if(error) {
                 resolve({});
-                Util.log(`Could not load '${ names }' system message(s)`, 2);
+                Util.log(`Could not load '${ query }' system messages`, 2);
 
                 return;
             }
 
-            let final_results: SystemMessage | SystemMessagesObject = {};
+            const final_results: SystemMessagesObject = {};
 
-            if(getting_multiple) {
-                const results_obj: any = {};
+            const results_obj: any = {};
 
-                for(const result of results) {
-                    results_obj[result.name] = result;
-                }
+            for(const result of results) {
+                results_obj[result.name] = result;
+            }
 
-                for(const name of names) {
-                    const sysmsg = results_obj[name];
+            for(const el of normalized_query) {
+                const name = el[0];
+                const sysmsg = results_obj[name];
 
-                    if(sysmsg) {
-                        final_results[sysmsg.name] = {
-                            ...sysmsg,
+                if(sysmsg) {
+                    let final_value = he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value);
 
-                            value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
-                            is_default: !sysmsg.value,
-                            is_deletable: sysmsg.deletable.readInt8(0) === 1,
-                            does_exist: true,
-                        };
-                    } else {
-                        final_results[name] = {
-                            name,
-
-                            value: `<code>[! SYSMSG ${ name } !]</code>`,
-                            default_value: "",
-                            is_default: false,
-                            is_deletable: false,
-                            does_exist: false,
-
-                            rev_history: {}
-                        };
+                    // Do we have to put in arguments?
+                    if(el.length > 1) {
+                        for(let i = 1; i < el.length; i++) {
+                            final_value = final_value.replace(`$${ i }`, el[i]);
+                        }
                     }
-                }
-            } else {
-                if(results.length === 0) {
-                    const name = names as string;
 
-                    final_results = {
+                    final_results[sysmsg.name] = {
+                        ...sysmsg,
+
+                        value: final_value,
+                        is_default: !sysmsg.value,
+                        is_deletable: sysmsg.deletable.readInt8(0) === 1,
+                        does_exist: true,
+                    };
+                } else {
+                    final_results[name] = {
                         name,
 
                         value: `<code>[! SYSMSG ${ name } !]</code>`,
@@ -198,15 +197,6 @@ export async function get(names: string[] | string): Promise<SystemMessage | Sys
                         does_exist: false,
 
                         rev_history: {}
-                    };
-                } else {
-                    final_results = {
-                        ...results[0],
-
-                        value: he.decode(results[0].value !== null ? results[0].value : results[0].default_value),
-                        is_default: !results[0].value,
-                        is_deletable: results[0].deletable.readInt8(0) === 1,
-                        does_exist: true
                     };
                 }
             }
