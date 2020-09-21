@@ -1538,6 +1538,23 @@ table.ui-table td {
     background-color: var(--color-red-transparent-05);
 }
 
+.ui-notification > .top .progress-ring {
+    position: absolute;
+}
+
+.ui-notification > .top .progress-ring-circle {
+    stroke-dasharray: 62.83185307179586 62.83185307179586;
+
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+
+    transition: 6s stroke-dashoffset linear;
+}
+
+.ui-notification > .top .progress-ring-circle.error {
+    transition: 12s stroke-dashoffset linear;
+}
+
 .ui-notification > .middle {
     margin: 7px 13px 13px 14px;
     font-size: 14px;
