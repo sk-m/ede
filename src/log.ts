@@ -88,9 +88,23 @@ VALUES (?, ?, ?, ?, ?, ?, ?)",
  * @param executor executor (user id)
  * @param target target
  */
-export async function getEntries(type: string, executor?: string, target?: string): Promise<LogEntry[]> {
+export async function getEntries(type: string | string[], executor?: string, target?: string): Promise<LogEntry[]> {
     return new Promise((resolve: any, reject: any) => {
-        let sql_query = `SELECT * FROM \`logs\` WHERE \`type\` = '${ type }'`;
+        let sql_query;
+
+        if(Array.isArray(type)) {
+            // Disallow '
+            for(const item of type) {
+                if(item.includes("'")) {
+                    reject();
+                    return;
+                }
+            }
+
+            sql_query = `SELECT * FROM \`logs\` WHERE \`type\` IN ('${ type.join("','") }')`;
+        } else {
+            sql_query = `SELECT * FROM \`logs\` WHERE \`type\` = '${ type }'`;
+        }
 
         if(executor) sql_query += ` AND \`executor\` = '${ executor }'`;
         if(target) sql_query += ` AND \`target\` = '${ target }'`;

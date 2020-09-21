@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `timestamp` int(10) unsigned NOT NULL,
   `bytes_size` int(10) NOT NULL,
   `bytes_change` int(10) NOT NULL,
+  `is_deleted` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   KEY `revision_page` (`page`),
   KEY `revision_user` (`user`),
@@ -106,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
@@ -144,7 +145,9 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(32, 'edeconfig-category-security-description', NULL, 'Security related configuration items', '{}', b'0'),
 	(33, 'edeconfig-category-security-iconclass', NULL, 'fas fa-shield-alt', '{}', b'0'),
 	(34, 'wikipagedelete-toptext', NULL, 'Deleting a page will make it completely inaccessible and will hide all related revisions (logs will still be accessible). Only users with <code>wiki_restorepage</code> right will be able see it\'s contents and revisions.<br><br>\r\n\r\nHowever, if you want to <u>completely</u> remove this page and all related revisions from the database, without any going back, check the checkbox below.  But remember, <b class="ui-text">this action is <i>irreversible</i></b>. In the case of full removal, access level of related logs will  be set to <code class="ui-code">1</code> (not visible to users without the right).', '{}', b'0'),
-	(35, 'right-description-wiki_deletepage', NULL, 'Delete wiki pages', '{}', b'0');
+	(35, 'right-description-wiki_deletepage', NULL, 'Delete wiki pages', '{}', b'0'),
+	(36, 'wikipagerestore-toptext', NULL, 'You are about to restore the page', '{}', b'0'),
+	(37, 'page-error-deleted', NULL, '<div class="ui-text b">This page was deleted at some point.</div>', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `users` (

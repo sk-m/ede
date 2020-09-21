@@ -299,7 +299,7 @@ VALUES (?, ?, NULL, ?, '{}')",
         sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ? ORDER BY id DESC LIMIT 1); \
 INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \`bytes_change\`)\
  VALUES (?, ?, ?, ?, ?, ?, ?, ${ bytes_change_str }); \
-UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
+UPDATE \`wiki_pages\` SET \`is_deleted\` = b'0', \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
 [target_page_id, target_page_id, user.id, clean_content, shasum.digest("hex"), summary, created_on, content_size, target_page_id],
 (error: any) => {
             if(!error) {
@@ -320,8 +320,8 @@ UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
 export async function deletePage(page_id: number, completely_remove: boolean = false): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         if(!completely_remove) {
-            sql.execute("UPDATE `wiki_pages` SET `is_deleted` = b'1' WHERE id = ?",
-            [page_id],
+            sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'1' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = ?",
+            [page_id, page_id],
             (error: any) => {
                 if(!error) resolve();
                 else reject(error);
@@ -339,9 +339,25 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
 }
 
 /**
+ * Restore the page
+ *
+ * @param page_id internal page id
+ */
+export async function restorePage(page_id: number): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'0' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'0' WHERE `page` = ?",
+        [page_id, page_id],
+        (error: any) => {
+            if(!error) resolve();
+            else reject(error);
+        });
+    });
+}
+
+/**
  * Get raw page content
  */
-export async function getRaw(namespace: string, name: string): Promise<ResponsePage> {
+export async function getRaw(namespace: string, name: string, ignore_deleted: boolean = false): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
         const time_start = process.hrtime();
 
@@ -377,8 +393,9 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @is_deleted, `content` FROM
                 const db_page = results[3][0];
 
                 // Page is deleted
-                if(db_page["@is_deleted"] === 1) {
+                if(db_page["@is_deleted"] === 1 && !ignore_deleted) {
                     page.status.push("page_not_found");
+                    page.status.push("page_deleted");
                 } else {
                     page.raw_content = db_page.content;
                 }
@@ -408,14 +425,25 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
 
                 // Page was not found
                 if(page.status.includes("page_not_found")) {
-                    // Get error system messages (we preload page-badge-namespacenotfound)
-                    error_sysmsgs = await SystemMessage.get([
+                    const sysmsgs_query = [
                         "page-error-notfound",
                         "page-badge-pagenotfound",
                         "page-badge-namespacenotfound"
-                    ]) as SystemMessage.SystemMessagesObject;
+                    ];
 
-                    page.parsed_content = error_sysmsgs["page-error-notfound"].value;
+                    if(page.status.includes("page_deleted")) {
+                        sysmsgs_query.push("page-error-deleted");
+                    }
+
+                    // Get error system messages (we preload page-badge-namespacenotfound)
+                    error_sysmsgs = await SystemMessage.get(sysmsgs_query) as SystemMessage.SystemMessagesObject;
+                    page.parsed_content = "";
+
+                    if(page.status.includes("page_deleted")) {
+                        page.parsed_content += error_sysmsgs["page-error-deleted"].value + "<br>";
+                    }
+
+                    page.parsed_content += error_sysmsgs["page-error-notfound"].value;
                     page.badges.push(error_sysmsgs["page-badge-pagenotfound"].value);
                 }
 

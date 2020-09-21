@@ -13,7 +13,7 @@ import { pageTitleParser } from "../routes";
 
 async function info_page(queried_page: any, client?: User.User): Promise<string> {
     // TODO include deletion logs
-    const create_log_entries = await Log.getEntries("createwikipage", undefined, queried_page.id);
+    const all_log_entries = await Log.getEntries(["createwikipage", "deletewikipage", "restorewikipage"], undefined, queried_page.id);
 
     const stat_createdon = new Date(queried_page.page_info.created_on * 1000).toUTCString();
 
@@ -31,8 +31,14 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
         });
     });
 
+    const page_deleted = queried_page.is_deleted.readInt8(0) === 1;
+
     return `\
 <div class="ui-form-box no-title ui-keyvalue-container">
+    <div class="item">
+        <div class="key">Namespace</div>
+        <div class="value">${ queried_page.namespace }</div>
+    </div>
     <div class="item">
         <div class="key">Page id</div>
         <div class="value ui-text monospace">${ queried_page.id }</div>
@@ -43,9 +49,16 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
     </div>
     <div class="spacer"></div>
     <div class="item">
-        <div class="key">Namespace</div>
-        <div class="value">${ queried_page.namespace }</div>
+        <div class="key">Current deletion status</div>
+        <div class="value ui-text w-icon">${ page_deleted
+? `<div class="icon red"><i class="fas fa-times"></i></div> Deleted`
+: `<div class="icon"><i class="fas fa-check"></i></div> Normal` }</div>
     </div>
+    <div class="item">
+        <div class="key">Current restriction status</div>
+        <div class="value ui-text w-icon"><div class="icon"><i class="fas fa-check"></i></div> No restrictions</div>
+    </div>
+    <div class="spacer"></div>
     <div class="item">
         <div class="key">Created on</div>
         <div class="value">${ stat_createdon } (${ Util.formatTimeString(queried_page.page_info.created_on) })</div>
@@ -57,10 +70,65 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
 </div>
 
 <div class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("info_logs", "Related logs") }
+    ${ UI.constructFormBoxTitleBar("info_logs", "All related logs") }
 
-    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(create_log_entries) }</div>
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(all_log_entries) }</div>
 </div>`;
+}
+
+async function restore_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+    return new Promise(async (resolve: any) => {
+        if(!client_rights || !client_rights.rights.wiki_restorepage) {
+            resolve("You don't have permission to restore wiki pages.");
+            return;
+        }
+
+        const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page.id);
+        const deleted_page = await Page.getRaw(queried_page.namespace, queried_page.name, true);
+
+        let deleted_page_contents = "";
+        if(deleted_page && deleted_page.raw_content) {
+            deleted_page_contents = deleted_page.raw_content.replace(/\n/g, "<br>");
+        }
+
+        const sysmsgs = await SystemMessage.get([
+            "wikipagerestore-toptext"
+        ]) as SystemMessage.SystemMessagesObject;
+
+        // Page is not deleted
+        if(queried_page.is_deleted.readInt8(0) === 0) {
+            resolve("<div class=\"ui-text\">This page can not be restored because it is not deleted.</div>");
+            return;
+        }
+
+        resolve(`\
+<div name="restorepage-preview" class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("restore_preview", "Preview", "Deleted contents of the page") }
+    <div class="ui-text monospace">${ deleted_page_contents }</div>
+</div>
+
+<form name="restorepage-form" class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("restore_restore", "Restore page") }
+
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagerestore-toptext"].value }</div>
+
+    <div class="ui-input-box margin-top">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Reason</div>
+        <input type="text" name="summary" data-handler="summary" class="ui-input1">
+    </div>
+
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1">Restore page</button>
+    </div>
+</form>
+
+<div class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("restore_logs", "Restore and delete logs for this page") }
+
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
+</div>`);
+});
 }
 
 async function delete_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
@@ -71,7 +139,7 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
         }
 
         const client_can_completely_remove = client_rights.rights.wiki_deletepage.allow_complete_erase === true;
-        const delete_log_entries = await Log.getEntries("deletewikipage", undefined, queried_page.id);
+        const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page.id);
 
         const sysmsgs = await SystemMessage.get([
             "wikipagedelete-toptext"
@@ -105,9 +173,9 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
 </form>
 
 <div class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("delete_logs", "Delete logs for this page") }
+    ${ UI.constructFormBoxTitleBar("delete_logs", "Delete and restore logs for this page") }
 
-    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(delete_log_entries) }</div>
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`);
 });
 }
@@ -123,12 +191,6 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
             body_html: ""
         }
-
-        // Load css and js files for this system page
-        // TODO move to appropriate route
-        const page_js = fs.readFileSync("./static/PageManagement/script.js", "utf8");
-
-        page.additional_js = [page_js];
 
         // Check if page name was provided
         if(!queried_page_fullname) {
@@ -268,6 +330,10 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
         switch(page.address.url_params[1]) {
             case "delete": {
+                const page_js = fs.readFileSync("./static/PageManagement/delete.js", "utf8");
+
+                page_config.page.additional_js = [page_js];
+
                 page_config.breadcrumbs_data.push(["Delete"]);
                 page_config.header_config = {
                     icon: "fas fa-file",
@@ -275,6 +341,19 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 };
 
                 page_config.body_html = await delete_page(queried_page, client, client_groups || undefined);
+            } break;
+            case "restore": {
+                const page_js = fs.readFileSync("./static/PageManagement/restore.js", "utf8");
+
+                page_config.page.additional_js = [page_js];
+
+                page_config.breadcrumbs_data.push(["Restore"]);
+                page_config.header_config = {
+                    icon: "fas fa-file",
+                    title: `Restore ${ page_fullname}`
+                };
+
+                page_config.body_html = await restore_page(queried_page, client, client_groups || undefined);
             } break;
             default: {
                 page_config.breadcrumbs_data.push(["Info"]);

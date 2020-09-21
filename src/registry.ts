@@ -27,6 +27,7 @@ import { deleteUserGroupRoute } from "./api/usergroup_delete";
 import { pageSaveRoute } from "./api/page_save";
 import { wikiPageManagement } from "./systempages/pageManagement";
 import { pageDeleteRoute } from "./api/page_delete";
+import { pageRestoreRoute } from "./api/page_restore";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -206,6 +207,14 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
                 default_value: false,
             },
         }
+    },
+    wiki_restorepage: {
+        name: "wiki_restorepage",
+        risk_text: "Semi-Dangerous",
+
+        source: "ede",
+
+        arguments: {}
     },
     modifyusergroupmembership: {
         name: "modifyusergroupmembership",
@@ -455,6 +464,26 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: pageDeleteRoute
+    },
+    "page/restore": {
+        name: "page/restore",
+        method: "POST",
+
+        description: "Restore deleted page",
+
+        required_arguments: ["title", "csrf_token"],
+        required_rights: ["wiki_restorepage"],
+
+        arguments: {
+            title: {
+                name: "title",
+                display_name: "Page title",
+
+                type: "string"
+            }
+        },
+
+        handler: pageRestoreRoute
     },
     "usergroup/update": {
         name: "usergroup/update",
