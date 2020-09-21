@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS `config` (
   `key` varchar(64) NOT NULL,
   `value` text,
   `value_type` enum('bool','int','string','json','array','allowed_values') NOT NULL DEFAULT 'string',
-  `value_pattern` text,
+  `value_pattern` varchar(256) DEFAULT NULL,
   `default_value` text,
-  `allowed_values` text,
+  `allowed_values` varchar(2048) DEFAULT NULL,
   `tags` varchar(256) DEFAULT NULL,
-  `description` text,
+  `description` varchar(1024) DEFAULT NULL,
   `source` varchar(64) NOT NULL,
   `access_level` bit(2) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS `logs` (
   `type` varchar(128) NOT NULL,
   `executor` int(10) unsigned NOT NULL,
   `target` varchar(256) NOT NULL,
-  `action_text` text NOT NULL,
+  `action_text` varchar(2048) NOT NULL DEFAULT '',
   `summary_text` varchar(1024) NOT NULL DEFAULT '',
   `created_on` int(10) unsigned NOT NULL,
   `visibility_level` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -100,13 +100,13 @@ CREATE TABLE IF NOT EXISTS `revisions` (
 CREATE TABLE IF NOT EXISTS `system_messages` (
   `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
-  `value` mediumtext,
-  `default_value` mediumtext,
+  `value` text,
+  `default_value` text,
   `rev_history` json NOT NULL,
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
@@ -142,7 +142,9 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(30, 'right-description-wiki_createpage', NULL, 'Create new wiki pages', '{}', b'0'),
 	(31, 'edeconfig-category-security-name', NULL, 'Security', '{}', b'0'),
 	(32, 'edeconfig-category-security-description', NULL, 'Security related configuration items', '{}', b'0'),
-	(33, 'edeconfig-category-security-iconclass', NULL, 'fas fa-shield-alt', '{}', b'0');
+	(33, 'edeconfig-category-security-iconclass', NULL, 'fas fa-shield-alt', '{}', b'0'),
+	(34, 'wikipagedelete-toptext', NULL, 'Deleting a page will make it completely inaccessible and will hide all related revisions (logs will still be accessible). Only users with <code>wiki_restorepage</code> right will be able see it\'s contents and revisions.<br><br>\r\n\r\nHowever, if you want to <u>completely</u> remove this page and all related revisions from the database, without any going back, check the checkbox below.  But remember, <b class="ui-text">this action is <i>irreversible</i></b>. In the case of full removal, access level of related logs will  be set to <code class="ui-code">1</code> (not visible to users without the right).', '{}', b'0'),
+	(35, 'right-description-wiki_deletepage', NULL, 'Delete wiki pages', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -170,7 +172,7 @@ CREATE TABLE IF NOT EXISTS `user_groups` (
 
 /*!40000 ALTER TABLE `user_groups` DISABLE KEYS */;
 INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALUES
-	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroups": {}, "modifyusergroupmembership": {"add": "*", "remove": "*"}}'),
+	(1, 'sysadmin', 'modifyusergroupmembership;modifyusergroups', '{"modifyusergroupmembership": {"add": ["*"], "remove": ["*"]}}'),
 	(2, 'verified', '', '{}');
 /*!40000 ALTER TABLE `user_groups` ENABLE KEYS */;
 
@@ -199,7 +201,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   PRIMARY KEY (`id`),
   KEY `user_sessions_user` (`user`),
   CONSTRAINT `user_sessions_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
@@ -211,6 +213,7 @@ CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `revision` bigint(20) unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
+  `is_deleted` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `revision` (`revision`),
   KEY `namespace` (`namespace`),
