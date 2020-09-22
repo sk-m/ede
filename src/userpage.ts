@@ -138,10 +138,20 @@ ${ client_can_modify_groups ? `\
 ${ client_can_modify_groups ? `<form class="ui-form-box" name="usergroupmembership-save">
 ${ UI.constructFormBoxTitleBar("save", "Save") }
 
-<div class="ui-input-box">
-<div class="popup"></div>
-<div class="ui-input-name1">Summary</div>
-<input type="text" name="summary" data-handler="summary" class="ui-input1">
+<div input-container class="ui-input-box">
+    <div popup class="popup"></div>
+    <div class="ui-input-name1">Summary</div>
+
+    <div input class="ui-input-dropdown1" editable name="summary" data-handler="summary">
+        <input type="text">
+        <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+        <div class="choices">
+            <div class="choice">Trusted user</div>
+            <div class="choice">Per [[System:Diff/_____|discussion]]</div>
+            <div class="choice">Per [[System:Diff/_____|request]]</div>
+            <div class="choice">Per request</div>
+        </div>
+    </div>
 </div>
 <div class="ui-form-container between margin-top">
 <div class="ui-text">${ sysmsgs["usergroupmembership-savetext"].value }</div>
@@ -240,10 +250,21 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
     <div class="ui-form-box">
         ${ UI.constructFormBoxTitleBar("block", "Block") }
 
-        <div class="ui-input-box">
-            <div class="popup"></div>
+        <div input-container class="ui-input-box">
+            <div popup class="popup"></div>
             <div class="ui-input-name1">Reason</div>
-            <input type="text" name="summary" data-handler="summary" class="ui-input1">
+
+            <div input class="ui-input-dropdown1" editable name="summary" data-handler="summary">
+                <input type="text">
+                <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+                <div class="choices">
+                    <div class="choice">Inappropriate behaviour</div>
+                    <div class="choice">Inactive account</div>
+                    <div class="choice">Per [[System:Diff/_____|discussion]]</div>
+                    <div class="choice">Per [[System:Diff/_____|request]]</div>
+                    <div class="choice">Per request</div>
+                </div>
+            </div>
         </div>
 
         <div class="ui-form-container between margin-top">

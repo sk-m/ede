@@ -106,7 +106,7 @@ async function move_page(queried_page: any, client?: User.User, client_rights?: 
         for(const name in registry_namespaces_snapshot) {
             // We can only move to namespaces with 'wiki' content model
             if(registry_namespaces_snapshot[name].content_model === "wiki") {
-                namespace_select_html += `<div data-value="${ name }" class="choice">${ name }</div>`;
+                namespace_select_html += `<div class="choice">${ name }</div>`;
             }
         }
 
@@ -231,10 +231,18 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
         <div class="text">Completely remove this page and all related information from the database instead</div>
     </div>
 
-    <div class="ui-input-box margin-top">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Reason</div>
-        <input type="text" name="summary" data-handler="summary" class="ui-input1">
+    <div input-container class="ui-input-box">
+        <div popup class="popup"></div>
+        <div class="ui-input-name1">Reaon</div>
+
+        <div input class="ui-input-dropdown1" editable name="summary" data-handler="summary">
+            <input type="text">
+            <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+            <div class="choices">
+                <div class="choice">No longer needed</div>
+                <div class="choice">Per [[System:Diff/_____|discussion]]</div>
+            </div>
+        </div>
     </div>
 
     <div class="ui-form-container between margin-top">
