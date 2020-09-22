@@ -716,8 +716,6 @@ a.ui-text[href]:focus:not(:hover),
 
     font-size: 12px;
     color: hsl(0, 0%, 30%);
-
-    transition: 0.15s;
 }
 
 .ui-input-dropdown1:hover > .arrow-icon {
@@ -766,7 +764,7 @@ a.ui-text[href]:focus:not(:hover),
     border-radius: 0 0 3px 3px;
     border-top: 0;
 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.025);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.033);
 }
 
 .ui-input-dropdown1[data-open="true"] > .choices {
@@ -778,6 +776,8 @@ a.ui-text[href]:focus:not(:hover),
 
     top: 0;
     right: 0;
+
+    pointer-events: none;
 
     padding: 8px 10px;
 
@@ -794,6 +794,8 @@ a.ui-text[href]:focus:not(:hover),
     padding: 7px 10px;
 
     cursor: pointer;
+
+    font-size: 13px;
 
     transition: 0.15s;
 }

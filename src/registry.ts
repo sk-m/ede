@@ -28,6 +28,7 @@ import { pageSaveRoute } from "./api/page_save";
 import { wikiPageManagement } from "./systempages/pageManagement";
 import { pageDeleteRoute } from "./api/page_delete";
 import { pageRestoreRoute } from "./api/page_restore";
+import { pageMoveRoute } from "./api/page_move";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -187,6 +188,14 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
             },
         }
     },
+    wiki_movepage: {
+        name: "wiki_movepage",
+        risk_text: "Semi-dangerous",
+
+        source: "ede",
+
+        arguments: {}
+    },
     wiki_deletepage: {
         name: "wiki_deletepage",
         risk_text: "Dangerous",
@@ -210,7 +219,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
     },
     wiki_restorepage: {
         name: "wiki_restorepage",
-        risk_text: "Semi-Dangerous",
+        risk_text: "Semi-dangerous",
 
         source: "ede",
 
@@ -484,6 +493,38 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: pageRestoreRoute
+    },
+    "page/move": {
+        name: "page/move",
+        method: "POST",
+
+        description: "Move (rename) the page",
+
+        required_arguments: ["title", "new_namespace", "new_name", "csrf_token"],
+        required_rights: ["wiki_movepage"],
+
+        arguments: {
+            title: {
+                name: "title",
+                display_name: "Current title",
+
+                type: "string"
+            },
+            new_namespace: {
+                name: "new_namespace",
+                display_name: "New namespace",
+
+                type: "string"
+            },
+            new_name: {
+                name: "new_name",
+                display_name: "New name (without the namespace)",
+
+                type: "string"
+            }
+        },
+
+        handler: pageMoveRoute
     },
     "usergroup/update": {
         name: "usergroup/update",

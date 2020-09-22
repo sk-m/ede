@@ -10,6 +10,7 @@ import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 import { sql } from "../server";
 import { pageTitleParser } from "../routes";
+import { registry_namespaces } from "../registry";
 
 async function info_page(queried_page: any, client?: User.User): Promise<string> {
     // TODO include deletion logs
@@ -74,6 +75,79 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(all_log_entries) }</div>
 </div>`;
+}
+
+async function move_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+    return new Promise(async (resolve: any) => {
+        if(!client_rights || !client_rights.rights.wiki_movepage) {
+            resolve("You don't have permission to move wiki pages.");
+            return;
+        }
+
+        // Page is deleted
+        if(queried_page.is_deleted.readInt8(0) === 1) {
+            resolve("<div class=\"ui-text\">This page can not be moved because it is deleted.</div>");
+            return;
+        }
+
+        // Get log entries
+        const log_entries = await Log.getEntries("movewikipage", undefined, queried_page.id);
+
+        // Get system messages
+        const sysmsgs = await SystemMessage.get([
+            "wikipagemove-toptext"
+        ]);
+
+        // Get all namespaces
+        const registry_namespaces_snapshot = registry_namespaces.get();
+        let namespace_select_html = "";
+
+        // tslint:disable-next-line: forin
+        for(const name in registry_namespaces_snapshot) {
+            // We can only move to namespaces with 'wiki' content model
+            if(registry_namespaces_snapshot[name].content_model === "wiki") {
+                namespace_select_html += `<div data-value="${ name }" class="choice">${ name }</div>`;
+            }
+        }
+
+        resolve(`\
+<form name="movepage-form" class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("move_move", "Move page") }
+
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagemove-toptext"].value }</div>
+
+    <div class="ui-input-name1">Move to</div>
+    <div class="ui-form-container between">
+        <div input class="ui-input-dropdown1" name="new_namespace" style="margin-right: 3px">
+            <input disabled type="text" value="${ queried_page.namespace }">
+            <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+            <div class="choices">
+                ${ namespace_select_html }
+            </div>
+        </div>
+
+        <input type="text" name="new_name" value="${ queried_page.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+    </div>
+
+    <div class="ui-text small gray">Page can only be moved to <code>wiki</code> namespaces. You can manage namespaces <a href="/System:Namespaces">here</a>.</div>
+
+    <div class="ui-input-box margin-top">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Reason</div>
+        <input type="text" name="summary" data-handler="summary" class="ui-input1">
+    </div>
+
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1">Move page</button>
+    </div>
+</form>
+
+<div class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("move_logs", "Move logs for this page") }
+
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
+</div>`);
+});
 }
 
 async function restore_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
@@ -298,9 +372,9 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             },
             {
                 type: "link",
-                text: "Rename page",
-                icon: "fas fa-tag",
-                href: `/System:WikiPageManagement/rename/${ queried_page_fullname }`
+                text: "Move page (rename)",
+                icon: "fas fa-arrow-right",
+                href: `/System:WikiPageManagement/move/${ queried_page_fullname }`
             },
             {
                 type: "link",
@@ -336,7 +410,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
                 page_config.breadcrumbs_data.push(["Delete"]);
                 page_config.header_config = {
-                    icon: "fas fa-file",
+                    icon: "fas fa-trash",
                     title: `Delete ${ page_fullname}`
                 };
 
@@ -349,11 +423,24 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
                 page_config.breadcrumbs_data.push(["Restore"]);
                 page_config.header_config = {
-                    icon: "fas fa-file",
+                    icon: "fas fa-trash-restore",
                     title: `Restore ${ page_fullname}`
                 };
 
                 page_config.body_html = await restore_page(queried_page, client, client_groups || undefined);
+            } break;
+            case "move": {
+                const page_js = fs.readFileSync("./static/PageManagement/move.js", "utf8");
+
+                page_config.page.additional_js = [page_js];
+
+                page_config.breadcrumbs_data.push(["Move"]);
+                page_config.header_config = {
+                    icon: "fas fa-file-export",
+                    title: `Move ${ page_fullname}`
+                };
+
+                page_config.body_html = await move_page(queried_page, client, client_groups || undefined);
             } break;
             default: {
                 page_config.breadcrumbs_data.push(["Info"]);

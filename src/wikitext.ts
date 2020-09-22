@@ -329,7 +329,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                         if(page.parsed_content && !page.status.includes("page_not_found")) {
                             write(page.parsed_content);
                         } else {
-                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-a" href="${ template_params[0] }">${ Util.sanitize(template_params[0]) }</a> not found !</span>`);
+                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-text monospace" href="${ template_params[0] }">${ Util.sanitize(template_params[0]) }</a> not found !</span>`);
                         }
 
                         flag_awaiting_template_info = false;

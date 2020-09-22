@@ -102,6 +102,7 @@ export interface Namespace {
 
     action_restrictions: { [action_name: string]: string };
     info: PageInfoItemsObject;
+    content_model: string;
 
     // TODO this will be moved into namespace_info
     show_in_title: boolean;
@@ -347,6 +348,36 @@ export async function restorePage(page_id: number): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'0' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'0' WHERE `page` = ?",
         [page_id, page_id],
+        (error: any) => {
+            if(!error) resolve();
+            else reject(error);
+        });
+    });
+}
+
+/**
+ * Move (rename) the page
+ *
+ * @param page_id internal page id
+ * @param new_namespace name of the namespace to move the page into
+ * @param new_name new name for the page
+ */
+export async function movePage(page_id: number, new_namespace: string, new_name: string): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        const new_namespace_obj = registry_namespaces.get()[new_namespace];
+
+        if(!new_namespace_obj) {
+            reject(new Error(`Namespace '${ new_namespace }' does not exist.`));
+            return;
+        }
+
+        if(new_namespace_obj.content_model !== "wiki") {
+            reject(new Error(`You can only move pages to namespaces with 'wiki' content model.`));
+            return;
+        }
+
+        sql.execute("UPDATE `wiki_pages` SET `namespace` = ?, `name` = ? WHERE id = ?",
+        [new_namespace, new_name, page_id],
         (error: any) => {
             if(!error) resolve();
             else reject(error);
