@@ -82,6 +82,22 @@ export interface PageAddress {
     raw_url: string;
 }
 
+export interface PageInfo {
+    id: string;
+
+    namespace: string;
+    name: string;
+
+    revision?: number;
+    page_info: any;
+
+    action_restrictions: any;
+
+    is_deleted: boolean;
+    deleted_by?: number;
+    deleted_on?: number;
+}
+
 // TODO This is not a good system. We have to describe the value type, source and display every time we set the option
 // So, if we want to hide a titlebar of a page, we can't just do `page.info.hidetitle = false`
 // We have to write `page.info.hidetitle = { value_type: "boolean", source: "ede", display_name: "abc" ... }`
@@ -300,7 +316,7 @@ VALUES (?, ?, NULL, ?, '{}')",
         sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ? ORDER BY id DESC LIMIT 1); \
 INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \`bytes_change\`)\
  VALUES (?, ?, ?, ?, ?, ?, ?, ${ bytes_change_str }); \
-UPDATE \`wiki_pages\` SET \`is_deleted\` = b'0', \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
+UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
 [target_page_id, target_page_id, user.id, clean_content, shasum.digest("hex"), summary, created_on, content_size, target_page_id],
 (error: any) => {
             if(!error) {
@@ -318,14 +334,30 @@ UPDATE \`wiki_pages\` SET \`is_deleted\` = b'0', \`revision\` = LAST_INSERT_ID()
  * @param page_id internal page id
  * @param completely_remove completely remove all related records (except logs) from the database?
  */
-export async function deletePage(page_id: number, completely_remove: boolean = false): Promise<void> {
+export async function deletePage(page_id: number, deleted_user_id: string, completely_remove: boolean = false): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         if(!completely_remove) {
-            sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'1' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = ?",
-            [page_id, page_id],
-            (error: any) => {
-                if(!error) resolve();
-                else reject(error);
+            // First, get the page
+            sql.execute("SELECT * FROM `wiki_pages` WHERE id = ?",
+            [page_id],
+            (get_error: any, results: any) => {
+                if(get_error || results.length < 1) {
+                    reject(get_error);
+                    return;
+                }
+
+                const page = results[0];
+                const now: number = Math.floor(new Date().getTime() / 1000);
+
+                // Delete the page
+                sql.query("INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, `deleted_by`, `deleted_on`) \
+VALUES (?, ?, ?, ?, ?, ?, ?); DELETE FROM `wiki_pages` WHERE id = ?",
+                [page_id, page.namespace, page.name, JSON.stringify(page.page_info), JSON.stringify(page.action_restrictions),
+                deleted_user_id, now, page_id],
+                (del_error: any) => {
+                    if(!del_error) resolve();
+                    else reject(del_error);
+                });
             });
         } else {
             sql.query("DELETE FROM `revisions` WHERE `page` = ?; DELETE FROM `wiki_pages` WHERE id = ?; \
@@ -344,16 +376,16 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  *
  * @param page_id internal page id
  */
-export async function restorePage(page_id: number): Promise<void> {
-    return new Promise((resolve: any, reject: any) => {
-        sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'0' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'0' WHERE `page` = ?",
-        [page_id, page_id],
-        (error: any) => {
-            if(!error) resolve();
-            else reject(error);
-        });
-    });
-}
+// export async function restorePage(page_id: number): Promise<void> {
+//     return new Promise((resolve: any, reject: any) => {
+//         sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'0' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'0' WHERE `page` = ?",
+//         [page_id, page_id],
+//         (error: any) => {
+//             if(!error) resolve();
+//             else reject(error);
+//         });
+//     });
+// }
 
 /**
  * Move (rename) the page
@@ -385,10 +417,54 @@ export async function movePage(page_id: number, new_namespace: string, new_name:
     });
 }
 
+export async function getInfo(namespace: string, name: string, get_deleted: boolean = false): Promise<[boolean, PageInfo[]]> {
+    return new Promise((resolve: any, reject: any) => {
+        // Try to get the page
+        sql.execute("SELECT * FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ? LIMIT 1",
+        [namespace, name],
+        (normal_error: any, normal_results: any) => {
+            if(!normal_error && normal_results.length !== 0) {
+                // Normal page is ready
+                resolve([false, [{
+                    ...normal_results[0],
+
+                    is_deleted: false
+                }]]);
+            } else if(get_deleted) {
+                // The page was deleted
+                sql.execute("SELECT * FROM `deleted_wiki_pages` WHERE `namespace` = ? AND `name` = ? LIMIT 1",
+                [namespace, name],
+                (deleted_error: any, deleted_results: any) => {
+                    if(deleted_error || deleted_results.length === 0) {
+                        reject(new Error("page_not_found"));
+                        return;
+                    }
+
+                    const final_results: PageInfo[] = [];
+
+                    for(const page of deleted_results) {
+                        final_results.push({
+                            ...page,
+
+                            id: page.pageid,
+                            is_deleted: true
+                        })
+                    }
+
+                    // Deleted page is ready
+                    resolve([true, final_results]);
+                });
+            } else {
+                reject(new Error("page_not_found"));
+            }
+        });
+    });
+}
+
 /**
  * Get raw page content
  */
-export async function getRaw(namespace: string, name: string, ignore_deleted: boolean = false): Promise<ResponsePage> {
+export async function getRaw(namespace: string, name: string): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
         const time_start = process.hrtime();
 
@@ -413,23 +489,17 @@ export async function getRaw(namespace: string, name: string, ignore_deleted: bo
 
         // Get the page
         // TODO setting vars to NULL might be unnecessary
-        sql.query("SET @revid = NULL; SET @is_deleted = NULL; SELECT `revision`, `is_deleted` INTO @revid, @is_deleted FROM `wiki_pages` \
-WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @is_deleted, `content` FROM `revisions` WHERE id = @revid;",
+        sql.query("SET @revid = NULL; SELECT `revision` INTO @revid FROM `wiki_pages` \
+WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT `content` FROM `revisions` WHERE id = @revid;",
         [namespace, name],
         (error: any, results: any) => {
             // Page was not found
-            if(error || !results[3][0]) {
+            if(error || !results[2][0]) {
                 page.status.push("page_not_found");
             } else {
-                const db_page = results[3][0];
+                const db_page = results[2][0];
 
-                // Page is deleted
-                if(db_page["@is_deleted"] === 1 && !ignore_deleted) {
-                    page.status.push("page_not_found");
-                    page.status.push("page_deleted");
-                } else {
-                    page.raw_content = db_page.content;
-                }
+                page.raw_content = db_page.content;
             }
 
             page.access_time_ms = process.hrtime(time_start)[1] / 1000000;

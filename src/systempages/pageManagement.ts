@@ -14,7 +14,7 @@ import { registry_namespaces } from "../registry";
 
 async function info_page(queried_page: any, client?: User.User): Promise<string> {
     // TODO include deletion logs
-    const all_log_entries = await Log.getEntries(["createwikipage", "deletewikipage", "restorewikipage"], undefined, queried_page.id);
+    const all_log_entries = await Log.getEntries(["createwikipage", "deletewikipage", "restorewikipage", "movewikipage"], undefined, queried_page.id);
 
     const stat_createdon = new Date(queried_page.page_info.created_on * 1000).toUTCString();
 
@@ -32,8 +32,6 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
         });
     });
 
-    const page_deleted = queried_page.is_deleted.readInt8(0) === 1;
-
     return `\
 <div class="ui-form-box no-title ui-keyvalue-container">
     <div class="item">
@@ -49,12 +47,6 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
         <div class="value ui-text monospace">${ queried_page.revision }</div>
     </div>
     <div class="spacer"></div>
-    <div class="item">
-        <div class="key">Current deletion status</div>
-        <div class="value ui-text w-icon">${ page_deleted
-? `<div class="icon red"><i class="fas fa-times"></i></div> Deleted`
-: `<div class="icon"><i class="fas fa-check"></i></div> Normal` }</div>
-    </div>
     <div class="item">
         <div class="key">Current restriction status</div>
         <div class="value ui-text w-icon"><div class="icon"><i class="fas fa-check"></i></div> No restrictions</div>
@@ -81,12 +73,6 @@ async function move_page(queried_page: any, client?: User.User, client_rights?: 
     return new Promise(async (resolve: any) => {
         if(!client_rights || !client_rights.rights.wiki_movepage) {
             resolve("You don't have permission to move wiki pages.");
-            return;
-        }
-
-        // Page is deleted
-        if(queried_page.is_deleted.readInt8(0) === 1) {
-            resolve("<div class=\"ui-text\">This page can not be moved because it is deleted.</div>");
             return;
         }
 
@@ -169,12 +155,6 @@ async function restore_page(queried_page: any, client?: User.User, client_rights
             "wikipagerestore-toptext"
         ]);
 
-        // Page is not deleted
-        if(queried_page.is_deleted.readInt8(0) === 0) {
-            resolve("<div class=\"ui-text\">This page can not be restored because it is not deleted.</div>");
-            return;
-        }
-
         resolve(`\
 <div name="restorepage-preview" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("restore_preview", "Preview", "Deleted contents of the page") }
@@ -205,7 +185,7 @@ async function restore_page(queried_page: any, client?: User.User, client_rights
 });
 }
 
-async function delete_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+async function delete_page(queried_page: Page.PageInfo, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
     return new Promise(async (resolve: any) => {
         if(!client_rights || !client_rights.rights.wiki_deletepage) {
             resolve("You don't have permission to delete wiki pages.");
@@ -223,8 +203,7 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
 <form name="deletepage-form" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("delete_delete", "Delete page") }
 
-    ${ queried_page.is_deleted.readInt8(0) !== 1 ?
-    `<div class="ui-text margin-bottom">${ sysmsgs["wikipagedelete-toptext"].value }</div>
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagedelete-toptext"].value }</div>
 
     <div input name="db_removal" class="ui-checkbox-1${ client_can_completely_remove? "" : " disabled" }">
         <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
@@ -251,7 +230,7 @@ async function delete_page(queried_page: any, client?: User.User, client_rights?
             <div class="text">Confirm complete removal</div>
         </div>
         <button name="submit" class="ui-button1 c-red">Delete page</button>
-    </div>` : "<div class=\"ui-text\">This page can not be deleted because it already is.</div>" }
+    </div>
 </form>
 
 <div class="ui-form-box">
@@ -300,23 +279,14 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             return;
         }
 
+        // Get the page
         const page_address = pageTitleParser(queried_page_fullname);
         let page_error = false;
 
-        const queried_page: any = await new Promise((resolve: any) => {
-            sql.execute("SELECT * FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-            [page_address.namespace, page_address.name],
-            (error: any, results: any) => {
-                if(error || results.length < 1) {
-                    page_error = true;
-                    resolve();
-                } else {
-                    resolve(results[0]);
-                }
-            });
-        });
+        const page_query: any = await Page.getInfo(page_address.namespace, page_address.name, true)
+        .catch(() => { page_error = true });
 
-        if(page_error) {
+        if(page_error || page_query[0] === true) {
             page_config.header_config = {
                 icon: "fas fa-file-alt",
                 title: "Page Management",
@@ -325,11 +295,18 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
             page_config.body_html = "Page was not found.";
 
+            if(page_query[0] === true) {
+                page_config.body_html +=
+`<br><br>Deleted pages with such name were found. You can manage them here → <a class="ui-text" href="/System:DeletedWikiPages/${ queried_page_fullname }">\
+System:DeletedWikiPages/${ queried_page_fullname }</a>.`;
+            }
+
             resolve(page_config);
             return;
         }
 
-        const queried_page_is_deleted = queried_page.is_deleted.readInt8(0) === 1;
+        // No errors with a page
+        const queried_page = page_query[1][0];
 
         let client_groups;
 
@@ -390,25 +367,14 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 icon: "fas fa-unlock",
                 href: `/System:WikiPageManagement/restrictions/${ queried_page_fullname }`
             },
-        ] };
-
-        // Page is deleted, add a restore link
-        if(queried_page_is_deleted) {
-            page_config.sidebar_config.links.push({
-                type: "link",
-                text: "Restore page",
-                icon: "fas fa-trash-restore",
-                href: `/System:WikiPageManagement/restore/${ queried_page_fullname }`
-            });
-        } else {
-            page_config.sidebar_config.links.push({
+            {
                 type: "link",
                 text: "Delete page",
                 additional_classes: "red",
                 icon: "fas fa-trash",
                 href: `/System:WikiPageManagement/delete/${ queried_page_fullname }`
-            });
-        }
+            }
+        ] };
 
         switch(page.address.url_params[1]) {
             case "delete": {
@@ -424,19 +390,19 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
                 page_config.body_html = await delete_page(queried_page, client, client_groups || undefined);
             } break;
-            case "restore": {
-                const page_js = fs.readFileSync("./static/PageManagement/restore.js", "utf8");
+            // case "restore": {
+            //     const page_js = fs.readFileSync("./static/PageManagement/restore.js", "utf8");
 
-                page_config.page.additional_js = [page_js];
+            //     page_config.page.additional_js = [page_js];
 
-                page_config.breadcrumbs_data.push(["Restore"]);
-                page_config.header_config = {
-                    icon: "fas fa-trash-restore",
-                    title: `Restore ${ page_fullname}`
-                };
+            //     page_config.breadcrumbs_data.push(["Restore"]);
+            //     page_config.header_config = {
+            //         icon: "fas fa-trash-restore",
+            //         title: `Restore ${ page_fullname}`
+            //     };
 
-                page_config.body_html = await restore_page(queried_page, client, client_groups || undefined);
-            } break;
+            //     page_config.body_html = await restore_page(queried_page, client, client_groups || undefined);
+            // } break;
             case "move": {
                 const page_js = fs.readFileSync("./static/PageManagement/move.js", "utf8");
 

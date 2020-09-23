@@ -40,6 +40,21 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'01');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `pageid` int(10) unsigned NOT NULL,
+  `namespace` varchar(64) NOT NULL,
+  `name` tinytext NOT NULL,
+  `page_info` json NOT NULL,
+  `action_restrictions` json NOT NULL,
+  `deleted_by` int(10) unsigned NOT NULL,
+  `deleted_on` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+
+/*!40000 ALTER TABLE `deleted_wiki_pages` DISABLE KEYS */;
+/*!40000 ALTER TABLE `deleted_wiki_pages` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
@@ -204,7 +219,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   PRIMARY KEY (`id`),
   KEY `user_sessions_user` (`user`),
   CONSTRAINT `user_sessions_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
@@ -216,7 +231,6 @@ CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `revision` bigint(20) unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
-  `is_deleted` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `revision` (`revision`),
   KEY `namespace` (`namespace`),
