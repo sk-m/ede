@@ -76,8 +76,10 @@ ede.instance_display_name = \`${ current_instance_displayname }\`;`];
 /** @ignore */
 // TODO most of this should be moved to the getPage() method
 export async function directRoute(req: any, res: any): Promise<void> {
-    // TODO
-    if(req.params["*"] === "favicon.ico") return;
+    if(req.params["*"] === "favicon.ico") {
+        res.status(404).send();
+        return;
+    }
 
     const client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
 
