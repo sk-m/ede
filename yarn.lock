@@ -23,6 +23,13 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
+"@types/bitwise@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/bitwise/-/bitwise-2.0.0.tgz#8713edfa5242535e93cb289bb26d8f56a0b545c5"
+  integrity sha512-SWA5iNrvwaYVNAFm8dYvickWcxY2B8ANzUhQbGFLLb93YFSYuFV6bQjCZKYYowPQCmmRhvG+XxBQJt0ouI3gtA==
+  dependencies:
+    bitwise "*"
+
 "@types/caseless@*":
   version "0.12.2"
   resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.2.tgz#f65d3d6389e01eeb458bd54dc8f52b95a9463bc8"
@@ -258,6 +265,11 @@ bcrypt-pbkdf@^1.0.0:
   integrity sha1-pDAdOJtqQ/m2f/PKEaP2Y342Dp4=
   dependencies:
     tweetnacl "^0.14.3"
+
+bitwise@*, bitwise@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/bitwise/-/bitwise-2.0.4.tgz#3b6f95c43d614b83b980331d3b41d78b9c902039"
+  integrity sha512-ZOByl1Sc8SH2/owfRfR1apaC1ELNqHqAAtfqs1Ixqk/9Bod6VxWz10MiMYXkNiL95RdFAqOGQxm1TCGPf1iFyw==
 
 brace-expansion@^1.1.7:
   version "1.1.11"

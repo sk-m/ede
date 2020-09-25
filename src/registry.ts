@@ -29,6 +29,7 @@ import { wikiPageManagement } from "./systempages/pageManagement";
 import { pageDeleteRoute } from "./api/page_delete";
 import { pageRestoreRoute } from "./api/page_restore";
 import { pageMoveRoute } from "./api/page_move";
+import { getRevisionRoute } from "./api/revision_get";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -386,26 +387,79 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
     },
 });
 
+// TODO add summaries to arguments
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
     "page/get": {
         name: "page/get",
         method: "GET",
 
-        description: "Get page's parsed and ready to serve content",
+        description: "Get page's content",
 
-        required_arguments: ["title"],
+        required_arguments: [],
         required_rights: [],
 
         arguments: {
             title: {
                 name: "title",
-                display_name: "Page title",
+                display_name: "Get the last revision of a page by it's title",
 
                 type: "string"
+            },
+            revid: {
+                name: "revid",
+                display_name: "Get page's revision by revision id",
+
+                type: "string"
+            },
+            allow_deleted: {
+                name: "allow_deleted",
+                display_name: "Allow retrieving deleted revisions",
+                description: "wiki_restorepage right required",
+
+                type: "boolean"
+            },
+            get_raw: {
+                name: "get_raw",
+                display_name: "Get raw wikitext",
+
+                type: "boolean"
             }
         },
 
         handler: getPageRoute
+    },
+    "revision/get": {
+        name: "revision/get",
+        method: "GET",
+
+        description: "Get revisions",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {
+            pageid: {
+                name: "pageid",
+                display_name: "ID of the page to get the revisions for",
+
+                type: "string"
+            },
+            userid: {
+                name: "userid",
+                display_name: "ID of the user whos revisions to get",
+
+                type: "string"
+            },
+            include_deleted: {
+                name: "include_deleted",
+                display_name: "Include deleted revisions",
+                description: "wiki_restorepage right required",
+
+                type: "boolean"
+            },
+        },
+
+        handler: getRevisionRoute
     },
     "page/save": {
         name: "page/save",

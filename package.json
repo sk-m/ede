@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "@types/bitwise": "^2.0.0",
     "@types/cookie": "^0.3.3",
     "@types/he": "^1.1.0",
     "@types/mysql": "^2.15.8",
@@ -14,6 +15,7 @@
     "@types/sanitize-html": "^1.27.0",
     "@types/squirrelly": "^7.1.0",
     "@types/uuid": "^3.4.6",
+    "bitwise": "^2.0.4",
     "cookie": "^0.4.0",
     "diff": "^4.0.2",
     "fastify": "^2.11.0",
@@ -41,6 +43,7 @@
     "dev": "set EDE_DEV=1&&ts-node-dev --respawn --transpileOnly ./src/server.ts",
     "start": "node ./build/src/server.js",
     "lint": "tslint --project .",
+    "precommit": "yarn lint && yarn build-src && echo \"Everything looks good. Ready to commit!\"",
     "docs": "typedoc --mode modules --excludeNotExported --excludeExternals --readme none --ignoreCompilerErrors --out docs src",
     "build-win": "tsc && xcopy /E /I static build\\static && xcopy /E /I skins build\\skins && xcopy /E /I lib build\\lib",
     "build-src": "tsc"

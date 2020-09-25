@@ -2,6 +2,8 @@ import * as Page from "./page";
 import { pageTitleParser } from "./routes";
 import * as User from "./user";
 import { registry_apiRoutes } from "./registry";
+import { GroupsAndRightsObject } from "./right";
+import { renderWikitext } from "./wikitext";
 
 export type ApiRoutesObject = { [route_name: string]: ApiRoute };
 export interface ApiRoute {
@@ -63,22 +65,53 @@ export function apiResponse(status: ApiResponseStatus, additional_data?: any): a
 
 // TODO @draft
 export async function getPageRoute(req: any, res: any, client_user?: User.User): Promise<void> {
-    const name = pageTitleParser(req.query.title);
+    if(req.query.title) {
+        // Get by title
+        const name = pageTitleParser(req.query.title);
 
-    const page = await Page.get({
-        name: name.name,
-        namespace: name.namespace,
+        const page = await Page.get({
+            name: name.name,
+            namespace: name.namespace,
 
-        url_params: req.query.title.split("/"),
-        query: req.query,
+            url_params: req.query.title.split("/"),
+            query: req.query,
 
-        raw_url: req.raw.originalUrl
-    }, client_user as User.User);
+            raw_url: req.raw.originalUrl
+        }, client_user as User.User);
 
-    if(req.query.raw) {
-        res.send(page.parsed_content);
-    } else {
+        // TODO get_raw does nothing here, Page.get renders it anyway
         res.send(page);
+    } else if(req.query.revid) {
+        // Get by revid
+        let get_deleted = false
+
+        if(req.query.allow_deleted) {
+            // User wants to get a deleted revision, check if they have the right to do so
+            let client_permissions_error = true;
+
+            if(client_user) {
+                await User.getUserGroupRights(client_user.id)
+                .then((grouprights: GroupsAndRightsObject) => {
+                    if(grouprights.rights.wiki_restorepage) {
+                        // Main right
+                        client_permissions_error = false;
+                    }
+                })
+                .catch(() => undefined);
+            }
+
+            if(!client_permissions_error) get_deleted = true;
+        }
+
+        // Get the page
+        const page = await Page.getRaw(req.query.revid, undefined, undefined, get_deleted);
+
+        // Do we have to render?
+        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content)).content;
+
+        res.send(page);
+    } else {
+        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Please provide a title or a revid"));
     }
 }
 

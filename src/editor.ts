@@ -14,7 +14,7 @@ export async function getEditorRoute(req: any, res: any): Promise<void> {
     }
 
     // Get raw page content
-    const page = await Page.getRaw(req.query.page_namespace, req.query.page_name);
+    const page = await Page.getRaw(undefined, req.query.page_namespace, req.query.page_name);
 
     const html = `\
 <div class="editor-main">

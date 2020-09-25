@@ -1,3 +1,7 @@
+div.margin-top:empty {
+    margin-top: 0;
+}
+
 /* Form containers */
 .ui-form-box {
     position: relative;
@@ -1126,15 +1130,10 @@ a.ui-text[href]:focus:not(:hover),
     color: var(--color-blue2);
 
     text-decoration: none;
-    font-weight: 600;
 }
 
 .ui-log-item a[href]:hover {
     text-decoration: underline;
-}
-
-.ui-log-item code {
-    font-family: "Roboto Mono", monospace;
 }
 
 .ui-log-item code + code {
@@ -1142,8 +1141,79 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-log-item .summary {
-    color: hsl(0, 0%, 40%);
-    font-family: "Roboto", sans-serif;
+    font-style: italic;
+}
+
+/* Revisions */
+.ui-revision-item {
+    position: relative;
+
+    box-sizing: border-box;
+
+    width: 100%;
+    padding: 3px;
+
+    overflow: hidden;
+
+    color: hsl(0, 0%, 10%);
+    font-size: 14px;
+}
+
+.ui-revision-item > * {
+    vertical-align: middle;
+}
+
+.ui-revision-item > .ui-checkbox-1 {
+    display: inline-flex;
+    margin: 4px 0;
+}
+
+.ui-revision-item > .ui-checkbox-1 > .checkbox {
+    margin: 0 8px 0 0;
+}
+
+.ui-revision-item .time {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 4px 9px;
+    
+    color: hsl(0, 0%, 35%);
+    font-size: 12px;
+
+    background-color: rgba(0,0,0,0.025);
+    border-radius: 4px;
+}
+
+.ui-revision-item .time > i {
+    margin-right: 5px;
+}
+
+.ui-revision-item a[href]:visited,
+.ui-revision-item a[href] {
+    color: var(--color-blue2);
+
+    text-decoration: none;
+}
+
+.ui-revision-item a[href]:hover {
+    text-decoration: underline;
+}
+
+.ui-revision-item code {
+    font-family: monospace;
+}
+
+.ui-revision-item code + code {
+    margin-inline-start: 6px;
+}
+
+.ui-revision-item .summary {
+    font-style: italic;
+}
+
+.ui-revision-item .hidden {
+    color: hsl(0, 0%, 45%);
 }
 
 /* Tables */

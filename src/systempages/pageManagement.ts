@@ -144,7 +144,7 @@ async function restore_page(queried_page: any, client?: User.User, client_rights
         }
 
         const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page.id);
-        const deleted_page = await Page.getRaw(queried_page.namespace, queried_page.name, true);
+        const deleted_page = await Page.getRaw(undefined, queried_page.namespace, queried_page.name, true);
 
         let deleted_page_contents = "";
         if(deleted_page && deleted_page.raw_content) {
@@ -262,12 +262,12 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             };
 
             page_config.body_html = `\
-<form class="ui-form-box" name="usergroupmanagement-query">
+<form class="ui-form-box" name="wikipagemanagement-query">
     ${ UI.constructFormBoxTitleBar("query", "Find a page") }
 
     <div class="ui-input-box">
         <div class="popup"></div>
-        <div class="ui-input-name1">Page name</div>
+        <div class="ui-input-name1">Page title</div>
         <input type="text" name="page_name" data-handler="page_name" class="ui-input1">
     </div>
     <div class="ui-form-container right margin-top">
@@ -281,12 +281,10 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
         // Get the page
         const page_address = pageTitleParser(queried_page_fullname);
-        let page_error = false;
 
-        const page_query: any = await Page.getInfo(page_address.namespace, page_address.name, true)
-        .catch(() => { page_error = true });
+        const page_query: any = await Page.getInfo(page_address.namespace, page_address.name, true);
 
-        if(page_error || page_query[0] === true) {
+        if(page_query[0] === true) {
             page_config.header_config = {
                 icon: "fas fa-file-alt",
                 title: "Page Management",
@@ -295,10 +293,11 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
             page_config.body_html = "Page was not found.";
 
-            if(page_query[0] === true) {
+            if(page_query[1].length !== 0) {
                 page_config.body_html +=
-`<br><br>Deleted pages with such name were found. You can manage them here → <a class="ui-text" href="/System:DeletedWikiPages/${ queried_page_fullname }">\
-System:DeletedWikiPages/${ queried_page_fullname }</a>.`;
+`<br><br><div class="ui-text w-icon"><div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div><div>Deleted pages with such \
+name were found. You can manage them here — <a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/\
+${ queried_page_fullname }</a>.</div></div>`;
             }
 
             resolve(page_config);
