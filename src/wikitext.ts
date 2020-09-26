@@ -324,12 +324,16 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                     } else {
                         // Template insertion
                         const template_params = input.substring(flag_template_info_start_pos, i).split("|");
-                        const page = await Page.get(pageTitleParser(template_params[0]), {});
+
+                        const address = pageTitleParser(template_params[0], "Template");
+                        const page = await Page.get(address, {});
 
                         if(page.parsed_content && !page.status.includes("page_not_found")) {
                             write(page.parsed_content);
                         } else {
-                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-text monospace" href="${ template_params[0] }">${ Util.sanitize(template_params[0]) }</a> not found !</span>`);
+                            const title = `${ address.namespace }:${ address.name }`;
+
+                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-text monospace" href="/${ Util.sanitize(title) }">${ Util.sanitize(title) }</a> not found !</span>`);
                         }
 
                         flag_awaiting_template_info = false;
@@ -342,7 +346,6 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                 }
             } break;
 
-            case '\s':
             case ' ': {
                 if(flag_newline_firstchar) {
                     break;

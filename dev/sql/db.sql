@@ -90,7 +90,8 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
 INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
 	(1, 'System', 'system', '{}', '{}', b'1'),
 	(2, 'Main', 'wiki', '{}', '{}', b'0'),
-	(3, 'User', 'system', '{}', '{}', b'1');
+	(3, 'User', 'system', '{}', '{}', b'1'),
+	(4, 'Template', 'wiki', '{}', '{}', b'1');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `revisions` (

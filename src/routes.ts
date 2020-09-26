@@ -5,7 +5,7 @@ import { registry_skins, registry_config } from "./registry";
 import * as Util from "./utils";
 import * as User from "./user";
 
-export function pageTitleParser(raw_title: string): any {
+export function pageTitleParser(raw_title: string, default_namespace: string = "Main"): any {
     let name: string;
     let namespace: string;
 
@@ -18,7 +18,7 @@ export function pageTitleParser(raw_title: string): any {
         namespace = name_split[0];
         name = name_split[1];
     } else {
-        namespace = "Main";
+        namespace = default_namespace;
         name = raw_title;
     }
 
