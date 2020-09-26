@@ -39,8 +39,8 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
     // Get the page
     sql.execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
     [address.namespace, address.name],
-    (error: any, results: any) => {
-        if(error || results.length < 1) {
+    (query_error: any, results: any) => {
+        if(query_error || results.length < 1) {
             res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested page was not found"));
             return;
         } else {
@@ -61,9 +61,9 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
 
                 res.send(apiResponse(ApiResponseStatus.success));
             })
-            .catch((error: any) => {
+            .catch((move_error: any) => {
                 // TODO save error to a log
-                res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
+                res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, move_error && move_error.message || "Unknown error occured"));
             })
         }
     });

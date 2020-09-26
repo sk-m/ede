@@ -487,9 +487,8 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
  * @param new_namespace name of the namespace to move the page into
  * @param new_name new name for the page
  */
-// TODO check if page with new name already exists.
 export async function movePage(page_id: number, new_namespace: string, new_name: string): Promise<void> {
-    return new Promise((resolve: any, reject: any) => {
+    return new Promise(async (resolve: any, reject: any) => {
         const new_namespace_obj = registry_namespaces.get()[new_namespace];
 
         if(!new_namespace_obj) {
@@ -502,11 +501,19 @@ export async function movePage(page_id: number, new_namespace: string, new_name:
             return;
         }
 
+        // Check if the page with target title already exists
+        const current_page_query = await getInfo(new_namespace, new_name);
+
+        if(current_page_query[1].length !== 0) {
+            reject(new Error("A page with such title already exists"));
+            return;
+        }
+
         sql.execute("UPDATE `wiki_pages` SET `namespace` = ?, `name` = ? WHERE id = ?",
         [new_namespace, new_name, page_id],
         (error: any) => {
             if(!error) resolve();
-            else reject(error);
+            else reject();
         });
     });
 }
