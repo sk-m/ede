@@ -17,8 +17,15 @@ export interface LogEntry {
 }
 
 export let log_icons: { [log_type: string]: string } = {
+    groupupdate: "fas fa-users-cog",
+
     usergroupsupdate: "fas fa-user-cog",
-    groupupdate: "fas fa-users-cog"
+    blockuser: "fas fa-user-lock",
+
+    createwikipage: "fas fa-file-alt",
+    deletewikipage: "fas fa-trash",
+    restorewikipage: "fas fa-trash-restore",
+    movewikipage: "fas fa-arrow-right",
 };
 
 /**
@@ -33,10 +40,11 @@ export function constructLogEntriesHTML(entries: LogEntry[]): string {
     }
 
     let html = "";
-    const icon = log_icons[entries[0].type] || "fas fa-cog";
+    let icon;
 
     for(const entry of entries) {
         const date = new Date(entry.created_on * 1000);
+        icon = log_icons[entry.type] || "fas fa-cog";
 
         html += `\
 <div class="ui-log-item" data-logid="${ entry.id }">

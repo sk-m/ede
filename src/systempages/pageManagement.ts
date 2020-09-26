@@ -12,9 +12,9 @@ import { sql } from "../server";
 import { pageTitleParser } from "../routes";
 import { registry_namespaces } from "../registry";
 
-async function info_page(queried_page: any, client?: User.User): Promise<string> {
+async function info_page(queried_page: any, queried_page_title: string, client?: User.User): Promise<string> {
     // TODO include deletion logs
-    const all_log_entries = await Log.getEntries(["createwikipage", "deletewikipage", "restorewikipage", "movewikipage"], undefined, queried_page.id);
+    const all_log_entries = await Log.getEntries(["createwikipage", "deletewikipage", "restorewikipage", "movewikipage"], undefined, queried_page_title);
 
     const stat_createdon = new Date(queried_page.page_info.created_on * 1000).toUTCString();
 
@@ -69,7 +69,7 @@ async function info_page(queried_page: any, client?: User.User): Promise<string>
 </div>`;
 }
 
-async function move_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+async function move_page(queried_page: any, queried_page_title: string, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
     return new Promise(async (resolve: any) => {
         if(!client_rights || !client_rights.rights.wiki_movepage) {
             resolve("You don't have permission to move wiki pages.");
@@ -77,7 +77,7 @@ async function move_page(queried_page: any, client?: User.User, client_rights?: 
         }
 
         // Get log entries
-        const log_entries = await Log.getEntries("movewikipage", undefined, queried_page.id);
+        const log_entries = await Log.getEntries("movewikipage", undefined, queried_page_title);
 
         // Get system messages
         const sysmsgs = await SystemMessage.get([
@@ -136,56 +136,7 @@ async function move_page(queried_page: any, client?: User.User, client_rights?: 
 });
 }
 
-async function restore_page(queried_page: any, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
-    return new Promise(async (resolve: any) => {
-        if(!client_rights || !client_rights.rights.wiki_restorepage) {
-            resolve("You don't have permission to restore wiki pages.");
-            return;
-        }
-
-        const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page.id);
-        const deleted_page = await Page.getRaw(undefined, queried_page.namespace, queried_page.name, true);
-
-        let deleted_page_contents = "";
-        if(deleted_page && deleted_page.raw_content) {
-            deleted_page_contents = deleted_page.raw_content.replace(/\n/g, "<br>");
-        }
-
-        const sysmsgs = await SystemMessage.get([
-            "wikipagerestore-toptext"
-        ]);
-
-        resolve(`\
-<div name="restorepage-preview" class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("restore_preview", "Preview", "Deleted contents of the page") }
-    <div class="ui-text monospace">${ deleted_page_contents }</div>
-</div>
-
-<form name="restorepage-form" class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("restore_restore", "Restore page") }
-
-    <div class="ui-text margin-bottom">${ sysmsgs["wikipagerestore-toptext"].value }</div>
-
-    <div class="ui-input-box margin-top">
-        <div class="popup"></div>
-        <div class="ui-input-name1">Reason</div>
-        <input type="text" name="summary" data-handler="summary" class="ui-input1">
-    </div>
-
-    <div class="ui-form-container right margin-top">
-        <button name="submit" class="ui-button1">Restore page</button>
-    </div>
-</form>
-
-<div class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("restore_logs", "Restore and delete logs for this page") }
-
-    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
-</div>`);
-});
-}
-
-async function delete_page(queried_page: Page.PageInfo, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+async function delete_page(queried_page: Page.PageInfo, queried_page_title: string, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
     return new Promise(async (resolve: any) => {
         if(!client_rights || !client_rights.rights.wiki_deletepage) {
             resolve("You don't have permission to delete wiki pages.");
@@ -193,7 +144,7 @@ async function delete_page(queried_page: Page.PageInfo, client?: User.User, clie
         }
 
         const client_can_completely_remove = client_rights.rights.wiki_deletepage.allow_complete_erase === true;
-        const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page.id);
+        const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page_title);
 
         const sysmsgs = await SystemMessage.get([
             "wikipagedelete-toptext"
@@ -291,14 +242,28 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 description: "Page not found"
             };
 
-            page_config.body_html = "Page was not found.";
+            page_config.body_html = `\
+<div class="ui-text w-icon margin-top">
+    <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="text ui-text">Page was not found. Maybe it was deleted or moved?</div>
+</div>`;
 
             if(page_query[1].length !== 0) {
-                page_config.body_html +=
-`<br><br><div class="ui-text w-icon"><div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div><div>Deleted pages with such \
-name were found. You can manage them here — <a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/\
-${ queried_page_fullname }</a>.</div></div>`;
+                page_config.body_html +=`\
+<div class="ui-text w-icon margin-top">
+    <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="text">Deleted pages with such name were found. You can manage them here — \
+<a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/${ queried_page_fullname }</a>.</div></div>`;
             }
+
+            const log_entries = await Log.getEntries(["deletewikipage", "movewikipage"], undefined, queried_page_fullname);
+
+            page_config.body_html += `\
+<div class="ui-form-box" style="margin-top: 30px">
+    ${ UI.constructFormBoxTitleBar("delete_move_logs", "Delete and move logs for this page") }
+
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
+</div>`
 
             resolve(page_config);
             return;
@@ -387,21 +352,8 @@ ${ queried_page_fullname }</a>.</div></div>`;
                     title: `Delete ${ page_fullname}`
                 };
 
-                page_config.body_html = await delete_page(queried_page, client, client_groups || undefined);
+                page_config.body_html = await delete_page(queried_page, queried_page_fullname, client, client_groups || undefined);
             } break;
-            // case "restore": {
-            //     const page_js = fs.readFileSync("./static/PageManagement/restore.js", "utf8");
-
-            //     page_config.page.additional_js = [page_js];
-
-            //     page_config.breadcrumbs_data.push(["Restore"]);
-            //     page_config.header_config = {
-            //         icon: "fas fa-trash-restore",
-            //         title: `Restore ${ page_fullname}`
-            //     };
-
-            //     page_config.body_html = await restore_page(queried_page, client, client_groups || undefined);
-            // } break;
             case "move": {
                 const page_js = fs.readFileSync("./static/PageManagement/move.js", "utf8");
 
@@ -413,11 +365,11 @@ ${ queried_page_fullname }</a>.</div></div>`;
                     title: `Move ${ page_fullname}`
                 };
 
-                page_config.body_html = await move_page(queried_page, client, client_groups || undefined);
+                page_config.body_html = await move_page(queried_page, queried_page_fullname, client, client_groups || undefined);
             } break;
             default: {
                 page_config.breadcrumbs_data.push(["Info"]);
-                page_config.body_html = await info_page(queried_page, client);
+                page_config.body_html = await info_page(queried_page, queried_page_fullname, client);
             }
         }
 

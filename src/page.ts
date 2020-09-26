@@ -338,8 +338,9 @@ VALUES (?, ?, NULL, ?, '{}')",
             const full_address = `${ page_address.namespace }:${ page_address.name }`;
 
             // Log page creation
-            Log.createEntry("createwikipage", user.id, target_page_id,
-            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ full_address }">${ full_address }</a>`, "");
+            Log.createEntry("createwikipage", user.id, full_address,
+            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ full_address }">${ full_address }</a> \
+(<code>${ target_page_id }</code>)`, "");
         }
 
         // We could not create the page
@@ -400,7 +401,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?); DELETE FROM `wiki_pages` WHERE id = ?; UPDATE `
                 });
             });
         } else {
-            sql.query("DELETE FROM `revisions` WHERE `page` = ?; DELETE FROM `wiki_pages` WHERE id = ?; \
+            // TODO!
+            reject();
+            return;
+
+            sql.query("#$&(*invalid)  DELETE FROM `revisions` WHERE `page` = ?; DELETE FROM `wiki_pages` WHERE id = ?; \
 UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','deletewikipage') AND `target` = ?",
             [page_id, page_id, page_id],
             (error: any) => {
@@ -415,17 +420,41 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  * Restore the page
  *
  * @param page_id internal page id
+ * 
+ * @returns [new page id, page title]
  */
-// export async function restorePage(page_id: number): Promise<void> {
-//     return new Promise((resolve: any, reject: any) => {
-//         sql.query("UPDATE `wiki_pages` SET `is_deleted` = b'0' WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'0' WHERE `page` = ?",
-//         [page_id, page_id],
-//         (error: any) => {
-//             if(!error) resolve();
-//             else reject(error);
-//         });
-//     });
-// }
+// TODO allow specifying a new name and namespace. Also check if a page with the new title already exists
+export async function restorePage(page_id: number): Promise<string> {
+    return new Promise((resolve: any, reject: any) => {
+        // Get the deleted page and the last revision
+        sql.query("SELECT id FROM `revisions` WHERE `page` = ? ORDER BY id DESC LIMIT 1; \
+SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
+        [page_id, page_id],
+        (get_error: any, results: any) => {
+            if(get_error || results.length < 1) {
+                reject(get_error);
+                return;
+            }
+
+            const deleted_page = results[1][0];
+            const revid = results[0][0].id;
+
+            // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and 
+            // delete the record from `deleted_wiki_pages`)
+            sql.query("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
+            VALUES (?, ?, ?, ?, ?); SET @new_pageid = LAST_INSERT_ID(); UPDATE `revisions` SET `page` = @new_pageid, `is_deleted` = b'0' WHERE `page` = ?; \
+            DELETE FROM `deleted_wiki_pages` WHERE `pageid` = ?; SELECT @new_pageid",
+            [deleted_page.namespace, deleted_page.name, revid, JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions),
+            page_id, page_id, page_id],
+            (restore_error: any, restore_results: any) => {
+                const new_pageid = restore_results[4][0]["@new_pageid"];
+
+                if(!restore_error) resolve([new_pageid, `${ deleted_page.namespace }:${ deleted_page.name }`]);
+                else reject(restore_error);
+            });
+        });
+    });
+}
 
 /**
  * Move (rename) the page
@@ -434,6 +463,7 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  * @param new_namespace name of the namespace to move the page into
  * @param new_name new name for the page
  */
+// TODO check if page with new name already exists.
 export async function movePage(page_id: number, new_namespace: string, new_name: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         const new_namespace_obj = registry_namespaces.get()[new_namespace];
@@ -453,6 +483,33 @@ export async function movePage(page_id: number, new_namespace: string, new_name:
         (error: any) => {
             if(!error) resolve();
             else reject(error);
+        });
+    });
+}
+
+export async function getDeletedPagesInfo(namespace: string, name: string): Promise<PageInfo[]> {
+    return new Promise((resolve: any) => {
+        sql.execute("SELECT * FROM `deleted_wiki_pages` WHERE `namespace` = ? AND `name` = ?",
+        [namespace, name],
+        (deleted_error: any, deleted_results: any) => {
+            if(deleted_error || deleted_results.length === 0) {
+                resolve([]);
+                return;
+            }
+
+            const final_results: PageInfo[] = [];
+
+            for(const page of deleted_results) {
+                final_results.push({
+                    ...page,
+
+                    id: page.pageid,
+                    is_deleted: true
+                })
+            }
+
+            // Deleted page is ready
+            resolve(final_results);
         });
     });
 }

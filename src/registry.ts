@@ -534,15 +534,15 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         description: "Restore deleted page",
 
-        required_arguments: ["title", "csrf_token"],
+        required_arguments: ["pageid", "csrf_token"],
         required_rights: ["wiki_restorepage"],
 
         arguments: {
-            title: {
-                name: "title",
-                display_name: "Page title",
+            pageid: {
+                name: "pageid",
+                display_name: "ID of the page to be restored",
 
-                type: "string"
+                type: "number"
             }
         },
 

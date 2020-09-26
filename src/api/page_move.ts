@@ -49,8 +49,15 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
             .then(() => {
                 const new_title = `${ req.body.new_namespace }:${ req.body.new_name }`;
 
-                Log.createEntry("movewikipage", client_user.id, results[0].id,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <a href="/${ req.body.title }">${ req.body.title }</a> to <a href="/${ new_title }">${ new_title }</a>`, req.body.summary);
+                // TODO idk about this solution
+
+                // Log for old title
+                Log.createEntry("movewikipage", client_user.id, req.body.title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <i><a href="/${ req.body.title }">${ req.body.title }</a></i> to <a href="/${ new_title }">${ new_title }</a> (<code>${ results[0].id }</code>)`, req.body.summary);
+
+                // Log for new title
+                Log.createEntry("movewikipage", client_user.id, new_title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <a href="/${ req.body.title }">${ req.body.title }</a> to <i><a href="/${ new_title }">${ new_title }</a></i> (<code>${ results[0].id }</code>)`, req.body.summary);
 
                 res.send(apiResponse(ApiResponseStatus.success));
             })
