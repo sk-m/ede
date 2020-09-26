@@ -80,18 +80,17 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
   `content_model` varchar(32) NOT NULL DEFAULT 'wiki',
   `action_restrictions` json NOT NULL,
   `namespace_info` json NOT NULL,
-  `show_in_title` bit(1) NOT NULL DEFAULT b'1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `namespace_name` (`name`),
   KEY `NOT_EDITABLE` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
-INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
-	(1, 'System', 'system', '{}', '{}', b'1'),
-	(2, 'Main', 'wiki', '{}', '{}', b'0'),
-	(3, 'User', 'system', '{}', '{}', b'1'),
-	(4, 'Template', 'wiki', '{}', '{}', b'1');
+INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `namespace_info`) VALUES
+	(1, 'System', 'system', '{}', '{}'),
+	(2, 'Main', 'wiki', '{}', '{}'),
+	(3, 'User', 'system', '{}', '{}'),
+	(4, 'Template', 'wiki', '{}', '{}');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `revisions` (

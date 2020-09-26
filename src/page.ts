@@ -168,9 +168,6 @@ export interface Namespace {
     info: { [key: string]: any };
     content_model: string;
 
-    // TODO this will be moved into namespace_info
-    show_in_title: boolean;
-
     handler?: (address: PageAddress, client: User.User) => Promise<ResponsePage>;
 }
 
@@ -251,11 +248,10 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
             const namespaces: NamespacesObject = {};
 
             // We should have a namespace_info JSON object instead (like pages do)
+            // TODO idk if we need to work with fields here. Maybe just return the results as is?
             for(const namespace of results) {
                 namespaces[namespace.name] = {
                     ...namespace,
-
-                    show_in_title: namespace.show_in_title.readInt8(0) === 1
                 };
             }
 
@@ -431,7 +427,7 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  * @param page_id internal page id
  * @param new_namespace new namespace for the page (will be checked for content_model)
  * @param new_name new name for the page
- * 
+ *
  * @returns [new page id, new page title, old page title]
  */
 export async function restorePage(page_id: number, new_namespace?: string, new_name?: string): Promise<string> {
@@ -468,7 +464,7 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
                 return;
             }
 
-            // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and 
+            // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and
             // delete the record from `deleted_wiki_pages`)
             sql.query("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
             VALUES (?, ?, ?, ?, ?); SET @new_pageid = LAST_INSERT_ID(); UPDATE `revisions` SET `page` = @new_pageid, `is_deleted` = b'0' WHERE `page` = ?; \
@@ -862,8 +858,7 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
 
                 // Check if namespace exists
                 if(namespace) {
-                    page.display_title = `${ namespace.show_in_title ? (namespace.name + ":") : "" }\
-${ address.name }`;
+                    page.display_title = `${ namespace.name }:${ address.name }`;
                 } else {
                     page.display_title = `${ address.namespace }:${ address.name }`;
                     page.status.push("namespace_not_found");
