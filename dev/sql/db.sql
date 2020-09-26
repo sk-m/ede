@@ -49,8 +49,10 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
   `action_restrictions` json NOT NULL,
   `deleted_by` int(10) unsigned NOT NULL,
   `deleted_on` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+  `delete_summary` varchar(1024) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `pageid` (`pageid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*!40000 ALTER TABLE `deleted_wiki_pages` DISABLE KEYS */;
 /*!40000 ALTER TABLE `deleted_wiki_pages` ENABLE KEYS */;
@@ -97,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `content` mediumtext CHARACTER SET utf16 COLLATE utf16_unicode_520_ci NOT NULL,
   `content_hash` varchar(50) NOT NULL,
   `summary` varchar(1024) DEFAULT NULL,
-  `visibility` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `visibility` bit(5) NOT NULL DEFAULT b'0',
   `tags` varchar(512) NOT NULL DEFAULT '',
   `timestamp` int(10) unsigned NOT NULL,
   `bytes_size` int(10) NOT NULL,
@@ -105,9 +107,7 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `is_deleted` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   KEY `revision_page` (`page`),
-  KEY `revision_user` (`user`),
-  CONSTRAINT `revision_page` FOREIGN KEY (`page`) REFERENCES `wiki_pages` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION,
-  CONSTRAINT `revision_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION
+  KEY `revision_user` (`user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `revisions` DISABLE KEYS */;
