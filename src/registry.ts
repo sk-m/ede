@@ -29,6 +29,7 @@ import { wikiPageManagement } from "./systempages/pageManagement";
 import { pageDeleteRoute } from "./api/page_delete";
 import { pageRestoreRoute } from "./api/page_restore";
 import { pageMoveRoute } from "./api/page_move";
+import { deletedWikiPages } from "./systempages/deletedWikiPages";
 import { getRevisionRoute } from "./api/revision_get";
 
 /** @ignore */
@@ -324,6 +325,18 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
         source: "ede",
 
         systempage_config: wikiPageManagement
+    },
+    deletedwikipages: {
+        name: "DeletedWikiPages",
+
+        display_title: "Deleted pages",
+        display_category: "wiki",
+        display_description: "Manage, view and restore deleted wiki pages",
+        display_icon: "fas fa-archive",
+
+        source: "ede",
+
+        systempage_config: deletedWikiPages
     },
     usergroupmanagement: {
         name: "UserGroupManagement",
