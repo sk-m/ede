@@ -4,11 +4,11 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
-CREATE DATABASE IF NOT EXISTS `ede_dev` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `ede_dev`;
+CREATE DATABASE IF NOT EXISTS `ede_dev_git` /*!40100 DEFAULT CHARACTER SET utf8 */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `ede_dev_git`;
 
 CREATE TABLE IF NOT EXISTS `config` (
-  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint unsigned NOT NULL AUTO_INCREMENT,
   `key` varchar(64) NOT NULL,
   `value` text,
   `value_type` enum('bool','int','string','json','array','allowed_values') NOT NULL DEFAULT 'string',
@@ -41,14 +41,14 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `pageid` int(10) unsigned NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `pageid` int unsigned NOT NULL,
   `namespace` varchar(64) NOT NULL,
   `name` tinytext NOT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
-  `deleted_by` int(10) unsigned NOT NULL,
-  `deleted_on` int(10) unsigned NOT NULL,
+  `deleted_by` int unsigned NOT NULL,
+  `deleted_on` int unsigned NOT NULL,
   `delete_summary` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pageid` (`pageid`)
@@ -58,25 +58,26 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
 /*!40000 ALTER TABLE `deleted_wiki_pages` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `logs` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
-  `executor` int(10) unsigned NOT NULL,
+  `executor` int unsigned NOT NULL,
   `target` varchar(256) NOT NULL,
   `action_text` varchar(2048) NOT NULL DEFAULT '',
   `summary_text` varchar(1024) NOT NULL DEFAULT '',
-  `created_on` int(10) unsigned NOT NULL,
-  `visibility_level` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `created_on` int unsigned NOT NULL,
+  `visibility_level` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `logs_executor` (`executor`),
-  CONSTRAINT `logs_executor` FOREIGN KEY (`executor`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `logs_executor` FOREIGN KEY (`executor`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `logs` DISABLE KEYS */;
 /*!40000 ALTER TABLE `logs` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `namespaces` (
-  `id` smallint(6) unsigned NOT NULL AUTO_INCREMENT,
+  `id` smallint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
+  `content_model` varchar(32) NOT NULL DEFAULT 'wiki',
   `action_restrictions` json NOT NULL,
   `namespace_info` json NOT NULL,
   `show_in_title` bit(1) NOT NULL DEFAULT b'1',
@@ -86,24 +87,24 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
-INSERT INTO `namespaces` (`id`, `name`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
-	(1, 'System', '{}', '{}', b'1'),
-	(2, 'Main', '{}', '{}', b'0'),
-	(3, 'User', '{}', '{}', b'1');
+INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `namespace_info`, `show_in_title`) VALUES
+	(1, 'System', 'system', '{}', '{}', b'1'),
+	(2, 'Main', 'wiki', '{}', '{}', b'0'),
+	(3, 'User', 'system', '{}', '{}', b'1');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `revisions` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `page` int(10) unsigned DEFAULT NULL,
-  `user` int(10) unsigned DEFAULT NULL,
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `page` int unsigned DEFAULT NULL,
+  `user` int unsigned DEFAULT NULL,
   `content` mediumtext CHARACTER SET utf16 COLLATE utf16_unicode_520_ci NOT NULL,
   `content_hash` varchar(50) NOT NULL,
   `summary` varchar(1024) DEFAULT NULL,
   `visibility` bit(5) NOT NULL DEFAULT b'0',
   `tags` varchar(512) NOT NULL DEFAULT '',
-  `timestamp` int(10) unsigned NOT NULL,
-  `bytes_size` int(10) NOT NULL,
-  `bytes_change` int(10) NOT NULL,
+  `timestamp` int unsigned NOT NULL,
+  `bytes_size` int NOT NULL,
+  `bytes_change` int NOT NULL,
   `is_deleted` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   KEY `revision_page` (`page`),
@@ -114,7 +115,7 @@ CREATE TABLE IF NOT EXISTS `revisions` (
 /*!40000 ALTER TABLE `revisions` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `system_messages` (
-  `id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+  `id` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
   `value` text,
   `default_value` text,
@@ -166,7 +167,7 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(256) NOT NULL,
   `email_address` varchar(256) NOT NULL,
   `password` varchar(2048) NOT NULL DEFAULT '',
@@ -180,7 +181,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `user_groups` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL DEFAULT '',
   `added_rights` varchar(8192) DEFAULT '',
   `right_arguments` json NOT NULL,
@@ -195,7 +196,7 @@ INSERT INTO `user_groups` (`id`, `name`, `added_rights`, `right_arguments`) VALU
 /*!40000 ALTER TABLE `user_groups` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `user_group_membership` (
-  `user` int(10) unsigned NOT NULL,
+  `user` int unsigned NOT NULL,
   `group` varchar(128) NOT NULL DEFAULT '',
   PRIMARY KEY (`user`,`group`),
   CONSTRAINT `user_group_membership_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -205,16 +206,16 @@ CREATE TABLE IF NOT EXISTS `user_group_membership` (
 /*!40000 ALTER TABLE `user_group_membership` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `user_sessions` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `user` int(11) unsigned NOT NULL,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user` int unsigned NOT NULL,
   `session_token` tinytext NOT NULL,
   `sid_hash` varchar(4096) NOT NULL,
   `sid_salt` varchar(2048) NOT NULL,
   `csrf_token` varchar(1024) NOT NULL,
   `ip_address` varchar(16) NOT NULL,
   `user_agent` varchar(1024) NOT NULL,
-  `expires_on` int(11) DEFAULT '0',
-  `created_on` int(11) DEFAULT '0',
+  `expires_on` int DEFAULT '0',
+  `created_on` int DEFAULT '0',
   `invalid` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   KEY `user_sessions_user` (`user`),
@@ -225,17 +226,17 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `namespace` varchar(64) DEFAULT NULL,
   `name` tinytext NOT NULL,
-  `revision` bigint(20) unsigned DEFAULT NULL,
+  `revision` bigint unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `revision` (`revision`),
   KEY `namespace` (`namespace`),
-  CONSTRAINT `namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON DELETE SET NULL ON UPDATE NO ACTION,
-  CONSTRAINT `revision` FOREIGN KEY (`revision`) REFERENCES `revisions` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION
+  CONSTRAINT `namespace` FOREIGN KEY (`namespace`) REFERENCES `namespaces` (`name`) ON DELETE SET NULL,
+  CONSTRAINT `revision` FOREIGN KEY (`revision`) REFERENCES `revisions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `wiki_pages` DISABLE KEYS */;
