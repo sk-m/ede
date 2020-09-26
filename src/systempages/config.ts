@@ -170,24 +170,9 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
         page.additional_css = [page_css];
         page.additional_js = [page_js];
 
-        // TODO bad system
-        page.info.hidetitle = {
-            display_name: "Hidden title",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
-
-        page.info.nocontainer = {
-            display_name: "No container",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
+        // Set some info items
+        page.info.hiddentitle = true;
+        page.info.nocontainer = true;
 
         let client_can_alter = false;
         let client_restricted_permits: string[] = [];

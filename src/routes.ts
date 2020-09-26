@@ -61,8 +61,8 @@ ede.instance_display_name = \`${ current_instance_displayname }\`;`];
         ede_page_content: page.parsed_content || "",
         ede_page_additionalinfo_badges: page.badges,
         ede_page_subnametext: registry_config_snapshot["instance.page_subnametext"].value as string || "",
-        ede_page_hidetitle: page.info && page.info.hidetitle && page.info.hidetitle.value as boolean,
-        ede_page_nocontainer: page.info && page.info.nocontainer && page.info.nocontainer.value as boolean,
+        ede_page_hiddentitle: page.info && page.info.hiddentitle as boolean,
+        ede_page_nocontainer: page.info && page.info.nocontainer as boolean,
 
         ede_instance_displayname: current_instance_displayname,
 

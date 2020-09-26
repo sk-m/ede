@@ -81,8 +81,8 @@
     </div>
     <div id="ede-main-panel">
         <div class="main-content-container">
-            <div class="main-content{{if(options.ede_page_nocontainer)}} nocontainer{{/if}}">
-                <div class="ede-template ede_page_title_container page-title-container{{if(options.ede_page_hidetitle)}} hidden{{/if}}">
+            <div class="ede-template ede_page_main_content_container main-content{{if(options.ede_page_nocontainer)}} nocontainer{{/if}}">
+                <div class="ede-template ede_page_title_container page-title-container{{if(options.ede_page_hiddentitle)}} hidden{{/if}}">
                     <div class="ede-template ede_page_title">{{ede_page_title}}</div>
                     <div class="ede-template ede_page_actionbuttons">
                         <div class="button page-history"><div class="icon"><i class="material-icons">history</i></div>History</div>
@@ -92,7 +92,7 @@
                         <!-- <div class="button page-more"><div class="icon"><i class="material-icons">more_vert</i></div></div> -->
                     </div>
                 </div>
-                <div class="ede-template ede_page_additional_info_container additional-info-container{{if(options.ede_page_hidetitle)}} hidden{{/if}}">
+                <div class="ede-template ede_page_additional_info_container additional-info-container{{if(options.ede_page_hiddentitle)}} hidden{{/if}}">
                     <div class="ede-template ede_page_subnametext">{{ede_page_subnametext | safe}}</div>
                     <div class="ede-template ede_page_additionalinfo_badges">
                         {{if(options.ede_page_additionalinfo_badges)}}

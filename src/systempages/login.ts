@@ -15,15 +15,9 @@ export async function login(page: Page.ResponsePage, _client: User.User): Promis
         const page_content = fs.readFileSync("./static/Login/content.html", "utf8");
         page.parsed_content = page_content;
 
-        // TODO bad system
-        page.info.hidetitle = {
-            display_name: "Hidden title",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
+        // Set some info items
+        page.info.hiddentitle = true;
+        page.info.nocontainer = true;
 
         resolve(page);
     });

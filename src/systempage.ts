@@ -123,24 +123,9 @@ ${ header_html }
     </div>` : "" }
 </div>`;
 
-    // Bad system
-    config.page.info.hidetitle = {
-        display_name: "Hidden title",
-
-        value_type: "boolean",
-        value: true,
-
-        source: "ede"
-    }
-
-    config.page.info.nocontainer = {
-        display_name: "No container",
-
-        value_type: "boolean",
-        value: true,
-
-        source: "ede"
-    }
+    // Set some info items
+    config.page.info.hiddentitle = true;
+    config.page.info.nocontainer = true;
 
     return config.page;
 }

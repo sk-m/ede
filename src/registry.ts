@@ -313,6 +313,25 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins);
 export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getNamespacesFromDB);
 
+export const registry_page_info_types = new RegistryContainer<Page.PageInfoTypes>("ede", undefined, {
+    hiddentitle: {
+        display_name: "Hidden title",
+
+        value_type: "boolean",
+        default_value: false,
+
+        source: "ede"
+    },
+    nocontainer: {
+        display_name: "No container",
+
+        value_type: "boolean",
+        default_value: false,
+
+        source: "ede"
+    }
+});
+
 export const registry_systempages = new RegistryContainer<Page.SystemPageDescriptorsObject>("ede", undefined, {
     wikipagemanagement: {
         name: "WikiPageManagement",

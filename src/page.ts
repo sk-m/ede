@@ -63,7 +63,12 @@ export interface ResponsePage {
     /** Page's language (ex. json, js, css, none) */
     page_lang?: string;
 
-    info: PageInfoItemsObject;
+    /**
+     * Please, do not reassign this. If you want to add or remove an info item, just change the info item in question
+     *
+     * So, instead of `page.info = { hiddentitle: true }`, do `page.info.hiddentitle = true`
+     */
+    info: { [key: string]: any };
 
     badges: string[];
 
@@ -137,15 +142,13 @@ export interface PageInfo {
     deleted_on?: number;
 }
 
-// TODO This is not a good system. We have to describe the value type, source and display every time we set the option
-// So, if we want to hide a titlebar of a page, we can't just do `page.info.hidetitle = false`
-// We have to write `page.info.hidetitle = { value_type: "boolean", source: "ede", display_name: "abc" ... }`
-export type PageInfoItemsObject = { [internal_name: string]: PageInfoItem };
-export interface PageInfoItem {
+export type PageInfoTypes = { [internal_name: string]: PageInfoType };
+export interface PageInfoType {
     display_name: string;
+    description?: string;
 
     value_type: "string" | "number" | "boolean" | "json" | "array";
-    value: string | number | boolean | string[] | undefined;
+    default_value?: any;
 
     /** Name of the extension that provided the info type */
     source: string;
@@ -156,7 +159,13 @@ export interface Namespace {
     name: string;
 
     action_restrictions: { [action_name: string]: string };
-    info: PageInfoItemsObject;
+
+    /**
+     * Please, do not reassign this. If you want to add or remove an info item, just change the info item in question
+     *
+     * So, instead of `page.info = { hiddentitle: true }`, do `page.info.hiddentitle = true`
+     */
+    info: { [key: string]: any };
     content_model: string;
 
     // TODO this will be moved into namespace_info

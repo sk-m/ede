@@ -65,24 +65,9 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
         page.additional_css = [page_css];
         page.additional_js = [page_js];
 
-        // TODO bad system
-        page.info.hidetitle = {
-            display_name: "Hidden title",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
-
-        page.info.nocontainer = {
-            display_name: "No container",
-
-            value_type: "boolean",
-            value: true,
-
-            source: "ede"
-        }
+        // Set some info items
+        page.info.hiddentitle = true;
+        page.info.nocontainer = true;
 
         page.parsed_content = `\
 <div class="ui-systempage-header-box">
