@@ -18,7 +18,6 @@ function deletedWikiPagesPageScript() {
     let retrieve_rendered_revisions = false;
 
     const restore_form = ede.form.list["deletedwikipages-restoreform"];
-    const restore_prohibited = restore_form._form.dataset.restoreProhibited === "true";
 
     // Get rendered revisions checkbox
     const retrieve_rendered_revisions_checkbox = ede.form.list["deletedwikipages-preview"].retrieve_rendered_revisions;
@@ -78,7 +77,7 @@ Is it hidden?</i>";
         current_pageid = pageid;
 
         // Enable restore button
-        if(!restore_prohibited) restore_form.submit.classList.remove("disabled");
+        restore_form.submit.classList.remove("disabled");
 
         // Get revisions for selected page
         ede.apiCall("revision/get", { pageid, include_deleted: true })
@@ -148,10 +147,8 @@ Is it hidden?</i>";
 
         // Restore the page
         ede.apiCall("page/restore", final_params, true)
-        .then(() => {
-            const target_title = ede.current_page.address.url_params[1];
-
-            ede.navigate(`/System:WikiPageManagement/info/${ target_title }`);
+        .then(response => {
+            ede.navigate(`/System:WikiPageManagement/info/${ response.new_title }`);
 
             ede.showNotification("wikipagerestore-success", "Page restored", "Page successfully restored.");
         })

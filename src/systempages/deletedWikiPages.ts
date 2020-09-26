@@ -2,13 +2,11 @@ import fs from "fs";
 
 import * as Page from "../page";
 import * as User from "../user";
-import * as Log from "../log";
-import * as Util from "../utils";
 import * as UI from "../ui";
-import * as SystemMessage from "../system_message";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { sql } from "../server";
 import { pageTitleParser } from "../routes";
+import { registry_namespaces } from "../registry";
 
 export async function deletedWikiPages(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
@@ -149,6 +147,18 @@ deleted by <a href="/User:${ users[p.deleted_by] }">${ users[p.deleted_by] }</a>
 </div>`;
         }
 
+        // Get all namespaces
+        const registry_namespaces_snapshot = registry_namespaces.get();
+        let namespace_select_html = "";
+
+        // tslint:disable-next-line: forin
+        for(const name in registry_namespaces_snapshot) {
+            // We can only move to namespaces with 'wiki' content model
+            if(registry_namespaces_snapshot[name].content_model === "wiki") {
+                namespace_select_html += `<div class="choice">${ name }</div>`;
+            }
+        }
+
         // Body HTML
         page_config.body_html = `\
 <form name="deletedwikipages-versionselect" class="ui-form-box">
@@ -173,23 +183,42 @@ from the list.") }
         <div class="text">Show rendered revisions instead of wikitext</div>
     </div>
 
-    <div style="with: 100%; height: 1px; margin: 15px 25px; background-color: var(--color-gray3)"></div>
+    <div class="ui-form-spacer-thin"></div>
 
     <div class="ui-text" id="deletedwikipages-revision-content">Select a revision you want to preview from the revisions list</div>
 </form>
 
-<form name="deletedwikipages-restoreform" class="ui-form-box" data-restore-prohibited="${ page_with_such_name_exists ? "true" : "false" }">
+<form name="deletedwikipages-restoreform" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("restore", "Restore page") }
 
     ${ page_with_such_name_exists ? `<div class="ui-text w-icon margin-bottom">
     <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
-    <div class="text">This page can not be restored because a page with such name currently exists.</div>
+    <div class="text">A page with such title already exists. Please, pick another title to restore the page to.</div>
     </div>` : "" }
 
     <div class="ui-text margin-bottom">Keep in mind that <i>all</i> the revisions from the selected version will be restored. \
 The selected revision will not affect anything, it is there just for previewing purposes.</div>
 
     <div class="ui-text margin-bottom">Selected version: <span id="deletedwikipages-selectedversion-text"><i>(none)</i></span></div>
+
+    <div class="ui-form-spacer-thin"></div>
+
+    <div input-container class="ui-input-box margin-top">
+        <div class="ui-input-name1">Restore to</div>
+        <div class="ui-form-container between">
+            <div input class="ui-input-dropdown1" name="new_namespace" style="margin-right: 3px">
+                <input disabled type="text" value="${ page_address.namespace }">
+                <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+                <div class="choices">
+                    ${ namespace_select_html }
+                </div>
+            </div>
+
+            <input type="text" name="new_name" value="${ page_address.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+        </div>
+    </div>
+
+    <div class="ui-text small gray" style="margin-top: 5px">Page can only be restored to <code>wiki</code> namespaces. You can manage namespaces <a href="/System:Namespaces">here</a>.</div>
 
     <div class="ui-input-box margin-top">
         <div class="popup"></div>

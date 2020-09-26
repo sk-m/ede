@@ -3,6 +3,14 @@ div.margin-top:empty {
 }
 
 /* Form containers */
+.ui-form-spacer-thin {
+    height: 1px;
+    
+    margin: 15px 25px;
+    
+    background-color: var(--color-gray3)
+}
+
 .ui-form-box {
     position: relative;
 

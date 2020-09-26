@@ -556,6 +556,20 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
                 display_name: "ID of the page to be restored",
 
                 type: "number"
+            },
+            new_namespace: {
+                name: "new_namespace",
+                display_name: "New namespace",
+                description: "If you want to restore the page to some other title",
+
+                type: "string"
+            },
+            new_name: {
+                name: "new_name",
+                display_name: "New name (without the namespace)",
+                description: "If you want to restore the page to some other title",
+
+                type: "string"
             }
         },
 

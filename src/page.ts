@@ -420,37 +420,61 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  * Restore the page
  *
  * @param page_id internal page id
+ * @param new_namespace new namespace for the page (will be checked for content_model)
+ * @param new_name new name for the page
  * 
- * @returns [new page id, page title]
+ * @returns [new page id, new page title, old page title]
  */
-// TODO allow specifying a new name and namespace. Also check if a page with the new title already exists
-export async function restorePage(page_id: number): Promise<string> {
+export async function restorePage(page_id: number, new_namespace?: string, new_name?: string): Promise<string> {
     return new Promise((resolve: any, reject: any) => {
         // Get the deleted page and the last revision
         sql.query("SELECT id FROM `revisions` WHERE `page` = ? ORDER BY id DESC LIMIT 1; \
 SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
         [page_id, page_id],
-        (get_error: any, results: any) => {
+        async (get_error: any, results: any) => {
             if(get_error || results.length < 1) {
-                reject(get_error);
+                reject();
                 return;
             }
 
             const deleted_page = results[1][0];
             const revid = results[0][0].id;
 
+            if(!new_namespace) new_namespace = deleted_page.namespace;
+            if(!new_name) new_name = deleted_page.name;
+
+            // Check if namespace is correct
+            const registry_namespaces_snapshot = registry_namespaces.get();
+
+            if(registry_namespaces_snapshot[new_namespace as string].content_model !== "wiki") {
+                reject(new Error("Unable to move page to a non-wiki namespace"));
+                return;
+            }
+
+            // Check if the page with target title already exists
+            const current_page_query = await getInfo(new_namespace as string, new_name as string);
+
+            if(current_page_query[1].length !== 0) {
+                reject(new Error("A page with such title already exists"));
+                return;
+            }
+
             // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and 
             // delete the record from `deleted_wiki_pages`)
             sql.query("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
             VALUES (?, ?, ?, ?, ?); SET @new_pageid = LAST_INSERT_ID(); UPDATE `revisions` SET `page` = @new_pageid, `is_deleted` = b'0' WHERE `page` = ?; \
             DELETE FROM `deleted_wiki_pages` WHERE `pageid` = ?; SELECT @new_pageid",
-            [deleted_page.namespace, deleted_page.name, revid, JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions),
+            [new_namespace as string, new_name as string, revid, JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions),
             page_id, page_id, page_id],
             (restore_error: any, restore_results: any) => {
                 const new_pageid = restore_results[4][0]["@new_pageid"];
 
-                if(!restore_error) resolve([new_pageid, `${ deleted_page.namespace }:${ deleted_page.name }`]);
-                else reject(restore_error);
+                if(!restore_error) resolve([
+                    new_pageid,
+                    `${ new_namespace as string }:${ new_name as string }`,
+                    `${ deleted_page.namespace }:${ deleted_page.name }`
+                ]);
+                else reject();
             });
         });
     });

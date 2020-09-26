@@ -25,17 +25,19 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
         return;
     }
 
+    const is_new_name = req.body.new_namespace && req.body.new_name;
+
     // Restore the page
-    Page.restorePage(req.body.pageid)
+    Page.restorePage(req.body.pageid, is_new_name && req.body.new_namespace, is_new_name && req.body.new_name)
     .then((new_page: any) => {
         Log.createEntry("restorewikipage", client_user.id, new_page[1],
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <a href="/${ new_page[1] }">${ new_page[1] }</a> \
-(<code>${ req.body.pageid } -> ${ new_page[0] }</code>)`, req.body.summary);
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <a href="/${ new_page[2] }">${ new_page[2] }</a> \
+${ is_new_name ? `to <a href="/${ new_page[1] }">${ new_page[1] }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page[0] }</code>)`, req.body.summary);
 
-        res.send(apiResponse(ApiResponseStatus.success));
+        res.send(apiResponse(ApiResponseStatus.success, { new_title: new_page[1] }));
     })
     .catch((error: any) => {
         // TODO save error to a log
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error && error.message || "Unknown error occured"));
     })
 }

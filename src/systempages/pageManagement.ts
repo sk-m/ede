@@ -102,20 +102,22 @@ async function move_page(queried_page: any, queried_page_title: string, client?:
 
     <div class="ui-text margin-bottom">${ sysmsgs["wikipagemove-toptext"].value }</div>
 
-    <div class="ui-input-name1">Move to</div>
-    <div class="ui-form-container between">
-        <div input class="ui-input-dropdown1" name="new_namespace" style="margin-right: 3px">
-            <input disabled type="text" value="${ queried_page.namespace }">
-            <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
-            <div class="choices">
-                ${ namespace_select_html }
+    <div input-container class="ui-input-box margin-top">
+        <div class="ui-input-name1">Move to</div>
+        <div class="ui-form-container between">
+            <div input class="ui-input-dropdown1" name="new_namespace" style="margin-right: 3px">
+                <input disabled type="text" value="${ queried_page.namespace }">
+                <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+                <div class="choices">
+                    ${ namespace_select_html }
+                </div>
             </div>
-        </div>
 
-        <input type="text" name="new_name" value="${ queried_page.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+            <input type="text" name="new_name" value="${ queried_page.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+        </div>
     </div>
 
-    <div class="ui-text small gray">Page can only be moved to <code>wiki</code> namespaces. You can manage namespaces <a href="/System:Namespaces">here</a>.</div>
+    <div class="ui-text small gray" style="margin-top: 5px">Page can only be moved to <code>wiki</code> namespaces. You can manage namespaces <a href="/System:Namespaces">here</a>.</div>
 
     <div class="ui-input-box margin-top">
         <div class="popup"></div>
@@ -161,9 +163,9 @@ async function delete_page(queried_page: Page.PageInfo, queried_page_title: stri
         <div class="text">Completely remove this page and all related information from the database instead</div>
     </div>
 
-    <div input-container class="ui-input-box">
+    <div input-container class="ui-input-box margin-top">
         <div popup class="popup"></div>
-        <div class="ui-input-name1">Reaon</div>
+        <div class="ui-input-name1">Reason</div>
 
         <div input class="ui-input-dropdown1" editable name="summary" data-handler="summary">
             <input type="text">
