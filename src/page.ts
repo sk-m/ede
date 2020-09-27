@@ -52,6 +52,7 @@ export interface SystempageHeaderConfig {
 
 export interface ResponsePage {
     readonly address: PageAddress;
+    pageid?: number;
 
     display_title?: string;
 
@@ -756,16 +757,18 @@ client_visibility: number = 0): Promise<ResponsePage> {
             page.address.name = name;
             page.address.namespace = namespace;
 
-            // TODO setting vars to NULL might be unnecessary
-            sql.query("SET @revid = NULL; SELECT `revision` INTO @revid FROM `wiki_pages` \
-WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT `content`, `visibility` FROM `revisions` WHERE id = @revid;",
+            sql.query("SET @pageid = NULL; SET @revid = NULL; SELECT id, `revision` INTO @pageid, @revid FROM `wiki_pages` \
+WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @pageid, `content`, `visibility` FROM `revisions` WHERE id = @revid;",
             [namespace, name],
             (error: any, results: any) => {
-                if(error || !results[2][0]) {
+                if(error || !results[3][0]) {
                     // Page was not found
                     page.status.push("page_not_found");
                 } else {
-                    const db_page = results[2][0];
+                    const db_page = results[3][0];
+
+                    // Set pageid
+                    page.pageid = db_page["@pageid"];
 
                     // Check revision visibility
                     const visibility = parseRevisionVisibility(db_page.visibility.readInt8(0));

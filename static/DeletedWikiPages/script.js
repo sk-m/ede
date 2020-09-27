@@ -83,9 +83,9 @@ Is it hidden?</i>";
         ede.apiCall("revision/get", { pageid, include_deleted: true })
         .then(response => {
             // TODO maybe we should have a function that returns an HTML node with revisions instead?
-            const revisions_html = ede.tools.constructRevisionsHTML(response.revisions);
+            const revisions_fragment = ede.tools.constructRevisionsHTML(response.revisions, true);
 
-            revisions_container.innerHTML = revisions_html;
+            revisions_container.appendChild(revisions_fragment);
             revisions_status_text.innerText = "Displaying revisions for the selected version";
 
             // TODO @performance

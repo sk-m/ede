@@ -478,10 +478,12 @@
     display: none;
 }
 
+#ede-page-revisions-root,
 #ede-page-editor-root {
     display: none;
 }
 
+#ede-page-revisions-root.active,
 #ede-page-editor-root.active {
     display: block;
 }
