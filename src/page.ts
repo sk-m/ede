@@ -126,6 +126,7 @@ interface RevisionVisibility {
     summary_hidden: boolean,
 }
 
+// TODO we already use term PageInfo
 export interface PageInfo {
     id: string;
 
@@ -248,7 +249,6 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
             const namespaces: NamespacesObject = {};
 
             // We should have a namespace_info JSON object instead (like pages do)
-            // TODO idk if we need to work with fields here. Maybe just return the results as is?
             for(const namespace of results) {
                 namespaces[namespace.name] = {
                     ...namespace,
@@ -827,7 +827,7 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
         // Get the namespace handler
         const namespace = registry_namespaces.get()[address.namespace] as Namespace;
 
-        // Handler for common namespaces (Main or nonexistent)
+        // Handler for common namespaces (or nonexistent)
         const commonHandler = (page: ResponsePage) => {
             return new Promise(async (common_resolve: any) => {
                 let error_sysmsgs: SystemMessage.SystemMessagesObject = {};
@@ -858,7 +858,13 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
 
                 // Check if namespace exists
                 if(namespace) {
-                    page.display_title = `${ namespace.name }:${ address.name }`;
+                    // Inherit info items
+                    // tslint:disable-next-line: forin
+                    for(const info_item_name in namespace.info) {
+                        if(!page.info.hasOwnProperty(info_item_name)) page.info[info_item_name] = namespace.info[info_item_name];
+                    }
+
+                    page.display_title = `${ !namespace.info.hiddennamespacename ? (namespace.name + ":") : "" }${ address.name }`;
                 } else {
                     page.display_title = `${ address.namespace }:${ address.name }`;
                     page.status.push("namespace_not_found");

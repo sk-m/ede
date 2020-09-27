@@ -79,16 +79,16 @@ CREATE TABLE IF NOT EXISTS `namespaces` (
   `name` varchar(64) NOT NULL,
   `content_model` varchar(32) NOT NULL DEFAULT 'wiki',
   `action_restrictions` json NOT NULL,
-  `namespace_info` json NOT NULL,
+  `info` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `namespace_name` (`name`),
   KEY `NOT_EDITABLE` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `namespaces` DISABLE KEYS */;
-INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `namespace_info`) VALUES
+INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, `info`) VALUES
 	(1, 'System', 'system', '{}', '{}'),
-	(2, 'Main', 'wiki', '{}', '{}'),
+	(2, 'Main', 'wiki', '{}', '{"hiddennamespacename": true}'),
 	(3, 'User', 'system', '{}', '{}'),
 	(4, 'Template', 'wiki', '{}', '{}');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;

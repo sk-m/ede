@@ -322,6 +322,15 @@ export const registry_page_info_types = new RegistryContainer<Page.PageInfoTypes
 
         source: "ede"
     },
+    hiddennamespacename: {
+        display_name: "Hidden namespace name",
+        description: "Hides namespace from the title",
+
+        value_type: "boolean",
+        default_value: false,
+
+        source: "ede"
+    },
     nocontainer: {
         display_name: "No container",
 
