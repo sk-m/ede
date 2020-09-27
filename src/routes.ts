@@ -76,8 +76,15 @@ ede.instance_display_name = \`${ current_instance_displayname }\`;`];
 /** @ignore */
 // TODO most of this should be moved to the getPage() method
 export async function directRoute(req: any, res: any): Promise<void> {
+    // Reject favicons (for now)
     if(req.params["*"] === "favicon.ico") {
         res.status(404).send();
+        return;
+    }
+
+    // Redirect to main page from /
+    if(req.params["*"] === "") {
+        res.redirect(302, "/Main");
         return;
     }
 
