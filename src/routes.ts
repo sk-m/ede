@@ -8,21 +8,40 @@ import * as User from "./user";
 export function pageTitleParser(raw_title: string, default_namespace: string = "Main"): any {
     let name: string;
     let namespace: string;
+    const query: { [key: string]: string } = {};
 
-    const url_params = raw_title.split("/");
+    // Split on ? (start of query/search)
+    const query_split = raw_title.split("?", 2);
+
+    // Pathname part (before ?)
+    const pathname = query_split[0];
+
+    // Split pathname on slashes
+    const url_params = pathname.split("/");
+
+    // Query
+    if(query_split[1]) {
+        const pairs = query_split[1].split("&");
+
+        for(const pair of pairs) {
+            const split = pair.split("=", 2);
+
+            query[split[0]] = split[1];
+        }
+    }
 
     // Check if namespace was provided
-    if(raw_title.indexOf(":") > -1) {
+    if(pathname.indexOf(":") > -1) {
         const name_split = url_params[0].split(":", 2);
 
         namespace = name_split[0];
         name = name_split[1];
     } else {
         namespace = default_namespace;
-        name = raw_title;
+        name = pathname;
     }
 
-    return { name, namespace };
+    return { name, namespace, query, url_params };
 }
 
 /** @ignore */

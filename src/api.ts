@@ -67,14 +67,10 @@ export function apiResponse(status: ApiResponseStatus, additional_data?: any): a
 export async function getPageRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     if(req.query.title) {
         // Get by title
-        const name = pageTitleParser(req.query.title);
+        const parsed_title = pageTitleParser(req.query.title);
 
         const page = await Page.get({
-            name: name.name,
-            namespace: name.namespace,
-
-            url_params: req.query.title.split("/"),
-            query: req.query,
+            ...parsed_title,
 
             raw_url: req.raw.originalUrl
         }, client_user as User.User);

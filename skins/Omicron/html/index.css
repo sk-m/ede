@@ -488,6 +488,11 @@
     display: block;
 }
 
+#ede-page-revisions-root > .revisions-container {
+    display: flex;
+    flex-direction: column-reverse
+}
+
 #ede-page-editor-root > .editor-main .editor-textarea {
     height: 350px;
     min-height: 200px;

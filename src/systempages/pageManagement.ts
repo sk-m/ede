@@ -315,7 +315,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 type: "link",
                 text: "Edit page",
                 icon: "fas fa-pen",
-                href: `/${ queried_page_fullname }?edit=1`
+                href: `/${ queried_page_fullname }?v=edit`
             },
             {
                 type: "heading",
