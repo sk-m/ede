@@ -35,6 +35,6 @@ export async function getRevisionRoute(req: any, res: any, client_user?: User.Us
         res.send(apiResponse(ApiResponseStatus.success, { revisions }));
     })
     .catch((error: Error) => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error.message));
+        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error));
     });
 }

@@ -1203,6 +1203,10 @@ a.ui-text[href]:focus:not(:hover),
     transition: 0.15s;
 }
 
+.ui-revision-item > .buttons > .button > i {
+    pointer-events: none;
+}
+
 .ui-revision-item > .buttons > .button:hover {
     color: hsl(0, 0%, 15%);
     background-color: rgba(0,0,0,0.08);

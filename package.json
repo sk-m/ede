@@ -8,6 +8,7 @@
   "dependencies": {
     "@types/bitwise": "^2.0.0",
     "@types/cookie": "^0.3.3",
+    "@types/diff": "^4.0.2",
     "@types/he": "^1.1.0",
     "@types/mysql": "^2.15.8",
     "@types/node": "^13.5.0",

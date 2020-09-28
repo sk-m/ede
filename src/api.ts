@@ -56,7 +56,11 @@ export function apiResponse(status: ApiResponseStatus, additional_data?: any): a
         if(status === ApiResponseStatus.success) {
             response = Object.assign(response, additional_data);
         } else {
-            response.error = additional_data;
+            if(additional_data instanceof Error) {
+                response.error = additional_data && additional_data.message || "Unknown error occured";
+            } else {
+                response.error = additional_data;
+            }
         }
     }
 

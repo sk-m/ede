@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import * as JsDiff from "diff";
 
 import { sql } from "./server";
 import * as Log from "./log";
@@ -53,6 +54,7 @@ export interface SystempageHeaderConfig {
 export interface ResponsePage {
     readonly address: PageAddress;
     pageid?: number;
+    current_revision?: number;
 
     display_title?: string;
 
@@ -726,6 +728,48 @@ FROM `revisions` WHERE `page` = ?";
     });
 }
 
+export async function getRevisionsDiff(rev_from: number, rev_to: number, client_visibility: number = 0, get_html: boolean = false): Promise<JsDiff.Change[] | string> {
+    return new Promise((resolve: any, reject: any) => {
+        if(rev_from === rev_to) {
+            reject(new Error("Ids are the same"));
+            return;
+        }
+
+        sql.execute("SELECT `content`, `visibility` FROM `revisions` WHERE `is_deleted` = b'0' AND id IN (?, ?)",
+        [rev_from, rev_to],
+        (error: any, results: any) => {
+            if(error || results.length !== 2) {
+                reject();
+                return;
+            }
+
+            // Check visibility
+            const visibility_from = parseRevisionVisibility(results[0].visibility.readInt8(0));
+            const visibility_to = parseRevisionVisibility(results[1].visibility.readInt8(0));
+
+            if(client_visibility === 0
+            || client_visibility < visibility_from.overall_visibility
+            || client_visibility < visibility_to.overall_visibility) {
+                if(visibility_from.overall_visibility > 0 || visibility_to.overall_visibility > 0) {
+                    reject(new Error("One of the revisions is hidden"));
+                    return;
+                } else if(visibility_from.content_hidden || visibility_to.content_hidden) {
+                    reject(new Error("Content of one of the revisions is hidden"));
+                    return;
+                }
+            }
+
+            const diff = JsDiff.diffChars(results[0].content, results[1].content);
+
+            if(get_html) {
+                resolve(JsDiff.convertChangesToXML(diff).replace(/\n\n/g, "<br>"));
+            } else {
+                resolve(diff);
+            }
+        })
+    });
+}
+
 /**
  * Get raw page content
  */
@@ -758,7 +802,7 @@ client_visibility: number = 0): Promise<ResponsePage> {
             page.address.namespace = namespace;
 
             sql.query("SET @pageid = NULL; SET @revid = NULL; SELECT id, `revision` INTO @pageid, @revid FROM `wiki_pages` \
-WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @pageid, `content`, `visibility` FROM `revisions` WHERE id = @revid;",
+WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `visibility` FROM `revisions` WHERE id = @revid;",
             [namespace, name],
             (error: any, results: any) => {
                 if(error || !results[3][0]) {
@@ -767,8 +811,8 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT @pageid, `content`, `visibi
                 } else {
                     const db_page = results[3][0];
 
-                    // Set pageid
                     page.pageid = db_page["@pageid"];
+                    page.current_revision = db_page.id;
 
                     // Check revision visibility
                     const visibility = parseRevisionVisibility(db_page.visibility.readInt8(0));

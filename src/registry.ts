@@ -31,6 +31,7 @@ import { pageRestoreRoute } from "./api/page_restore";
 import { pageMoveRoute } from "./api/page_move";
 import { deletedWikiPages } from "./systempages/deletedWikiPages";
 import { getRevisionRoute } from "./api/revision_get";
+import { getRevisionsDiffRoute } from "./api/revision_diff";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -501,6 +502,38 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: getRevisionRoute
+    },
+    "revision/diff": {
+        name: "revision/diff",
+        method: "GET",
+
+        description: "Diff two revisions",
+
+        required_arguments: ["revid_from", "revid_to"],
+        required_rights: [],
+
+        arguments: {
+            revid_from: {
+                name: "revid_from",
+                display_name: "First revision id",
+
+                type: "number"
+            },
+            revid_to: {
+                name: "revid_to",
+                display_name: "Second revision id",
+
+                type: "number"
+            },
+            as_html: {
+                name: "as_html",
+                display_name: "Get as html",
+
+                type: "boolean"
+            },
+        },
+
+        handler: getRevisionsDiffRoute
     },
     "page/save": {
         name: "page/save",
