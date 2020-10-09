@@ -31,11 +31,10 @@ export function pageTitleParser(raw_title: string, default_namespace: string = "
     }
 
     // Check if namespace was provided
-    if(pathname.indexOf(":") > -1) {
-        const name_split = url_params[0].split(":", 2);
-
-        namespace = name_split[0];
-        name = name_split[1];
+    const namespace_colon_pos = url_params[0].indexOf(":");
+    if(namespace_colon_pos > -1) {
+        namespace = url_params[0].substring(0, namespace_colon_pos);
+        name = pathname.substring(namespace_colon_pos + 1);
     } else {
         namespace = default_namespace;
         name = pathname;
@@ -109,32 +108,8 @@ export async function directRoute(req: any, res: any): Promise<void> {
 
     const client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
 
-    const url_split = req.raw.originalUrl.substring(1).split("?", 2);
-    const url_params = url_split[0].split("/");
-
-    let name: string;
-    let namespace: string;
-
-    // Check if namespace was provided
-    // TODO @refactor made a small change, check if everything still works
-    if(url_split[0].indexOf(":") > -1) {
-        const name_split = url_params[0].split(":", 2);
-
-        namespace = name_split[0];
-        name = name_split[1];
-    } else {
-        namespace = "Main";
-        name = url_split[0];
-    }
-
-    const address: Page.PageAddress = {
-        name,
-        namespace,
-
-        raw_url: req.raw.originalUrl,
-        query: req.query,
-        url_params,
-    };
+    // Substring is to delete the first slash from the url
+    const address = pageTitleParser(req.raw.originalUrl.substring(1));
 
     // Get the requested page and send to the client
     Page.get(address, client_user as User.User)
