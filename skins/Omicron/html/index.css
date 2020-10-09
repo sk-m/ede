@@ -458,21 +458,38 @@
 #ede-page-content > .wiki-content h4,
 #ede-page-content > .wiki-content h5,
 #ede-page-content > .wiki-content h6 {
+    color: hsl(0, 0%, 5%);
     font-family: 'Merriweather', serif;
+
+    margin-top: 1.8em;
+    margin-bottom: 0.6em;
 }
 
 #ede-page-content > .wiki-content h2 {
-    color: hsl(0, 0%, 5%);
     font-size: 1.5em;
     font-weight: 600;
 
     padding-bottom: 0.25em;
-    margin-top: 1.5em;
-    margin-bottom: 0.8em;
+    margin-top: 1.4em;
+    margin-bottom: 0.6em;
     border-bottom: 1px solid var(--color-gray3);
 }
 
-/* TODO add h3-h5 */
+
+#ede-page-content > .wiki-content h3 {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+#ede-page-content > .wiki-content h4 {
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+#ede-page-content > .wiki-content h5 {
+    font-size: 1em;
+    font-weight: 600;
+}
 
 #ede-page-content.inactive {
     display: none;
