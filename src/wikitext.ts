@@ -49,6 +49,11 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
     let flag_template_info_start_pos = 0;
     let flag_template_variable_info_start_pos = 0;
 
+    // flags - links
+    let flag_awaiting_link_info = false;
+
+    let flag_link_info_start_pos = 0;
+
     let flag_ul_depth = 0;
 
     const write = (char: string) => {
@@ -311,6 +316,20 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                 }
             } break;
 
+            case '[': {
+                if(input[i + 1] === '[') {
+                    // Link
+
+                    flag_awaiting_link_info = true;
+                    flag_ignore_all_chars = true;
+                    flag_link_info_start_pos = i + 2;
+
+                    i += 1;
+                } else {
+                    write(c);
+                }
+            } break;
+
             case '}': {
                 if(input[i + 1] === '}') {
                     if(input[i + 2] === '}') {
@@ -333,7 +352,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                         } else {
                             const title = `${ address.namespace }:${ address.name }`;
 
-                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-text monospace" href="/${ Util.sanitize(title) }">${ Util.sanitize(title) }</a> not found !</span>`);
+                            write(`<span style="font-family: monospace; color: var(--color-red)">! Template: page <a class="ui-text monospace" href="/${ title }">${ title }</a> not found !</span>`);
                         }
 
                         flag_awaiting_template_info = false;
@@ -341,6 +360,25 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
 
                         i += 1;
                     }
+                } else {
+                    write(c);
+                }
+            } break;
+
+            case ']': {
+                if(input[i + 1] === ']') {
+                    // Link insertion
+                    const link_params = input.substring(flag_link_info_start_pos, i).split("|");
+
+                    const address = pageTitleParser(link_params[0]);
+                    const title = `${ address.namespace }:${ address.name }`;
+
+                    write(`<a class="ui-text" href="/${ title }">${ link_params[1] || title }</a>`);
+
+                    flag_awaiting_link_info = false;
+                    flag_ignore_all_chars = false;
+
+                    i += 1;
                 } else {
                     write(c);
                 }

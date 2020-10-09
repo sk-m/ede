@@ -270,9 +270,10 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
  */
 export function sanitizeWikitext(input: string): string {
     return sanitizeHtml(input, {
-        allowedTags: ["div", "code", "small"],
+        allowedTags: ["div", "span", "br", "code", "small", "sup", "sub"],
         allowedAttributes: {
-            div: ["class", "style"]
+            div: ["class", "style"],
+            span: ["class", "style"],
         },
 
         disallowedTagsMode: "recursiveEscape"
