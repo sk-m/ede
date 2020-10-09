@@ -641,7 +641,7 @@ function parseRevisionVisibility(raw_byte: UInt8): RevisionVisibility {
  * @param filter_client_visibility client's visibility level (used only with apply_filter)
  */
 export async function getPageRevisions(page_id?: string, user_id?: string, get_deleted: boolean = false, apply_filter: boolean = true,
-filter_client_visibility: number = 0): Promise<Revision[]> {
+filter_client_visibility: number = 0): Promise<{ [revid: number]: Revision }> {
     return new Promise((resolve: any) => {
         let query = "\
 SELECT id, `page`, `user`, `content_hash`, `summary`, `visibility`, `tags`, `timestamp`, `bytes_size`, `bytes_change`, `is_deleted` \
@@ -678,7 +678,7 @@ FROM `revisions` WHERE `page` = ?";
                 });
 
                 // Construct final results
-                const final_results: Revision[] = [];
+                const final_results: { [revid: number]: Revision } = {};
 
                 for(const result of results) {
                     const visibility = parseRevisionVisibility(result.visibility.readInt8(0));
@@ -719,7 +719,7 @@ FROM `revisions` WHERE `page` = ?";
                         revision._filter_applied = true;
                     }
 
-                    final_results.push(revision);
+                    final_results[revision.id] = revision;
                 }
 
                 resolve(final_results);
@@ -759,10 +759,14 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
                 }
             }
 
-            const diff = JsDiff.diffChars(results[0].content, results[1].content);
-
+            
+            
+            console.log("a");
+            const diff = JsDiff.diffLines(results[0].content, results[1].content);
+            console.log("b");
+            
             if(get_html) {
-                resolve(JsDiff.convertChangesToXML(diff).replace(/\n\n/g, "<br>"));
+                resolve(JsDiff.convertChangesToXML(diff).replace(/\n/g, "<br>"));
             } else {
                 resolve(diff);
             }

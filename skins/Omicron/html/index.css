@@ -496,8 +496,15 @@
 #ede-page-revisions-diff {
     font-family: monospace;
     font-size: 12px;
+    line-height: 17px;
 
     margin-bottom: 15px;
+    padding: 10px;
+
+    background-color: var(--color-gray);
+    
+    border: 1px solid var(--color-gray3);
+    border-radius: 3px;
 }
 
 #ede-page-revisions-diff del {

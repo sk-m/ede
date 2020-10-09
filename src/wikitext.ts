@@ -315,12 +315,12 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                 if(input[i + 1] === '}') {
                     if(input[i + 2] === '}') {
                         // Template variable
-                        console.log(input.substring(flag_template_variable_info_start_pos, i));
+                        // console.log(input.substring(flag_template_variable_info_start_pos, i));
 
-                        flag_awaiting_template_variable_info = false;
-                        flag_ignore_all_chars = false;
+                        // flag_awaiting_template_variable_info = false;
+                        // flag_ignore_all_chars = false;
 
-                        i += 2;
+                        // i += 2;
                     } else {
                         // Template insertion
                         const template_params = input.substring(flag_template_info_start_pos, i).split("|");

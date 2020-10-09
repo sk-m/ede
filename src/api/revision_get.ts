@@ -31,7 +31,7 @@ export async function getRevisionRoute(req: any, res: any, client_user?: User.Us
     // TODO if client requseted but is not permitted to do so, add a note explaining so
     // TODO client visibility is 0 for now
     Page.getPageRevisions(req.query.pageid, req.query.userid, query_deleted, true, 0)
-    .then((revisions: Page.Revision[]) => {
+    .then((revisions: { [revid: number]: Page.Revision }) => {
         res.send(apiResponse(ApiResponseStatus.success, { revisions }));
     })
     .catch((error: Error) => {
