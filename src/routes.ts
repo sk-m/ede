@@ -7,7 +7,9 @@ import * as User from "./user";
 
 export function pageTitleParser(raw_title: string, default_namespace: string = "Main"): any {
     let name: string;
+    let root_name: string;
     let namespace: string;
+
     const query: { [key: string]: string } = {};
 
     // Split on ? (start of query/search)
@@ -34,13 +36,17 @@ export function pageTitleParser(raw_title: string, default_namespace: string = "
     const namespace_colon_pos = url_params[0].indexOf(":");
     if(namespace_colon_pos > -1) {
         namespace = url_params[0].substring(0, namespace_colon_pos);
+
+        root_name = url_params[0].substring(namespace_colon_pos + 1);
         name = pathname.substring(namespace_colon_pos + 1);
     } else {
         namespace = default_namespace;
+
+        root_name = url_params[0];
         name = pathname;
     }
 
-    return { name, namespace, query, url_params };
+    return { name, namespace, query, url_params, root_name };
 }
 
 /** @ignore */

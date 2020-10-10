@@ -85,6 +85,7 @@ export interface ResponsePage {
 export interface PageAddress {
     namespace: string;
     name: string;
+    root_name: string;
 
     query: string[];
     url_params: string[];
@@ -178,7 +179,7 @@ export interface Namespace {
 // TODO This is not the right way to do it
 export async function systemNamespaceHandler(address: PageAddress, client: User.User): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
-        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];
+        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];        
 
         // Sets the content to notfound system message and appends a notfound badge
         const notFound = (notfound_page: ResponsePage) => {
@@ -198,7 +199,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         let page: ResponsePage = {
             address,
 
-            display_title: address.name,
+            display_title: address.root_name,
 
             badges: [systempage_badge_sysmsg.value],
 
@@ -212,7 +213,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
 
         // Get system page from the registry
         const registry_systempages_snapshot = registry_systempages.get();
-        const lowercase_name = address.name.toLowerCase();
+        const lowercase_name = address.root_name.toLowerCase();
 
         if(registry_systempages_snapshot[lowercase_name]) {
             const systempage: SystemPageDescriptor = registry_systempages_snapshot[lowercase_name];
@@ -276,7 +277,8 @@ export function sanitizeWikitext(input: string): string {
             span: ["class", "style"],
         },
 
-        disallowedTagsMode: "recursiveEscape"
+        disallowedTagsMode: "escape"
+        // disallowedTagsMode: "recursiveEscape"
     });
 }
 
@@ -783,6 +785,7 @@ client_visibility: number = 0): Promise<ResponsePage> {
             address: {
                 namespace: "",
                 name: "",
+                root_name: "",
 
                 raw_url: "",
                 query: [],
