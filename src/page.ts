@@ -270,7 +270,7 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
  */
 export function sanitizeWikitext(input: string): string {
     return sanitizeHtml(input, {
-        allowedTags: ["div", "span", "br", "code", "small", "sup", "sub"],
+        allowedTags: ["div", "span", "br", "code", "small", "sup", "sub", "s"],
         allowedAttributes: {
             div: ["class", "style"],
             span: ["class", "style"],
@@ -760,12 +760,9 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
                 }
             }
 
-            
-            
-            console.log("a");
+            // TODO @performance @placeholder Use normal diff, not the js implementation. It consumes a lot of memory and hangs when working on large revision
             const diff = JsDiff.diffLines(results[0].content, results[1].content);
-            console.log("b");
-            
+
             if(get_html) {
                 resolve(JsDiff.convertChangesToXML(diff).replace(/\n/g, "<br>"));
             } else {

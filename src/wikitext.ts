@@ -7,10 +7,11 @@ export interface WikitextRendererOutput {
 }
 
 export async function renderWikitext(input: string, skip_tag: boolean = false): Promise<WikitextRendererOutput> {
+    const bench_time = process.hrtime();
+
     let final_content: string = "";
 
     if(!skip_tag) final_content += "<div class=\"wiki-content\">";
-    final_content += "<p>";
 
     let i = 0;
     let c;
@@ -25,6 +26,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
     let flag_newline_firstchar = true;
 
     // flags - paragraphs
+    let flag_paragraphs_count = 0;
     let flag_paragraph_not_open = false;
 
     // flags - heading
@@ -93,6 +95,8 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
 
                 // Check if this is the second newline. If so, this is a new paragraph
                 if(flag_newline_firstchar) {
+                    flag_paragraphs_count++;
+
                     if(input[i + 1] === '=') {
                         final_content += "</p>";
                         flag_paragraph_not_open = true;
@@ -373,7 +377,12 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                     const address = pageTitleParser(link_params[0]);
                     const title = `${ address.namespace }:${ address.name }`;
 
-                    write(`<a class="ui-text" href="/${ title }">${ link_params[1] || title }</a>`);
+                    // TODO @performance like this for now. I'll have to fix it though, this is wasting time
+                    const link_text = link_params[1]
+                    ? (await renderWikitext(link_params[1], true)).content
+                    : title;
+
+                    write(`<a class="ui-text" href="/${ title }">${ link_text }</a>`);
 
                     flag_awaiting_link_info = false;
                     flag_ignore_all_chars = false;
@@ -402,10 +411,6 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                 write(c);
             } break;
 
-            // case '\r':
-            // case '\c':
-            //     break;
-
             // Any other char (this case should be as fast as possible)
             default: {
 
@@ -429,8 +434,18 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
     }
 
     // Add the last paragraph
-    final_content += "</p>";
+    if(flag_paragraphs_count !== 0) {
+        // TODO @performance
+        final_content = "<p>" + final_content;
+
+        final_content += "</p>";
+    }
+
     if(!skip_tag) final_content += "</div>";
+
+    const bench_time_diff = process.hrtime(bench_time);
+
+    // console.log(`renderWikitext: ${ (bench_time_diff[0] * 1e9 + bench_time_diff[1]) / 1000000 }ms`);
 
     return {
         content: final_content
