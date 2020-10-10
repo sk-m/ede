@@ -6,12 +6,12 @@ export interface WikitextRendererOutput {
     content: string
 }
 
-export async function renderWikitext(input: string, skip_tag: boolean = false): Promise<WikitextRendererOutput> {
+export async function renderWikitext(input: string, add_tag: boolean = false): Promise<WikitextRendererOutput> {
     const bench_time = process.hrtime();
 
     let final_content: string = "";
 
-    if(!skip_tag) final_content += "<div class=\"wiki-content\">";
+    if(add_tag) final_content += "<div class=\"wiki-content\">";
 
     let i = 0;
     let c;
@@ -40,9 +40,17 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
 
     // flags - lists
     let flag_ol_depth = 0;
+    let flag_ul_depth = 0;
+
     let flag_li_open = false;
     let flag_li_firstchar_found = false;
     let flag_close_li_count = 0;
+
+    // flags - identation
+    let flag_dl_depth = 0;
+    let flag_dd_open = false;
+    let flag_dd_firstchar_found = false;
+    let flag_close_dd_count = 0;
 
     // flags - templates
     let flag_awaiting_template_info = false;
@@ -55,8 +63,6 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
     let flag_awaiting_link_info = false;
 
     let flag_link_info_start_pos = 0;
-
-    let flag_ul_depth = 0;
 
     const write = (char: string) => {
         if(flag_write_to_buffer) return buffer_str += char;
@@ -91,6 +97,18 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                     flag_close_li_count = 0;
                     flag_li_open = false;
                     flag_li_firstchar_found = false;
+                }
+
+                // End of dl list
+                if(flag_dl_depth !== 0 && input[i + 1] !== ':') {
+                    write("</dd></dl>".repeat(flag_dl_depth - 1));
+                    if(flag_close_dd_count) write("</dd>".repeat(flag_close_dd_count));
+                    write("</dd></dl>");
+
+                    flag_dl_depth = 0;
+                    flag_close_dd_count = 0;
+                    flag_dd_open = false;
+                    flag_dd_firstchar_found = false;
                 }
 
                 // Check if this is the second newline. If so, this is a new paragraph
@@ -296,6 +314,62 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                 i = i_ref - 1;
             } break;
 
+            case ':': {
+                if(!flag_newline_firstchar) {
+                    write(c);
+                    break;
+                }
+
+                let i_ref = i + 1;
+                let colons_count = 1;
+
+                while(input[i_ref] === ':') {
+                    colons_count += 1;
+                    i_ref += 1;
+                }
+
+                let depth_change = 0;
+                let depth_inc = false;
+                let depth_dec = false;
+
+                let first_colon = false;
+
+                if(colons_count !== flag_dl_depth) {
+                    depth_change = Math.abs(colons_count - flag_dl_depth);
+
+                    if(flag_dl_depth === 0) { write("<dl><dd>"); flag_dl_depth += depth_change; first_colon = true; }
+                    else {
+                        if(colons_count > flag_dl_depth) { depth_inc = true; flag_dl_depth += depth_change; }
+                        else { depth_dec = true; flag_dl_depth -= depth_change; }
+                    }
+                }
+
+                if(flag_dd_open) {
+                    flag_dd_open = false;
+                    flag_dd_firstchar_found = false;
+
+                    if(depth_inc) { write("<dl><dd>".repeat(depth_change)); }
+                    else if(depth_dec) { write("</dd></dl>".repeat(depth_change)); write("<dd>"); flag_close_dd_count += 1; }
+                    else {
+                        write("</dd><dd>");
+                    }
+
+                } else {
+                    flag_dd_open = true;
+
+                    if(!first_colon) {
+                        if(depth_inc) { write("<dl><dd>".repeat(depth_change)); }
+                        else if(depth_dec) { write("</dd></dl>".repeat(depth_change)); write("<dd>"); flag_close_dd_count += 1; }
+                        else {
+                            write("</dd><dd>");
+                        }
+                    }
+                }
+
+                // -1 because we +1 at the end of this while loop
+                i = i_ref - 1;
+            } break;
+
             case '{': {
                 if(input[i + 1] === '{') {
                     if(input[i + 2] === '{') {
@@ -349,7 +423,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                         const template_params = input.substring(flag_template_info_start_pos, i).split("|");
 
                         const address = pageTitleParser(template_params[0], "Template");
-                        const page = await Page.get(address, {});
+                        const page = await Page.get(address, {}, false);
 
                         if(page.parsed_content && !page.status.includes("page_not_found")) {
                             write(page.parsed_content);
@@ -379,7 +453,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
 
                     // TODO @performance like this for now. I'll have to fix it though, this is wasting time
                     const link_text = link_params[1]
-                    ? (await renderWikitext(link_params[1], true)).content
+                    ? (await renderWikitext(link_params[1])).content
                     : title;
 
                     write(`<a class="ui-text" href="/${ title }">${ link_text }</a>`);
@@ -408,12 +482,16 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
                     break;
                 }
 
+                // Skip spaces at the beginning of indent items
+                if(flag_dl_depth !== 0 && !flag_dd_firstchar_found) {
+                    break;
+                }
+
                 write(c);
             } break;
 
             // Any other char (this case should be as fast as possible)
             default: {
-
                 // Reset some flags
                 flag_newline_firstchar = false;
 
@@ -423,6 +501,10 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
 
                 if(flag_ol_depth !== 0) {
                     flag_li_firstchar_found = true;
+                }
+
+                if(flag_dl_depth !== 0) {
+                    flag_dd_firstchar_found = true;
                 }
 
                 // Write this char to the final string, it's just content
@@ -441,7 +523,7 @@ export async function renderWikitext(input: string, skip_tag: boolean = false): 
         final_content += "</p>";
     }
 
-    if(!skip_tag) final_content += "</div>";
+    if(add_tag) final_content += "</div>";
 
     const bench_time_diff = process.hrtime(bench_time);
 

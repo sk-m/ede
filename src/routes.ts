@@ -61,6 +61,9 @@ export function directRouteWrapper(page: Page.ResponsePage, additional_options?:
     const frontend_page_object: Page.ResponsePage = {
         ...page,
 
+        // We don't have to send it to the client
+        // TODO allow sending options to the Page.get to, for example, disable returning raw content or rendered content
+        raw_content: undefined,
         parsed_content: undefined,
 
         additional_css: [],
@@ -112,6 +115,7 @@ export async function directRoute(req: any, res: any): Promise<void> {
     const address = pageTitleParser(req.raw.originalUrl.substring(1));
 
     // Get the requested page and send to the client
+    // TODO allow sending options to the Page.get to, for example, disable returning raw content or rendered content
     Page.get(address, client_user as User.User)
     .then((page: Page.ResponsePage) => {
         if(client_user) {

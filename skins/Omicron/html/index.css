@@ -440,6 +440,14 @@
     line-height: 22px;
 }
 
+#ede-page-content > .wiki-content dl {
+    margin: 0.6em 0;
+}
+
+#ede-page-content > .wiki-content dd {
+    margin-inline-start: 20px;
+}
+
 #ede-page-content > .wiki-content strong {
     font-weight: 600;
 }
@@ -474,7 +482,6 @@
     margin-bottom: 0.6em;
     border-bottom: 1px solid var(--color-gray3);
 }
-
 
 #ede-page-content > .wiki-content h3 {
     font-size: 1.2em;

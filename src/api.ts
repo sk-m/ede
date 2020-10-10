@@ -68,7 +68,7 @@ export function apiResponse(status: ApiResponseStatus, additional_data?: any): a
 }
 
 // TODO @draft
-export async function getPageRoute(req: any, res: any, client_user?: User.User): Promise<void> {
+export async function getPageRoute(req: any, res: any, client_user?: User.User, add_div_tag: boolean = true): Promise<void> {
     if(req.query.title) {
         // Get by title
         const parsed_title = pageTitleParser(req.query.title);
@@ -107,7 +107,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User):
         const page = await Page.getRaw(req.query.revid, undefined, undefined, get_deleted);
 
         // Do we have to render?
-        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content)).content;
+        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, add_div_tag)).content;
 
         res.send(page);
     } else {

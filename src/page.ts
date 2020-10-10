@@ -871,7 +871,7 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `vi
  * @param address [[PageAddress]] object
  */
 // TODO flag to only get the raw content and don't render
-export async function get(address: PageAddress, client: User.User): Promise<ResponsePage> {
+export async function get(address: PageAddress, client: User.User, add_div_tag: boolean = true): Promise<ResponsePage> {
     return new Promise((resolve: any) => {
         // Get the namespace handler
         const namespace = registry_namespaces.get()[address.namespace] as Namespace;
@@ -921,7 +921,7 @@ export async function get(address: PageAddress, client: User.User): Promise<Resp
                     page.badges.push(error_sysmsgs["page-badge-namespacenotfound"].value);
                 }
 
-                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content)).content;
+                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, add_div_tag)).content;
 
                 common_resolve(page);
             });
