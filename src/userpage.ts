@@ -302,10 +302,12 @@ function unblock_page(target_user: User.User, client?: User.User, client_rights?
 
 export async function userNamespaceHandler(address: Page.PageAddress, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
+        const username = address.root_name;
+
         let page: Page.ResponsePage = {
             address,
 
-            display_title: address.name,
+            display_title: username,
 
             additional_css: [],
             additional_js: [],
@@ -320,7 +322,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         const page_config: Page.SystempageConfig = {
             page,
 
-            breadcrumbs_data: [ ["User", "fas fa-user-cog"], [address.name, "fas fa-user", `/User:${ address.name }`], ],
+            breadcrumbs_data: [ ["User", "fas fa-user-cog"], [username, "fas fa-user", `/User:${ username }`], ],
 
             body_html: ""
         }
@@ -328,7 +330,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         // Get user
         let queried_user_error = false;
 
-        const queried_user = await User.getFromUsername(address.name).catch(error => { queried_user_error = error });
+        const queried_user = await User.getFromUsername(username).catch(error => { queried_user_error = error });
 
         if(queried_user && !queried_user_error) {
             // Get queried user's groups
@@ -354,7 +356,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
 
             page_config.header_config = {
                 icon: "fas fa-user",
-                title: address.name,
+                title: username,
                 body: queried_user_groups_list ? `<div class="tags">${ queried_user_groups_list }</div>` : ""
             };
 
@@ -446,7 +448,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         } else {
             page_config.header_config = {
                 icon: "fas fa-user",
-                title: address.name,
+                title: username,
                 description: queried_user_error || "Some error occured"
             };
         }
