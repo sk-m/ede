@@ -117,6 +117,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
 
 export async function RootRoute(req: any, res: any): Promise<void> {
     // TODO catch may be a bug here
+    // TODO we dont't allways need to get the user. This is inefficient
     const client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
 
     const registry_apiRoutes_snapshot = registry_apiRoutes.get();
@@ -127,6 +128,12 @@ export async function RootRoute(req: any, res: any): Promise<void> {
     if(api_route_object) {
         if(api_route_object.method === req.raw.method) {
             if(api_route_object.method === "POST") {
+                // Check if client is blocked from editing
+                if(client_user && client_user.blocks.includes("edit")) {
+                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You are blocked from editing"));
+                    return;
+                }
+
                 // Check if a body was provided
                 if(!req.body) {
                     res.status(403).send(apiResponse(ApiResponseStatus.nopostbody, "No POST body provided"));

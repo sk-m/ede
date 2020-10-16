@@ -496,7 +496,7 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-checkbox-1.second-level {
-    margin-left: 26px;
+    margin-left: 29px;
 }
 
 .ui-checkbox-1 > .checkbox {
@@ -1510,6 +1510,29 @@ table.ui-table td {
     background-color: var(--color-blue2-transparent-1);
 
     border-radius: 3px;
+}
+
+.ui-systempage-header-box > .tags > .item[title] {
+    cursor: help;
+}
+
+.ui-systempage-header-box > .tags > .item.c-green {
+    color: var(--color-green);
+    background-color: var(--color-green-transparent-1);
+}
+
+.ui-systempage-header-box > .tags > .item.c-red {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
+}
+
+.ui-systempage-header-box > .tags > .item.c-orange {
+    color: var(--color-orange);
+    background-color: var(--color-orange-transparent-1);
+}
+
+.ui-systempage-header-box > .tags > .item i {
+    margin-right: 2px;
 }
 
 .ui-systempage-breadcrumbs {

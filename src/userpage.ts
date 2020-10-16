@@ -231,19 +231,14 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
             <div class="text">Completely lock out (destroy sessions and disable logging in)</div>
         </div>
 
-        <!-- <div input name="restriction;edit" data-checked="${ target_user.blocks.includes("edit") ? "true" : "false" }" class="ui-checkbox-1 second-level">
+        <div input name="restriction;edit" data-checked="${ target_user.blocks.includes("edit") ? "true" : "false" }" class="ui-checkbox-1 second-level">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-            <div class="text">Editing (WIP)</div>
-        </div> -->
+            <div class="text">Disallow editing</div>
+        </div>
 
         <div input name="restriction;account_creation" data-checked="${ target_user.blocks.includes("account_creation") ? "true" : "false" }" class="ui-checkbox-1" style="margin-top: 1em">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
             <div class="text">Disallow creating new accounts (WIP)</div>
-        </div>
-
-        <div input name="restriction;block_ip" data-checked="${ target_user.blocks.includes("block_ip") ? "true" : "false" }" class="ui-checkbox-1">
-            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-            <div class="text">Also block ip-address (WIP)</div>
         </div>
     </div>
 
@@ -332,7 +327,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
 
         const queried_user = await User.getFromUsername(username).catch(error => { queried_user_error = error });
 
-        if(queried_user && !queried_user_error) {
+        if(!queried_user_error && queried_user) {
             // Get queried user's groups
             // TODO just get the groups, we don't need the rights
             const queried_user_groups = await User.getUserGroupRights(queried_user.id);
@@ -348,16 +343,21 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
             }
 
             // Create a list of groups, assigned to target user
-            let queried_user_groups_list = "";
+            let header_body = "";
 
             for(const group_name of queried_user_groups.groups) {
-                queried_user_groups_list += `<div class="item">${ group_name }</div>`;
+                header_body += `<div class="item" title="This user is a member of the ${ group_name } group">${ group_name }</div>`;
+            }
+
+            // Indicate that the user is blocked
+            if(queried_user_blocked) {
+                header_body += `<div class="item c-red" title="This user is currently blocked (${ queried_user.blocks.join(", ") })"><i class="fas fa-minus-circle"></i> Blocked</div>`;
             }
 
             page_config.header_config = {
                 icon: "fas fa-user",
                 title: username,
-                body: queried_user_groups_list ? `<div class="tags">${ queried_user_groups_list }</div>` : ""
+                body: header_body ? `<div class="tags">${ header_body }</div>` : ""
             };
 
             page_config.sidebar_config = {
