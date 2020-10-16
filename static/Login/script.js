@@ -76,8 +76,11 @@ function loginPageScript() {
                     else if(error.error === "username_forbidden") {
                         ede.form.showPopup("join", "username", "Username is forbidden");
                     }
+                    else if(error.error === "ip_blocked") {
+                        ede.showPopup("join-ipblocked", "IP address Blocked", error.message);
+                    }
                     else {
-                        ede.showPopup("join-unknown", "Unknown error", `Unknown error occured: ${ error.message }`);
+                        ede.showPopup("join-unknown", "Unknown error", `Unknown error occured: ${ error.error }`);
                     }
                 });
             }

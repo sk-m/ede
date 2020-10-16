@@ -588,7 +588,7 @@ export async function updateUserBlocks(user_id: number, restrictions: string[]):
     return new Promise((resolve: any, reject: any) => {
         let blocks_string;
 
-        if(restrictions.length === 0) blocks_string = "null";
+        if(restrictions.length === 0) blocks_string = "";
         else blocks_string = Util.sanitize(restrictions.join(";"));
 
         sql.execute("UPDATE `users` SET `blocks` = ? WHERE id = ?",
@@ -600,6 +600,70 @@ export async function updateUserBlocks(user_id: number, restrictions: string[]):
                 reject(error);
             } else {
                 resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Block address
+ *
+ * @param address Address to block
+ * @param restrictions Array of restrictions
+ */
+export async function blockAddress(address: string, restrictions: string[]): Promise<true> {
+    // TODO @placeholder this function will not append new restrictions, it will instead replace them with new once. Fix that!
+    return new Promise((resolve: any, reject: any) => {
+        if(!address) {
+            reject(new Error("Invalid address"));
+            return;
+        }
+
+        let blocks_string;
+
+        if(restrictions.length === 0) blocks_string = "";
+        else blocks_string = Util.sanitize(restrictions.join(";"));
+
+        sql.execute("INSERT INTO `blocked_addresses` (`address`, `restrictions`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `restrictions` = ?",
+        [address, blocks_string, blocks_string],
+        (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not change block settings for address ${ address }`, 3, error);
+
+                reject(new Error("Could not block an address"));
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Get address blocks
+ *
+ * @param address Address to block
+ */
+export async function getAddressBlocks(address: string): Promise<string[]> {
+    // TODO this will not work for ranges like 124.173.1.0/24
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("SELECT `restrictions` FROM `blocked_addresses` WHERE `address` = ?",
+        [address],
+        (error: any, results: any) => {
+            if(error) {
+                // Could not get address blocks
+                Util.log(`Could not get block settings for address ${ address }`, 3, error);
+
+                reject(new Error("Could not get block settings for an address"));
+            } else if(results.length !== 1) {
+                // The address is not blocked in any way
+                resolve([]);
+            } else {
+                const raw_restrictions = results[0].restrictions;
+                let final_restrictions: string[] = [];
+
+                if(raw_restrictions) final_restrictions = raw_restrictions.split(";");
+
+                resolve(final_restrictions);
             }
         });
     });
@@ -629,6 +693,16 @@ export async function destroyUserSessions(user_id: number): Promise<true> {
 export async function joinRoute(req: any, res: any): Promise<void> {
     // Get ip address of a client
     const ip_address: string = req.headers["x-forwarded-for"] || req.ip;
+
+    // Check if ip is blocked from creating new accounts
+    const ip_blocks = await getAddressBlocks(ip_address);
+
+    if(Array.isArray(ip_blocks) && ip_blocks.includes("account_creation")) {
+        const msg = (await SystemMessage.get(["login-join-message-ipblocked"]))["login-join-message-ipblocked"];
+
+        res.status(403).send({ error: "ip_blocked", message: msg.value });
+        return;
+    }
 
     // Get a snapshot of the registry config to use later in the function
     const registry_config_snapshot = registry_config.get();

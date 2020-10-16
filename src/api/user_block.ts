@@ -2,6 +2,7 @@ import * as User from "../user";
 import * as Log from "../log";
 import { GroupsAndRightsObject } from "../right";
 import { apiResponse, ApiResponseStatus } from "../api";
+import { sql } from "../server";
 
 export async function blockUserRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
@@ -51,7 +52,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     User.getFromUsername(req.body.username)
     .then(async (target_user: User.User) => {
         User.getUserGroupRights(target_user.id)
-        .then((target_user_groups: GroupsAndRightsObject) => {
+        .then(async (target_user_groups: GroupsAndRightsObject) => {
             let error_group: string | false = false;
 
             // Check if target user is a member of a group that the client can't block
@@ -67,10 +68,38 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
             } else {
                 const user_id = Number.parseInt(target_user.id, 10);
                 const destroy_sessions = final_restrictions.includes("lockout");
+                const restrict_new_accounts_ip = final_restrictions.includes("account_creation");
 
                 // Destroy sessions, if locked from logging in
                 // We don't have to await here
                 if(destroy_sessions) User.destroyUserSessions(user_id);
+
+                // Block ip from creating new accounts
+                if(restrict_new_accounts_ip) {
+                    let ip_block_error = false;
+
+                    // Get target user's last IP address
+                    const last_target_ip: number = await new Promise((resolve: any) => {
+                        sql.execute("SELECT `ip_address` FROM `user_sessions` WHERE `user` = ? ORDER BY id DESC LIMIT 1",
+                        [user_id],
+                        (error: any, results: any) => {
+                            if(error || results.length !== 1) {
+                                resolve(null);
+                            } else {
+                                resolve(results[0].ip_address);
+                            }
+                        });
+                    });
+
+                    // We have the last ip of the target user, block it from creating new accounts
+                    await User.blockAddress(last_target_ip.toString(), ["account_creation"]).catch(() => { ip_block_error = true });
+
+                    // Check if we blocked successfully
+                    if(ip_block_error) {
+                        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking user's ip address"));
+                        return;
+                    }
+                }
 
                 User.updateUserBlocks(user_id, final_restrictions)
                 .then(() => {

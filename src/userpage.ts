@@ -238,7 +238,7 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
 
         <div input name="restriction;account_creation" data-checked="${ target_user.blocks.includes("account_creation") ? "true" : "false" }" class="ui-checkbox-1" style="margin-top: 1em">
             <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
-            <div class="text">Disallow creating new accounts (WIP)</div>
+            <div class="text">Disallow creating new accounts</div>
         </div>
     </div>
 
