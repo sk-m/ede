@@ -32,6 +32,7 @@ import { pageMoveRoute } from "./api/page_move";
 import { deletedWikiPages } from "./systempages/deletedWikiPages";
 import { getRevisionRoute } from "./api/revision_get";
 import { getRevisionsDiffRoute } from "./api/revision_diff";
+import { logoutUserRoute } from "./api/user_logout";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -534,6 +535,19 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: getRevisionsDiffRoute
+    },
+    "user/logout": {
+        name: "page/logout",
+        method: "POST",
+
+        description: "Log out",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {},
+
+        handler: logoutUserRoute
     },
     "page/save": {
         name: "page/save",

@@ -676,13 +676,35 @@ export async function getAddressBlocks(address: string): Promise<string[]> {
  */
 export async function destroyUserSessions(user_id: number): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("UPDATE `user_sessions` SET `invalid` = 1 WHERE `user` = ?",
+        sql.execute("UPDATE `user_sessions` SET `invalid` = b'1' WHERE `user` = ?",
         [user_id],
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 Util.log(`Could not destroy sessions for user id ${ user_id }`, 3, error);
 
-                reject(error);
+                reject(new Error("Could not invalidate all user sessions"));
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Invalidate user's session
+ *
+ * @param user_id User's id
+ * @param session Session to invalidate
+ */
+export async function invalidateUserSession(user_id: number, session: UserSession): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("UPDATE `user_sessions` SET `invalid` = b'1' WHERE `user` = ? AND `session_token` = ?",
+        [user_id, session.session_token],
+        (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not invalidate user's session (user ${ user_id })`, 3, error);
+
+                reject(new Error("Could not invalidate user session"));
             } else {
                 resolve(true);
             }
