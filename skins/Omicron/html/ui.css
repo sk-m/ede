@@ -1633,6 +1633,78 @@ table.ui-table td {
     margin-right: 5px;
 }
 
+/* Context menu */
+.ui-contextmenu-container {
+    position: relative;
+}
+
+.ui-contextmenu-container > .ui-contextmenu {
+    position: absolute;
+    z-index: 11;
+
+    /* Hidden state */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+
+    padding: 5px 0;
+
+    top: 100%;
+    right: 0;
+
+    margin-top: 5px;
+
+    background-color: white;
+    border-radius: 3px;
+
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.1);
+
+    transition: 0.15s;
+}
+
+.ui-contextmenu-container > .ui-contextmenu[shown] {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+    
+    transform: translateY(0px);
+}
+
+.ui-contextmenu-container > .ui-contextmenu > .links > .link {
+    display: block;
+
+    padding: 6px 20px 6px 18px;
+    margin: 1px 0;
+
+    cursor: pointer;
+
+    color: hsl(0, 0%, 18%);
+    font-size: 13px;
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition: 0.1s;
+}
+
+.ui-contextmenu-container > .ui-contextmenu > .links > .link:hover {
+    background-color: var(--color-gray15);
+    color: hsl(0, 0%, 0%);
+}
+
+.ui-contextmenu-container > .ui-contextmenu > .links > .link.c-red:hover {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-05);
+}
+
+.ui-contextmenu-container > .ui-contextmenu > .links > .link > i {
+    width: 16px;
+    text-align: center;
+
+    margin-right: 12px;
+}
+
 /* Popups */
 .ui-popup {
     position: fixed;

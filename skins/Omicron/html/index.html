@@ -59,10 +59,18 @@
             <div class="button inactive rotate"><i class="material-icons">notifications</i></div>
             <div class="button inactive"><i class="material-icons">view_list</i></div>
 
-            <div class="user-button">
+            <div class="user-button ui-contextmenu-container">
                 <i class="fas fa-user"></i>
                 <span class="ede-template ede_user_username ede-currentuser-username">{{ede_user_username}}</span>
                 <i class="arrow fas fa-caret-down"></i>
+
+                <div class="ui-contextmenu">
+                    <div class="links">
+                        <a class="link" href="/User:{{ede_user_username}}"><i class="fas fa-user"></i>User page</a>
+                        <a class="link" href="/System:UserSettings"><i class="fas fa-cog"></i>Settings</a>
+                        <a class="link c-red" onclick="ede.user_logout()"><i class="fas fa-sign-out-alt"></i>Log out</a>
+                    </div>
+                </div>
             </div>
             {{#else}}
                 <a href="/System:Login" class="link">Login / Join</a>
