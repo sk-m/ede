@@ -422,6 +422,7 @@ export async function renderWikitext(input: string, add_tag: boolean = false): P
                         // Template insertion
                         const template_params = input.substring(flag_template_info_start_pos, i).split("|");
 
+                        // TODO @placeholder {}
                         const address = pageTitleParser(template_params[0], "Template");
                         const page = await Page.get(address, {}, false);
 
