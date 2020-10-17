@@ -383,6 +383,10 @@
     color: hsl(0, 0%, 5%);
 }
 
+#ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button:active {
+    color: hsl(0, 0%, 55%);
+}
+
 #ede-main-panel > .main-content-container > .main-content > .page-title-container > .ede-template.ede_page_actionbuttons > .button > .icon {
     margin-right: 4px;
 }

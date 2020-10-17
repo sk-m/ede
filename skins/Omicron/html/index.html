@@ -95,7 +95,20 @@
                         <div class="button page-history"><div class="icon"><i class="material-icons">history</i></div>History</div>
                         <div class="button page-read hidden"><div class="icon"><i class="material-icons">visibility</i></div>Read</div>
                         <div class="button page-edit"><div class="icon"><i class="material-icons">edit</i></div>Edit</div>
-                        <div class="button page-manage"><div class="icon"><i class="material-icons">more_horiz</i></div>Manage</div>
+                        <div class="button page-manage ui-contextmenu-container" ignoreclick title="Right click to see quick links">
+                            <div class="icon"><i class="material-icons">more_horiz</i></div>Manage
+                        
+                            <div class="ui-contextmenu">
+                                <div class="links">
+                                    <a class="link" info><i class="fas fa-file-alt"></i>Page management</a>
+                                    <a class="link" move><i class="fas fa-arrow-right"></i>Move</a>
+                                    <a class="link" restrictions><i class="fas fa-unlock"></i>Edit restriction settings</a>
+                                    <a class="link" delete><i class="fas fa-trash"></i>Delete</a>
+                                </div>
+                            </div>
+
+                            <div class="ui-contextmenu-tip"><i class="fas fa-mouse-pointer"></i><i class="fas fa-bars"></i></div>
+                        </div>
                         <!-- <div class="button page-more"><div class="icon"><i class="material-icons">more_vert</i></div></div> -->
                     </div>
                 </div>

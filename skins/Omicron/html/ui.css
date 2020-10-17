@@ -1653,7 +1653,7 @@ table.ui-table td {
     top: 100%;
     right: 0;
 
-    margin-top: 5px;
+    margin-top: 10px;
 
     background-color: white;
     border-radius: 3px;
@@ -1669,6 +1669,40 @@ table.ui-table td {
     pointer-events: all;
     
     transform: translateY(0px);
+}
+
+.ui-contextmenu-container > .ui-contextmenu-tip {
+    position: absolute;
+
+    /* Hidden state */
+    opacity: 0;
+    transform: translateY(5px);
+
+    pointer-events: none;
+
+    top: 0;
+    right: 0;
+
+    margin-top: -12px;
+    margin-right: -26px;
+
+    font-size: 10px;
+    color: hsl(0, 0%, 80%);
+
+    transition: 0.2s;
+}
+
+.ui-contextmenu-container > .ui-contextmenu-tip > i {
+    transition: 0.2s;
+}
+
+.ui-contextmenu-container:hover > .ui-contextmenu-tip {
+    opacity: 1;
+    transform: translateY(0px);
+}
+
+.ui-contextmenu-container:hover > .ui-contextmenu-tip > i {
+    margin: 0 2px;
 }
 
 .ui-contextmenu-container > .ui-contextmenu > .links > .link {
