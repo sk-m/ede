@@ -1568,6 +1568,7 @@ table.ui-table td {
     color: var(--color-blue3);
     font-size: 12px;
     font-weight: 600;
+    text-decoration: none;
     
     background-color: var(--color-blue2-transparent-1);
 
@@ -1576,6 +1577,14 @@ table.ui-table td {
 
 .ui-systempage-header-box > .tags > .item[title] {
     cursor: help;
+}
+
+.ui-systempage-header-box > .tags > .item[href] {
+    cursor: pointer !important;
+}
+
+.ui-systempage-header-box > .tags > .item[href]:hover {
+    background-color: var(--color-blue2-transparent-2);
 }
 
 .ui-systempage-header-box > .tags > .item.c-green {

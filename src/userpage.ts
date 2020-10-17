@@ -352,7 +352,8 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
             let header_body = "";
 
             for(const group_name of queried_user_groups.groups) {
-                header_body += `<div class="item" title="This user is a member of the ${ group_name } group">${ group_name }</div>`;
+                header_body += `<a href="/System:UserGroupManagement/${ group_name }" class="item" \
+title="This user is a member of the ${ group_name } group. Click to see the group.">${ group_name }</a>`;
             }
 
             // Indicate that the user is blocked
