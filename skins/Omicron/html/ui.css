@@ -2,6 +2,83 @@ div.margin-top:empty {
     margin-top: 0;
 }
 
+/* Info boxes */
+.ui-info-box {
+    display: flex;
+    align-items: center;
+
+    margin-block-end: 0.9em;
+
+    padding: 12px 14px;
+    
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-05);
+
+    border-radius: 3px;
+}
+
+.ui-info-box > .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 26px;
+    height: 26px;
+
+    margin-right: 12px;
+
+    color: inherit;
+    font-size: 12px;
+
+    background-color: var(--color-blue2-transparent-1);
+    border-radius: 50%;
+}
+
+.ui-info-box > .text {
+    font-size: 13px;
+    color: inherit;
+}
+
+.ui-info-box > .text a[href] {
+    text-decoration: underline;
+}
+
+.ui-info-box > .text a[href]:hover {
+    text-decoration: none;
+}
+
+.ui-info-box.c-red {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-05);
+}
+
+.ui-info-box.c-red > .icon {
+    background-color: var(--color-red-transparent-1);
+}
+
+.ui-info-box.c-orange {
+    color: var(--color-orange-darker);
+    background-color: var(--color-orange-transparent-05);
+}
+
+.ui-info-box.c-orange > .icon {
+    color: var(--color-orange);
+    background-color: var(--color-orange-transparent-2);
+}
+
+.ui-form-box .ui-info-box {
+    padding: 8px 12px !important;
+
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.ui-form-box .ui-info-box > .icon {
+    margin-right: 10px;
+}
+
 /* Form containers */
 .ui-form-spacer-thin {
     height: 1px;
@@ -54,21 +131,6 @@ div.margin-top:empty {
 
 .ui-form-box.no-title {
     padding: 15px 20px;
-}
-
-/* TODO remove in the future, replace with on-screen notifications */
-.ui-form-box.green {
-    padding: 15px;
-
-    border: none;
-    background-color: rgba(0, 232, 23, 0.05);
-}
-
-.ui-form-box.red {
-    padding: 15px;
-
-    border: none;
-    background-color: rgba(232, 32, 0, 0.05);
 }
 
 .ui-form-box.hidden {
@@ -1079,7 +1141,7 @@ a.ui-text[href]:focus:not(:hover),
     box-sizing: border-box;
 
     width: 100%;
-    padding: 3px;
+    padding: 5px;
 
     overflow: hidden;
     cursor: pointer;
@@ -1125,7 +1187,7 @@ a.ui-text[href]:focus:not(:hover),
 }
 
 .ui-log-item .time > i {
-    margin-right: 5px;
+    margin-right: 8px;
 
     width: 13px;
     text-align: center;

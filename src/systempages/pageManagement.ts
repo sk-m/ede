@@ -245,23 +245,24 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             };
 
             page_config.body_html = `\
-<div class="ui-text w-icon margin-top">
-    <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
-    <div class="text ui-text">Page was not found. Maybe it was deleted or moved?</div>
+<div class="ui-info-box c-orange">
+    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="text">Page was not found. Maybe it was deleted or moved?</div>
 </div>`;
 
             if(page_query[1].length !== 0) {
                 page_config.body_html +=`\
-<div class="ui-text w-icon margin-top">
-    <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
-    <div class="text">Deleted pages with such name were found. You can manage them here — \
-<a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/${ queried_page_fullname }</a>.</div></div>`;
+<div class="ui-info-box">
+    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="text ui-text">Deleted pages with such name were found. You can manage them here — \
+    <a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/${ queried_page_fullname }</a>.</div>
+</div>`;
             }
 
             const log_entries = await Log.getEntries(["deletewikipage", "movewikipage"], undefined, queried_page_fullname);
 
             page_config.body_html += `\
-<div class="ui-form-box" style="margin-top: 30px">
+<div class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("delete_move_logs", "Delete and move logs for this page") }
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>

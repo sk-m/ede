@@ -191,9 +191,10 @@ from the list.") }
 <form name="deletedwikipages-restoreform" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("restore", "Restore page") }
 
-    ${ page_with_such_name_exists ? `<div class="ui-text w-icon margin-bottom">
-    <div class="icon orange"><i class="fas fa-exclamation-triangle"></i></div>
-    <div class="text">A page with such title already exists. Please, pick another title to restore the page to.</div>
+    ${ page_with_such_name_exists ? `
+    <div class="ui-info-box c-orange">
+        <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="text">A page with such title already exists. Please, pick another title to restore the page to.</div>
     </div>` : "" }
 
     <div class="ui-text margin-bottom">Keep in mind that <i>all</i> the revisions from the selected version will be restored. \

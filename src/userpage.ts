@@ -202,6 +202,12 @@ function block_page(target_user: User.User, client?: User.User, client_rights?: 
 
 
         resolve(`\
+${ client && target_user.id === client.id ?
+`<div class="ui-info-box c-orange">
+    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="text">You are about to block yourself. Be careful!</div>
+</div>` : "" }
+
 <div class="ui-form-box no-title">
     <div class="ui-form-container ui-keyvalue-container">
         <div class="item">
