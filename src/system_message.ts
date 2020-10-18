@@ -190,7 +190,7 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
                     final_results[name] = {
                         name,
 
-                        value: `<code>[! SYSMSG ${ name } !]</code>`,
+                        value: `<a href="/System:SystemMessages/${ name }" title="Edit this system message" class="ui-text monospace ede-undefined-sysmsg">[! SYSMSG ${ name } !]</a>`,
                         default_value: "",
                         is_default: false,
                         is_deletable: false,

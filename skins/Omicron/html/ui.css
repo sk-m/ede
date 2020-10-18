@@ -1932,3 +1932,13 @@ table.ui-table td {
     margin: 7px 13px 13px 14px;
     font-size: 14px;
 }
+
+/* Undefined system messages */
+.ede-undefined-sysmsg {
+    color: inherit !important;
+}
+
+.ede-undefined-sysmsg:hover {
+    color: var(--color-blue-lighter) !important;
+    background-color: var(--color-blue2-transparent-05);
+}
