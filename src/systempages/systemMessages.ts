@@ -43,6 +43,26 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
     </div>
 </form>`;
 
+        const create_form_html = `\
+<div id="systempage-systemmessages-create-form" class="hidden">
+    <div class="systemmessage">
+        <div class="top">
+            <div class="name-container">
+                <div class="text"></div>
+            </div>
+        </div>
+        <div class="middle">
+            <div class="edit-form">
+                <textarea class="ui-input1 monospace"></textarea>
+                <div class="ui-form-container between margin-top">
+                    <button class="ui-button1 t-frameless close-btn">Close</button>
+                    <button class="ui-button1 t-frameless c-blue create-btn"><i class="fas fa-star-of-life"></i> Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>`;
+
         // Nothing queried, display a query page
         if(!queried_message) {
             page_config.header_config = {
@@ -51,7 +71,11 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
                 description: "Please, select a message"
             };
 
-            page_config.body_html = query_form_html;
+            page_config.body_html = `\
+${ query_form_html }
+<div id="systempage-systemmessages-root" class="hidden">
+    ${ create_form_html }
+</div>`;
 
             resolve(page_config);
         } else {
@@ -112,24 +136,7 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
             page_config.body_html = `\
 ${ query_form_html }
 <div id="systempage-systemmessages-root" class="hidden">
-    <div id="systempage-systemmessages-create-form" class="hidden">
-        <div class="systemmessage">
-            <div class="top">
-                <div class="name-container">
-                    <div class="text"></div>
-                </div>
-            </div>
-            <div class="middle">
-                <div class="edit-form">
-                    <textarea class="ui-input1 monospace"></textarea>
-                    <div class="ui-form-container between margin-top">
-                        <button class="ui-button1 t-frameless close-btn">Close</button>
-                        <button class="ui-button1 t-frameless c-blue create-btn"><i class="fas fa-star-of-life"></i> Create</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    ${ create_form_html }
     <div id="systempage-systemmessages-list">
         ${ sysmsgs_html }
     </div>
