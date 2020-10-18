@@ -39,6 +39,7 @@ div.margin-top:empty {
 .ui-info-box > .text {
     font-size: 13px;
     color: inherit;
+    font-family: "Roboto";
 }
 
 .ui-info-box > .text a[href] {

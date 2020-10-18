@@ -17,7 +17,6 @@ export async function login(page: Page.ResponsePage, _client: User.User): Promis
 
         // Set some info items
         page.info.hiddentitle = true;
-        page.info.nocontainer = true;
 
         resolve(page);
     });
