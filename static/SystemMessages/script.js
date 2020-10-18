@@ -58,6 +58,30 @@ function SystemMessagesPageScript() {
         });
     }
 
+    // Function for deleting system messages
+    const delete_func = (name, el) => {
+        ede.closePopup();
+
+        // Delete the system message
+        ede.apiCall("systemmessage/delete", { name: name }, true)
+        .then(() => {
+            el.remove();
+
+            ede.showNotification("systemmessages-delete-success", "Success", "Successfully deleted a system message.");
+        })
+        .catch(response => {
+            ede.showNotification("systemmessages-delete-error", "Error", `Failed to delete a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+        });
+    };
+
+    const delete_popup_buttons_html = `\
+    <div class="left">
+        <button name="close" class="ui-button1 t-frameless w-500">BACK</button>
+    </div>
+    <div class="right">
+        <button name="delete" class="ui-button1 t-frameless c-red w-500">DELETE</button>
+    </div>`;
+
     // Event handlers for systemmessage items
     const systemmessage_els = document.querySelectorAll("#systempage-systemmessages-list > .systemmessage");
 
@@ -110,25 +134,13 @@ function SystemMessagesPageScript() {
             const delete_btn = item_el.querySelector(".top > .buttons-container > .delete-btn");
 
             if(delete_btn) {
-                delete_btn.onclick = e => {
+                delete_btn.onclick = () => {
                     const systemmessage_name = item_el.dataset.systemmessageName;
 
-                    // TODO @ui make something prettier than confirm()
-                    if(confirm(`Are you sure you want to delete ${ systemmessage_name }?`)) {
-                        // Disable the button
-                        e.target.classList.add("disabled");
-
-                        // Delete the system message
-                        ede.apiCall("systemmessage/delete", { name: systemmessage_name }, true)
-                        .then(() => {
-                            item_el.remove();
-
-                            ede.showNotification("systemmessages-delete-success", "Success", "Successfully deleted a system message.");
-                        })
-                        .catch(response => {
-                            ede.showNotification("systemmessages-delete-error", "Error", `Failed to delete a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
-                        });
-                    }
+                    ede.showPopup("systemmessage-delete", "Are you sure?", `Are you sure you want to delete the <code>${ systemmessage_name }</code> system message?`, delete_popup_buttons_html, {
+                        close: ede.closePopup,
+                        delete: () => { delete_func(systemmessage_name, item_el) }
+                    }, 460);
                 }
             }
         }
