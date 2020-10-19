@@ -57,14 +57,15 @@ export enum UsernameAvailability {
     Forbidden
 }
 
-interface Hash {
+export interface Hash {
     readonly salt: string,
     readonly key: string,
     readonly iterations: number,
     readonly keylen: number
 }
 
-async function pbkdf2(input_string: string, salt: string, iterations: number, keylen: number): Promise<Hash> {
+// TODO move to Util
+export async function pbkdf2(input_string: string, salt: string, iterations: number, keylen: number): Promise<Hash> {
     return new Promise((resolve: any) => {
         crypto.pbkdf2(input_string, salt, iterations, keylen, "sha512",
         (_hash_error: any, derived_key: Buffer) => {
@@ -79,7 +80,8 @@ async function pbkdf2(input_string: string, salt: string, iterations: number, ke
     });
 }
 
-function formatString(input: string | Buffer): string {
+// TODO move to Util
+export function formatString(input: string | Buffer): string {
     if(input instanceof Buffer) return input.toString("base64").replace(/[\+/]/g, "_");
     return input.replace(/[\+/]/g, "_");
 }
@@ -583,6 +585,71 @@ export async function createSession(user_id: string, ip_address: string, user_ag
 }
 
 /**
+ * Create an elevated session
+ *
+ * @param user_id User's id
+ *
+ * @returns [esid, Date object (time when the session will be invalid)]
+ */
+export async function createElevatedSession(user_id: number): Promise<[string, Date]> {
+    return new Promise((resolve: any, reject: any) => {
+        // now + 15 minutes (in ms)
+        const valid_until = new Date().getTime() + 900000;
+        const valid_until_unix: number = Math.floor(valid_until / 1000);
+
+        // Generate esid
+        crypto.randomBytes(128, (_esid_error: any, esid_buffer: Buffer) => {
+            const esid = formatString(esid_buffer);
+
+            // Create an elevated session
+            sql.execute("INSERT INTO `elevated_user_sessions` (`user`, `esid`, `valid_until`) VALUES (?, ?, ?)",
+            [user_id, esid, valid_until_unix],
+            (error: any, results: any) => {
+                if(error || results.length < 1) {
+                    Util.log(`Could not create a new elevated session for user id ${ user_id }`, 3, error);
+
+                    reject(new Error("Could not create a new elevated session for a user"));
+                } else {
+                    resolve([esid, valid_until]);
+                }
+            });
+        });
+    });
+}
+
+/**
+ * Check elevated session validity
+ *
+ * @param user_id User's id
+ * @param esid esid
+ * 
+ * @returns true if valid
+ */
+export async function checkElevatedSession(user_id: number, esid: string): Promise<boolean> {
+    return new Promise((resolve: any) => {
+        if(!esid) {
+            resolve(false);
+            return;
+        }
+
+        const now: number = Math.floor(new Date().getTime() / 1000);
+
+        // Get the session
+        sql.execute("SELECT `valid_until` FROM `elevated_user_sessions` WHERE `user` = ? AND `esid` = ?",
+        [user_id, esid],
+        (error: any, results: any) => {
+            if(error || results.length !== 1) {
+                // Esid is incorrect
+                resolve(false);
+            } else {
+                // There is such session, check if it is still valid
+                resolve(results[0].valid_until > now);
+            }
+        });
+    });
+}
+
+/**
  * Update user's blocks
  *
  * @param user_id User's id
@@ -712,6 +779,50 @@ export async function invalidateUserSession(user_id: number, session: UserSessio
             } else {
                 resolve(true);
             }
+        });
+    });
+}
+
+/**
+ * Update user's password
+ *
+ * @param user_id User's id
+ * @param password New password in clear text
+ */
+export async function updateUserPassword(user_id: number, password: string): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        // Get a snapshot of the registry config to use later in the function
+        const registry_config_snapshot = registry_config.get();
+
+        // Generate the salt for the new password
+        // TODO @placeholder we should use something like auth.password_salt size instead of this. Sid's salt size has nothing to do with a password
+        crypto.randomBytes(registry_config_snapshot["auth.sid_size"].value as number, (_: any, password_salt_buffer: Buffer) => {
+            const password_hash_salt: string = formatString(password_salt_buffer);
+
+            const password_hash_iterations = registry_config_snapshot["auth.password_hash_iterations"].value as number;
+            const password_hash_keylen = registry_config_snapshot["auth.password_hash_keylen"].value as number;
+
+            pbkdf2(password, password_hash_salt, password_hash_iterations, password_hash_keylen)
+            .then((password_hash: Hash) => {
+                const database_password_string: string =
+                `pbkdf2;${ password_hash.key };${ password_hash_salt };${ password_hash_iterations };\
+${ password_hash_keylen }`;
+
+                // Update the password
+                sql.execute("UPDATE `users` SET `password` = ? WHERE id = ?",
+                [database_password_string, user_id],
+                (error: any) => {
+                    if(error) {
+                        Util.log(`Could not update user's password (user ${ user_id })`, 3, error);
+
+                        reject(new Error("Could not update user's password"));
+                    } else {
+                        resolve(true);
+                    }
+                });
+            }).catch(() => {
+                reject(new Error("Could not update user's password"));
+            });
         });
     });
 }

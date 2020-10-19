@@ -17,6 +17,7 @@ export async function logoutUserRoute(_: any, res: any, client_user?: User.User)
         // Clear session cookies
         res.clearCookie("st", { path: "/", domain: registry_config_snapshot["instance.domain"].value as string });
         res.clearCookie("sid", { path: "/", domain: registry_config_snapshot["instance.domain"].value as string });
+        res.clearCookie("esid", { path: "/", domain: registry_config_snapshot["instance.domain"].value as string });
 
         res.send(apiResponse(ApiResponseStatus.success));
     })

@@ -53,7 +53,7 @@ ${ client.email_address } <i style="margin-left: 0.5ch">(${ client.email_verifie
                     <div class="value">
                         <!-- <div class="ui-text w-icon roboto"><div class="icon blue"><i class="fas fa-info-circle"></i></div> Last changed on 01.01.2020</div> -->
 
-                        <button class="ui-button1">Change password</button>
+                        <button class="ui-button1" data-action="update_password">Change password</button>
                     </div>
                 </div>
             </div>
@@ -166,9 +166,10 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
 
 <div id="systempage-usersettings-root">
     <div class="categories-container">
-        <div class="item"><i class="fas fa-shield-alt"></i> Account & Security</div>
-        <div class="item"><i class="fas fa-bell"></i> Notifications</div>
-        <div class="item"><i class="fas fa-desktop"></i> Sessions</div>
+        <div class="item" data-category="account"><i class="fas fa-shield-alt"></i> Account & Security</div>
+        <div class="item" data-category="editing"><i class="fas fa-pen"></i> Editing</div>
+        <div class="item" data-category="notifications"><i class="fas fa-bell"></i> Notifications</div>
+        <div class="item" data-category="sessions"><i class="fas fa-desktop"></i> Sessions</div>
     </div>
 
     <div class="settings-root">

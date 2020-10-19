@@ -34,6 +34,8 @@ import { getRevisionRoute } from "./api/revision_get";
 import { getRevisionsDiffRoute } from "./api/revision_diff";
 import { logoutUserRoute } from "./api/user_logout";
 import { userSettings } from "./systempages/userSettings";
+import { createElevatedSessionRoute } from "./api/user_create_elevated_session";
+import { updateUserPasswordRoute } from "./api/user_update_password";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -550,7 +552,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         handler: getRevisionsDiffRoute
     },
     "user/logout": {
-        name: "page/logout",
+        name: "user/logout",
         method: "POST",
 
         description: "Log out",
@@ -561,6 +563,46 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         arguments: {},
 
         handler: logoutUserRoute
+    },
+    "user/create_elevated_session": {
+        name: "user/create_elevated_session",
+        method: "POST",
+
+        description: "Create an elevated session",
+
+        required_arguments: ["password"],
+        required_rights: [],
+
+        arguments: {
+            password: {
+                name: "password",
+                display_name: "Current user's password in clear text",
+
+                type: "string"
+            }
+        },
+
+        handler: createElevatedSessionRoute
+    },
+    "user/update_password": {
+        name: "user/update_password",
+        method: "POST",
+
+        description: "Update own password",
+
+        required_arguments: ["new_password"],
+        required_rights: [],
+
+        arguments: {
+            password: {
+                name: "new_password",
+                display_name: "New password in clear text",
+
+                type: "string"
+            }
+        },
+
+        handler: updateUserPasswordRoute
     },
     "page/save": {
         name: "page/save",

@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
 /*!40000 ALTER TABLE `deleted_wiki_pages` DISABLE KEYS */;
 /*!40000 ALTER TABLE `deleted_wiki_pages` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `elevated_user_sessions` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user` int unsigned NOT NULL,
+  `esid` tinytext NOT NULL,
+  `valid_until` int unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `elevated_user_sessions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `elevated_user_sessions` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,

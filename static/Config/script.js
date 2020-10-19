@@ -8,6 +8,7 @@ function configPageScript() {
     // Click handlers for category links on the left side
     for(const link_el of category_link_els) {
         link_el.onclick = () => {
+            // TODO @performance this for loop can be replaced with a querySelector
             // Show the selected config items container
             for(const container_el of category_container_els) {
                 if(container_el.dataset.category !== link_el.dataset.name) {
