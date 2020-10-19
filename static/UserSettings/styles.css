@@ -1,0 +1,139 @@
+#systempage-usersettings-root > .notice {
+    max-width: 900px;
+    
+    margin: 20px auto 0 auto;
+    padding: 20px 24px;
+}
+
+#systempage-usersettings-root > .categories-container {
+    display: flex;
+    justify-content: center;
+
+    font-family: "Roboto", sans-serif;
+
+    border-top: 1px solid var(--color-gray3);
+    border-bottom: 1px solid var(--color-gray3);
+}
+
+#systempage-usersettings-root > .categories-container > .item {
+    padding: 10px 20px;
+
+    cursor: pointer;
+
+    color: hsl(0, 0%, 20%);
+    font-weight: 500;
+    font-size: 13px;
+
+    transition: 0.15s;
+}
+
+#systempage-usersettings-root > .categories-container > .item > i {
+    width: 16px;
+    margin-right: 4px;
+}
+
+#systempage-usersettings-root > .categories-container > .item:hover {
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+#systempage-usersettings-root > .settings-root {
+
+}
+
+#systempage-usersettings-root > .settings-root > .settings-category {
+    /* Hidden state */
+    display: none;
+
+    max-width: 900px;
+    
+    margin: 0 auto;
+    padding: 20px 24px;
+}
+
+#systempage-usersettings-root > .settings-root > .settings-category[shown] {
+    display: block;
+}
+
+#systempage-usersettings-root > .settings-root .settings-heading {
+    color: hsl(0, 0%, 10%);
+    font-size: 18px;
+    font-weight: 700;
+
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-heading:first-child {
+    margin-top: 0;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item {
+    border-radius: 3px;
+
+    margin: 8px 0;
+    padding: 12px 16px;
+}
+
+#systempage-usersettings-root > .settings-root .item-name {
+    margin-bottom: 5px;
+
+    color: hsl(0, 0%, 15%);
+    font-weight: 600;
+}
+
+#systempage-usersettings-root > .settings-root .item-value {
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description,
+#systempage-usersettings-root > .settings-root .settings-item > .item-description {
+    margin-top: 10px;
+
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description > .icon,
+#systempage-usersettings-root > .settings-root .settings-item > .item-description > .icon {
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description {
+    margin-top: 4px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item:hover {
+    background-color: var(--color-gray);
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key {
+    width: 50%;
+
+    color: hsl(0, 0%, 15%);
+    font-weight: 600;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .value {
+    width: 35%;
+    margin-left: 40px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .value .ui-text {
+    font-size: 13px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .value > * {
+    margin-bottom: 10px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .value > *:last-child {
+    margin-bottom: 0;
+}

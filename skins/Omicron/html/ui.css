@@ -17,6 +17,19 @@ div.margin-top:empty {
     border-radius: 3px;
 }
 
+.ui-info-box p {
+    margin: 8px 0;
+}
+
+.ui-info-box ul {
+    margin: 4px 0;
+    padding-inline-start: 30px;
+}
+
+.ui-info-box.bigger-margin > .icon {
+    margin-right: 18px;
+}
+
 .ui-info-box > .icon {
     display: flex;
     align-items: center;
@@ -1003,7 +1016,9 @@ a.ui-text[href]:focus:not(:hover),
     border-radius: 3px;
 
     background-color: white;
-    box-shadow: 0 0 4px 0 rgb(215, 215, 215);
+    /* box-shadow: 0 0 4px 0 rgb(215, 215, 215); */
+    /* box-shadow: 0 1px 3px 0 rgb(210 210 210); */
+    box-shadow: 0 0 3px 0 rgb(210 210 210);
 
     outline: none;
 

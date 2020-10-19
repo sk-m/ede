@@ -33,6 +33,7 @@ import { deletedWikiPages } from "./systempages/deletedWikiPages";
 import { getRevisionRoute } from "./api/revision_get";
 import { getRevisionsDiffRoute } from "./api/revision_diff";
 import { logoutUserRoute } from "./api/user_logout";
+import { userSettings } from "./systempages/userSettings";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -408,13 +409,25 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
         name: "Login",
 
         display_title: "Login",
-        display_category: "other",
+        display_category: "user",
         display_description: "Login and registration page",
         display_icon: "fas fa-sign-in-alt",
 
         source: "ede",
 
         dynamic_content: login
+    },
+    usersettings: {
+        name: "UserSettings",
+
+        display_title: "User Settings",
+        display_category: "user",
+        display_description: "Change your settings and preferences",
+        display_icon: "fas fa-cog",
+
+        source: "ede",
+
+        dynamic_content: userSettings
     },
     systemmessages: {
         name: "SystemMessages",

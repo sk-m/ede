@@ -18,6 +18,7 @@ export interface User {
     username: string;
 
     email_address?: string;
+    email_verified?: boolean;
 
     password_hash_salt?: string;
     password_hash_iterations?: number;
@@ -336,6 +337,7 @@ export async function getFromUsername(username: string): Promise<User> {
 
                 username: user.username,
                 email_address: user.email_address,
+                email_verified: user.email_verified.readInt8(0) === 1,
 
                 password_hash_salt: user_password[1],
                 password_hash_iterations: user_password[3],
@@ -422,6 +424,7 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
 
                         username: user.username,
                         email_address: user.email_address,
+                        email_verified: user.email_verified.readInt8(0) === 1,
 
                         password_hash_salt: user_password[1],
                         password_hash_iterations: user_password[3],
@@ -502,6 +505,7 @@ ${ password_hash_keylen }`;
 
                             username,
                             email_address,
+                            email_verified: false,
 
                             password_hash_salt,
                             password_hash_iterations,
