@@ -7,10 +7,10 @@ import { UI_CHECKBOX_SVG } from "../constants";
 
 function page_account(client: User.User): string {
     const email_text = `\
-<div class="ui-text w-icon roboto">
-<div class="icon ${ client.email_verified ? "green" : "red" }"><i class="fas fa-${ client.email_verified ? "check" : "exclamation" }-circle"></i></div>
-${ client.email_address } <i style="margin-left: 0.5ch">(${ client.email_verified ? "verified" : "not verified" })</i>
-</div>`;
+<div><div class="status-text ${ client.email_verified ? "c-blue" : "c-red" }">
+<i class="fas fa-${ client.email_verified ? "check" : "exclamation" }-circle"></i>
+${ client.email_address }
+</div></div>`;
 
     // Detect problems
     let problems_html = "";
@@ -25,7 +25,7 @@ ${ client.email_address } <i style="margin-left: 0.5ch">(${ client.email_verifie
             `<div class="ui-info-box c-orange bigger-margin">
                 <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
                 <div class="text">
-                    <p>There are some problems with your account's security.</p>
+                    <p>There are some problems with your account.</p>
                     <p>
                         Found problems:
                         <ul>${ problems_html }</ul>
@@ -51,8 +51,6 @@ ${ client.email_address } <i style="margin-left: 0.5ch">(${ client.email_verifie
                         <div class="item-description ui-text">You can easilly change your password if you know your current one. If you forgot your current password, you can <a href="/System:ResetUserPassword">reset</a> it.</div>
                     </div>
                     <div class="value">
-                        <!-- <div class="ui-text w-icon roboto"><div class="icon blue"><i class="fas fa-info-circle"></i></div> Last changed on 01.01.2020</div> -->
-
                         <button class="ui-button1" data-action="update_password">Change password</button>
                     </div>
                 </div>
@@ -77,7 +75,7 @@ ${ client.email_address } <i style="margin-left: 0.5ch">(${ client.email_verifie
                         <div class="item-description">Enabling two-factor authentication significantly increases the security of your account. It is highly recommended that you turn it on.</div>
                     </div>
                     <div class="value">
-                        <div class="ui-text w-icon roboto"><div class="icon red"><i class="fas fa-exclamation-circle"></i></div>Not enabled</div>
+                        <div><div class="status-text c-red"><i class="fas fa-exclamation-circle"></i> Not enabled</div></div>
 
                         <button class="ui-button1">Set up</button>
                     </div>

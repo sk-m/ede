@@ -137,3 +137,28 @@
 #systempage-usersettings-root > .settings-root .settings-item > .key-value > .value > *:last-child {
     margin-bottom: 0;
 }
+
+#systempage-usersettings-root > .settings-root .settings-item .status-text {
+    display: inline-block;
+
+    padding: 5px 8px;
+    border-radius: 3px;
+
+    font-weight: 500;
+    font-family: "Roboto", sans-serif;
+    font-size: 13px;
+
+    color: var(--color-blue2);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+#systempage-usersettings-root > .settings-root .settings-item .status-text > i {
+    width: 16px;
+
+    font-size: 12px;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item .status-text.c-red {
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
+}
