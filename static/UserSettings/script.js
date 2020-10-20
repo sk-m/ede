@@ -56,13 +56,12 @@ function userSettingsPageScript() {
     </div>
 </div>`;
 
-            ede.showPopup("user-updatepassword", "Change password", popup_body_html, popup_buttons_html, {
+            const popup_el = ede.showPopup("user-updatepassword", "Change password", popup_body_html, popup_buttons_html, {
                 close: ede.closePopup,
                 change: update_password
             }, 460);
 
-            // TODO! @performance @hack see todo file
-            ede.updateForms();
+            ede.updateForms(popup_el);
         });
     };
 
