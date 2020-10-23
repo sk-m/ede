@@ -398,14 +398,13 @@ export async function deletePage(page_id: number, deleted_user_id: string, summa
                 }
 
                 const page = results[0];
-                const now: number = Math.floor(new Date().getTime() / 1000);
 
                 // Delete the page
                 sql.query("INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, \
 `deleted_by`, `deleted_on`, `delete_summary`) \
-VALUES (?, ?, ?, ?, ?, ?, ?, ?); DELETE FROM `wiki_pages` WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = ?",
+VALUES (?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?); DELETE FROM `wiki_pages` WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = ?",
                 [page_id, page.namespace, page.name, JSON.stringify(page.page_info), JSON.stringify(page.action_restrictions),
-                deleted_user_id, now, summary, page_id, page_id],
+                deleted_user_id, summary, page_id, page_id],
                 (del_error: any) => {
                     if(!del_error) resolve();
                     else reject(del_error);
