@@ -80,7 +80,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
 
                     // Get target user's last IP address
                     const last_target_ip: number = await new Promise((resolve: any) => {
-                        sql.execute("SELECT `ip_address` FROM `user_sessions` WHERE `user` = ? ORDER BY id DESC LIMIT 1",
+                        sql.execute("SELECT `ip_address` FROM `user_tracking` WHERE `user` = ? ORDER BY id DESC LIMIT 1",
                         [user_id],
                         (error: any, results: any) => {
                             if(error || results.length !== 1) {

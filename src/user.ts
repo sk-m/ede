@@ -40,8 +40,8 @@ export interface UserSession {
 
     csrf_token: string;
 
-    ip_address: string;
-    user_agent: string;
+    ip_address?: string;
+    user_agent?: string;
 
     created_on: number;
     expires_on: number;
@@ -373,6 +373,8 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
             return;
         }
 
+        const now = Math.floor(new Date().getTime() / 1000);
+
         const st_split: string[] = cookies.st.split(":");
 
         const st_uid: string = st_split[0];
@@ -389,9 +391,9 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
 
             const session = session_results[0];
 
-            // session was invalidated
-            if(session.invalid.readInt8(0) > 0) {
-                reject("session_invalidated");
+            // Check if session expired
+            if(session.expires_on < now) {
+                reject("session_expired_or_invalidated");
                 return;
             }
 
@@ -524,6 +526,29 @@ ${ password_hash_keylen }`;
 }
 
 /**
+ * Create a new user_tracking record
+ *
+ * @param user_id target user's id
+ * @param ip_address target user's ip address
+ * @param user_agent target user's user agent
+ */
+export async function newUserTrackingRecord(user_id: number, ip_address: string, user_agent: string): Promise<true> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("INSERT INTO `user_tracking` (`user`, `ip_address`, `user_agent`, `timestamp`) VALUES (?, ?, ?, UNIX_TIMESTAMP())",
+        [user_id, ip_address, user_agent],
+        (error: any, results: any) => {
+            if(error || results.length < 1) {
+                Util.log(`Could not create a new user_tracking record for user id ${ user_id }`, 3, error);
+
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
  * Create a new user session
  *
  * @param user user's internal id (id column in the database)
@@ -567,13 +592,17 @@ export async function createSession(user_id: string, ip_address: string, user_ag
                 };
 
                 // Create a session
-                sql.execute("INSERT INTO `user_sessions` (`user`, `session_token`, `sid_hash`, `sid_salt`, `csrf_token`, `ip_address`, \
-`user_agent`, `expires_on`, `created_on`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [user_id, session_token, sidHash.key, sidHash.salt, csrf_token, ip_address, user_agent, expires_on, now],
+                sql.execute("INSERT INTO `user_sessions` (`user`, `session_token`, `sid_hash`, `sid_salt`, `csrf_token`, \
+`expires_on`, `created_on`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [user_id, session_token, sidHash.key, sidHash.salt, csrf_token, expires_on, now],
                 (error: any) => {
                     if(error) { reject(error) }
                     else resolve(session);
                 });
+
+                // Create a new user_tracking record. We don't have to await it
+                // TODO @performance @cleanup parseInt
+                newUserTrackingRecord(parseInt(user_id, 10), ip_address, user_agent);
             })
             .catch((error: Error) => {
                 reject(error);
@@ -747,7 +776,7 @@ export async function getAddressBlocks(address: string): Promise<string[]> {
  */
 export async function destroyUserSessions(user_id: number): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("UPDATE `user_sessions` SET `invalid` = b'1' WHERE `user` = ?",
+        sql.execute("UPDATE `user_sessions` SET `expires_on` = 1 WHERE `user` = ?",
         [user_id],
         (error: any, results: any) => {
             if(error || results.length < 1) {
@@ -769,7 +798,7 @@ export async function destroyUserSessions(user_id: number): Promise<true> {
  */
 export async function invalidateUserSession(user_id: number, session: UserSession): Promise<true> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("UPDATE `user_sessions` SET `invalid` = b'1' WHERE `user` = ? AND `session_token` = ?",
+        sql.execute("UPDATE `user_sessions` SET `expires_on` = 1 WHERE `user` = ? AND `session_token` = ?",
         [user_id, session.session_token],
         (error: any, results: any) => {
             if(error || results.length < 1) {

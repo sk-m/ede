@@ -233,11 +233,8 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   `sid_hash` varchar(4096) NOT NULL,
   `sid_salt` varchar(2048) NOT NULL,
   `csrf_token` varchar(1024) NOT NULL,
-  `ip_address` varchar(16) NOT NULL,
-  `user_agent` varchar(1024) NOT NULL,
   `expires_on` int DEFAULT '0',
   `created_on` int DEFAULT '0',
-  `invalid` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   KEY `user_sessions_user` (`user`),
   CONSTRAINT `user_sessions_user` FOREIGN KEY (`user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -245,6 +242,24 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 
 /*!40000 ALTER TABLE `user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_sessions` ENABLE KEYS */;
+
+DELIMITER //
+CREATE EVENT `user_sessions_cleanup` ON SCHEDULE EVERY 1 DAY STARTS '2020-10-23 00:00:01' ON COMPLETION NOT PRESERVE ENABLE COMMENT 'Deletes invalidated and expired user sessions' DO BEGIN
+	DELETE FROM `user_sessions` WHERE `expires_on` < UNIX_TIMESTAMP();
+END//
+DELIMITER ;
+
+CREATE TABLE IF NOT EXISTS `user_tracking` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user` int unsigned NOT NULL,
+  `ip_address` varchar(16) DEFAULT NULL,
+  `user_agent` varchar(1024) DEFAULT NULL,
+  `timestamp` int unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `user_tracking` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user_tracking` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
