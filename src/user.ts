@@ -1015,7 +1015,7 @@ export function loginRoute(req: any, res: any): void {
             }
 
             // Check if user is blocked from logging in
-            if(results[0].blocks && results[0].blocks.indexOf(";") !== -1) {
+            if(results[0].blocks) {
                 const blocks = results[0].blocks.split(";");
 
                 // User is locked out, get the appropriate system message
