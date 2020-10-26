@@ -1033,6 +1033,8 @@ a.ui-text[href]:focus:not(:hover),
 
 /* Buttons */
 .ui-button1 {
+    position: relative;
+
     padding: 8px 13px;
 
     border: 0;
@@ -1092,6 +1094,34 @@ a.ui-text[href]:focus:not(:hover),
     background-color: rgb(220, 220, 220);
 }
 
+.ui-button1.loading {
+    color: transparent !important;
+
+    pointer-events: none;
+
+    box-shadow: none;
+    background-color: var(--color-gray15);
+}
+
+.ui-button1.loading::after {
+    position: absolute;
+    display: block;
+    content: "";
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    opacity: 0.85;
+
+    background-image: url(/public/assets/spinner.svg);
+    background-position: 50% 50%;
+    background-size: 16px;
+    background-repeat: no-repeat;
+}
+
 .ui-button1.disabled {
     pointer-events: none;
     
@@ -1108,7 +1138,6 @@ a.ui-text[href]:focus:not(:hover),
     background-color: var(--color-blue2);
 }
 
-.ui-button1.toggled:focus,
 .ui-button1.toggled:hover {
     box-shadow: 0 0 0 1px hsl(228, 100%, 55%);
     background-color: hsl(228, 100%, 55%);
@@ -1120,7 +1149,6 @@ a.ui-text[href]:focus:not(:hover),
     background-color: transparent;
 }
 
-.ui-button1.t-frameless:focus,
 .ui-button1.t-frameless:hover {
     box-shadow: 0 0 0 1px rgb(245, 245, 245);
     background-color: rgb(245, 245, 245);
@@ -1142,7 +1170,6 @@ a.ui-text[href]:focus:not(:hover),
     color: var(--color-blue-lighter);
 }
 
-.ui-button1.c-blue.t-frameless:focus,
 .ui-button1.c-blue.t-frameless:hover {
     box-shadow: 0 0 0 1px var(--color-blue2-transparent-1);
     background-color: var(--color-blue2-transparent-1);
@@ -1153,7 +1180,6 @@ a.ui-text[href]:focus:not(:hover),
     background-color: var(--color-blue2-transparent-2);
 }
 
-.ui-button1.c-red.t-frameless:focus,
 .ui-button1.c-red.t-frameless:hover {
     box-shadow: 0 0 0 1px var(--color-red-transparent-1);
     background-color: var(--color-red-transparent-1);
