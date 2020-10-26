@@ -41,7 +41,7 @@ function wikipageDeletePageScript() {
         final_params.title = ede.current_page.address.url_params[2];
 
         // Disable the button
-        e.target.classList.add("disabled");
+        e.target.classList.add("loading");
 
         // Delete the page
         ede.apiCall("page/delete", final_params, true)
@@ -55,7 +55,7 @@ function wikipageDeletePageScript() {
             ede.showNotification("deletewikipage-error", "Error", `Failed to delete the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
             // Enable the button
-            e.target.classList.remove("disabled");
+            e.target.classList.remove("loading");
         });
     }
 }

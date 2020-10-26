@@ -51,20 +51,26 @@ function userSettingsPageScript() {
 
         // We need an elevated session to set up (enable) 2fa
         ede.createElevatedSession(() => {
-            const next_click = (show_next_step, refresh_popup_pos) => {
+            const next_click = (e, show_next_step, refresh_popup_pos) => {
                 if(current_step === 0) {
                     // Step 0 -> 1. Start the setup, get the qr code
-                    current_step = show_next_step();
+                    e.target.classList.add("loading");
 
                     ede.apiCall("user/start_f2a_setup", {}, true)
                     .then(response => {
                         // Display the qr code
+                        current_step = show_next_step();
+
                         document.getElementById("2fasetup-qrcode").src = response.qr_code;
+
+                        e.target.classList.remove("loading");
 
                         refresh_popup_pos();
                         ede.updateForms(popup_el);
                     })
                     .catch(error => {
+                        e.target.classList.remove("loading");
+
                         ede.showNotification("user-f2asetup-error", "Error", error.error || "Could not start the 2FA setup.", "error");
                     });
                 } else if(current_step === 2) {
@@ -74,12 +80,16 @@ function userSettingsPageScript() {
                     const validation_result = ede.form.validate("user-f2asetup");
                     if(validation_result.invalid) return;
 
+                    e.target.classList.add("loading");
+
                     ede.apiCall("user/finish_f2a_setup", {
                         otp: ede.form.list["user-f2asetup"].otp.value
                     }, true)
                     .then(response => {
                         // Successfully set up 2fa, format backup codes
                         const codes_container_el = document.getElementById("f2asetup-recoverycodes");
+
+                        e.target.classList.remove("loading");
 
                         for(const code in response.backup_codes) {
                             codes_container_el.innerHTML += `<div>${ code }</div>`;
@@ -89,6 +99,8 @@ function userSettingsPageScript() {
                         ede.showNotification("user-f2asetup-success", "Success", "Two-factor authentication successfully enabled.");
                     })
                     .catch(error => {
+                        e.target.classList.remove("loading");
+
                         ede.showNotification("user-f2asetup-error", "Error", error.error || "Could not finish the 2FA setup.", "error");
                     });
                 } else if(current_step === 3) {
@@ -141,7 +153,7 @@ function userSettingsPageScript() {
 
             const popup_el = ede.showPopup("user-f2asetup", "Set up Two-factor authentication", popup_body_html, popup_buttons_html, {
                 close: ede.closePopup,
-                next: (show_next_step, refresh_popup_pos) => { next_click(show_next_step, refresh_popup_pos) }
+                next: (e, show_next_step, refresh_popup_pos) => { next_click(e, show_next_step, refresh_popup_pos) }
             }, 460);
         });
     };
@@ -149,7 +161,7 @@ function userSettingsPageScript() {
     const action_update_password = () => {
         // We need an elevated session to update user's password
         ede.createElevatedSession(() => {
-            const update_password = () => {
+            const update_password = e => {
                 // Validate the form
                 const validation_result = ede.form.validate("user-updatepassword");
                 if(validation_result.invalid) return;
@@ -163,15 +175,21 @@ function userSettingsPageScript() {
                     return;
                 }
 
+                e.target.classList.add("loading");
+
                 // Update the password
                 ede.apiCall("user/update_password", { new_password }, true)
                 .then(() => {
+                    e.target.classList.remove("loading");
+
                     ede.closePopup();
                     ede.refresh();
 
                     ede.showNotification("user-updatepassword-success", "Success", "Password successfully changed.");
                 })
                 .catch(error => {
+                    e.target.classList.remove("loading");
+
                     ede.showNotification("user-updatepassword-error", "Error", error.error || "Could not change the password.", "error");
                 })
             };
@@ -202,7 +220,7 @@ function userSettingsPageScript() {
 
             const popup_el = ede.showPopup("user-updatepassword", "Change password", popup_body_html, popup_buttons_html, {
                 close: ede.closePopup,
-                change: update_password
+                change: e => { update_password(e) }
             }, 460);
 
             ede.updateForms(popup_el);

@@ -69,7 +69,7 @@ function userBlockingPageScript() {
         final_params.username = ede.current_page.address.url_params[0].split(":", 2)[1];
 
         // Disable the button
-        e.target.classList.add("disabled");
+        e.target.classList.add("loading");
 
         // Block the user
         ede.apiCall("user/block", final_params, true)
@@ -83,7 +83,7 @@ function userBlockingPageScript() {
             ede.showNotification("userblock-error", "Error", `Failed to block the user (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
             // Enable the button
-            e.target.classList.remove("disabled");
+            e.target.classList.remove("loading");
         });
     }
 }

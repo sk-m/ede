@@ -44,7 +44,7 @@ function SystemMessagesPageScript() {
         const new_value = create_form.getElementsByTagName("textarea")[0].value;
 
         // Disable the button
-        e.target.classList.add("disabled");
+        e.target.classList.add("loading");
 
         // Create a system message
         ede.apiCall("systemmessage/create", { name: systemmessage_name, value: new_value }, true)
@@ -54,22 +54,27 @@ function SystemMessagesPageScript() {
             ede.showNotification("systemmessages-create-success", "Success", "Successfully created a new system message.");
         })
         .catch(response => {
+            e.target.classList.remove("loading");
+
             ede.showNotification("systemmessages-create-error", "Error", `Failed to create a new system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
         });
     }
 
     // Function for deleting system messages
-    const delete_func = (name, el) => {
-        ede.closePopup();
+    const delete_func = (e, name, el) => {
+        e.target.classList.add("loading");
 
         // Delete the system message
         ede.apiCall("systemmessage/delete", { name: name }, true)
         .then(() => {
             el.remove();
+            ede.closePopup();
 
             ede.showNotification("systemmessages-delete-success", "Success", "Successfully deleted a system message.");
         })
         .catch(response => {
+            e.target.classList.remove("loading");
+
             ede.showNotification("systemmessages-delete-error", "Error", `Failed to delete a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
         });
     };
@@ -139,7 +144,7 @@ function SystemMessagesPageScript() {
 
                     ede.showPopup("systemmessage-delete", "Are you sure?", `Are you sure you want to delete the <code>${ systemmessage_name }</code> system message?`, delete_popup_buttons_html, {
                         close: ede.closePopup,
-                        delete: () => { delete_func(systemmessage_name, item_el) }
+                        delete: e => { delete_func(e, systemmessage_name, item_el) }
                     }, 460);
                 }
             }

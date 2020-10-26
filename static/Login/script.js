@@ -48,7 +48,7 @@ function loginPageScript() {
     }
 
     // On form submit
-    function login_form_submit() {
+    const login_form_submit = e => {
         document.getElementById("systempage-login-apiresponse").innerText = "";
 
         if(login_form_state_is_login) {
@@ -58,6 +58,8 @@ function loginPageScript() {
             const validation_result = ede.form.validate("login");
 
             if(!validation_result.invalid) {
+                e.target.classList.add("loading");
+
                 // join auth API call
                 ede.apiCall("auth/login", {
                     username: ede.form.list.login.username.value,
@@ -71,6 +73,8 @@ function loginPageScript() {
                     }
                 })
                 .catch(error => {
+                    e.target.classList.remove("loading");
+
                     // TODO @cleanup switch?
                     if(error.error === "2fa_required") {
                         // 2fa required
@@ -104,6 +108,8 @@ function loginPageScript() {
                     return;
                 }
 
+                e.target.classList.add("loading");
+
                 // join auth API call
                 ede.apiCall("auth/join", {
                     username: ede.form.list.join.username.value,
@@ -117,6 +123,8 @@ function loginPageScript() {
                     }
                 })
                 .catch((error) => {
+                    e.target.classList.remove("loading");
+
                     if(error.error === "username_taken") {
                         ede.form.showPopup("join", "username", "Username is already taken");
                     }

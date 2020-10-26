@@ -85,6 +85,7 @@ Is it hidden?</i>";
             // TODO maybe we should have a function that returns an HTML node with revisions instead?
             const revisions_fragment = ede.tools.constructRevisionsHTML(response.revisions, true);
 
+            revisions_container.innerHTML = "";
             revisions_container.appendChild(revisions_fragment);
             revisions_status_text.innerText = "Displaying revisions for the selected version";
 
@@ -143,7 +144,7 @@ Is it hidden?</i>";
         }
 
         // Disable the button
-        e.target.classList.add("disabled");
+        e.target.classList.add("loading");
 
         // Restore the page
         ede.apiCall("page/restore", final_params, true)
@@ -156,7 +157,7 @@ Is it hidden?</i>";
             ede.showNotification("wikipagerestore-error", "Error", `Failed to restore the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
             // Enable the button
-            e.target.classList.remove("disabled");
+            e.target.classList.remove("loading");
         });
     };
 }

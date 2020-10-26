@@ -117,7 +117,7 @@ function userGroupManagementPageScript() {
     const before_params_raw = ede.form.getParams("usergroupmanagement");
 
     // On save
-    main_form.submit.onclick = e => {
+    main_form.submit.onclick = () => {
         // Validate the form
         const form_validation = ede.form.validate("usergroupmanagement");
         if(form_validation.invalid) return;
@@ -165,23 +165,24 @@ function userGroupManagementPageScript() {
         params_final.group_name = location.pathname.split("/")[2];
 
         // Function that will save the group
-        const save_function = function() {
-            // Close the save popup
-            ede.closePopup();
-
+        const save_function = popup_submit_event => {
             // Disable the button
-            e.target.classList.add("disabled");
+            popup_submit_event.target.classList.add("loading");
 
             // Update the group
             ede.apiCall("usergroup/update", params_final, true)
             .then(() => {
+                ede.closePopup();
+
                 ede.showNotification("usergroupmanagement-update-success", "Success", "Group saved successfully.");
             })
             .catch(response => {
+                ede.closePopup();
+
                 ede.showNotification("usergroupmanagement-update-error", "Error", `Failed to save the group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
                 // Enable the button
-                e.target.classList.remove("disabled");
+                popup_submit_event.target.classList.remove("loading");
             });
         };
 
@@ -259,7 +260,7 @@ ${ !params_raw.summary ? "<div><i class=\"fas fa-info-circle\"></i> Please, prov
 
         ede.showPopup("usergroupmanagement-save", "Confirm save", review_changes_html, popup_buttons_html, {
             close: ede.closePopup,
-            save: save_function
+            save: e => { save_function(e) }
         }, 600);
     };
 }

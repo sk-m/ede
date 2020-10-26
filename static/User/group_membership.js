@@ -60,7 +60,7 @@ function userGroupMembershipPageScript() {
             }
 
             // Disable the button
-            e.target.classList.add("disabled");
+            e.target.classList.add("loading");
 
             // Update the group
             ede.apiCall("user/updategroups", final_params, true)
@@ -74,7 +74,7 @@ function userGroupMembershipPageScript() {
                 ede.showNotification("usergroupmembership-update-error", "Error", `Failed to update user's groups (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
                 // Enable the button
-                e.target.classList.remove("disabled");
+                e.target.classList.remove("loading");
             });
         }
     }

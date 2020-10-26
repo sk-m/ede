@@ -25,7 +25,7 @@ function wikipageMovePageScript() {
         final_params.title = ede.current_page.address.url_params[2];
 
         // Disable the button
-        e.target.classList.add("disabled");
+        e.target.classList.add("loading");
 
         // Move the page
         ede.apiCall("page/move", final_params, true)
@@ -38,7 +38,7 @@ function wikipageMovePageScript() {
             ede.showNotification("movewikipage-error", "Error", `Failed to move the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
 
             // Enable the button
-            e.target.classList.remove("disabled");
+            e.target.classList.remove("loading");
         });
     }
 }
