@@ -100,6 +100,12 @@ async function serverInit(db_error: Error): Promise<void> {
         prefix: '/public/lib',
     });
 
+    app.register(fastify_static, {
+        decorateReply: false,
+        root: path.join(__dirname, "../static/assets"),
+        prefix: '/public/assets',
+    });
+
     // Register routes
     app.get("/*", directRoute);
     app.get("/api*", Api.RootRoute);

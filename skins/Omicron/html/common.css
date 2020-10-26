@@ -25,6 +25,9 @@ body {
     --color-red-transparent-3: rgba(232, 32, 0, 0.22);
 
     --color-green: #0ccf00;
+    --color-green-darker: hsl(117deg 100% 35%);
+
+    --color-green-transparent-05: rgba(12, 207, 0, 0.05);
     --color-green-transparent-1: rgba(12, 207, 0, 0.1);
 
     --color-orange: #FFA300;

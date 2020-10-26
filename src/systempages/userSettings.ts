@@ -2,15 +2,31 @@ import fs from "fs";
 
 import * as User from "../user";
 import * as Page from "../page";
-import * as SystemMessages from "../system_message";
+import * as F2A from "../f2a";
 import { UI_CHECKBOX_SVG } from "../constants";
 
-function page_account(client: User.User): string {
+async function page_account(client: User.User): Promise<string> {
     const email_text = `\
 <div><div class="status-text ${ client.email_verified ? "c-blue" : "c-red" }">
 <i class="fas fa-${ client.email_verified ? "check" : "exclamation" }-circle"></i>
 ${ client.email_address }
 </div></div>`;
+
+    // check if user has f2a enabled
+    const is_f2a_enabled = (await F2A.check(parseInt(client.id, 10))).enabled;
+    let f2a_text;
+
+    if(is_f2a_enabled) {
+        f2a_text = `\
+        <div><div class="status-text c-green">
+        <i class="fas fa-check"></i>Enabled</div></div>
+        <button class="ui-button1" data-action="disable_f2a">Disable 2FA</button>`;
+    } else {
+        f2a_text = `\
+        <div><div class="status-text c-orange">
+        <i class="fas fa-exclamation-circle"></i>Not enabled</div></div>
+        <button class="ui-button1" data-action="setup_f2a">Set up 2FA</button>`;
+    }
 
     // Detect problems
     let problems_html = "";
@@ -75,21 +91,22 @@ ${ client.email_address }
                         <div class="item-description">Enabling two-factor authentication significantly increases the security of your account. It is highly recommended that you turn it on.</div>
                     </div>
                     <div class="value">
-                        <div><div class="status-text c-red"><i class="fas fa-exclamation-circle"></i> Not enabled</div></div>
-
-                        <button class="ui-button1">Set up</button>
+                        ${ f2a_text }
                     </div>
                 </div>
             </div>
             <div class="settings-item">
-                <div class="item-name">Disallow logging in using a username</div>
+                <div class="item-name">Strict login protection</div>
                 <div class="item-value">
                     <div input class="ui-checkbox-1 disabled">
                         <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
                         <div class="text">Enable</div>
                     </div>
                 </div>
-                <div class="item-description">If enabled, you will need to enter your email address instead of a username to log in. This increases the security of your account a bit.</div>
+                <div class="item-description">
+                    <p>Require scricter checks upon logging in to your account from new browsers/locations. Recommended for users with advanced rights.</p>
+                    <p>If enabled, you will <i>not</i> be able to log in using your username, as you will be required to use your email address instead. Also, additional checks like email verification will be necessary upon logging in from different browsers or locations.</p>
+                </div>
             </div>
 
             <div class="settings-heading">Password reset options</div>
@@ -171,7 +188,7 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
     </div>
 
     <div class="settings-root">
-        ${ page_account(client) }
+        ${ await page_account(client) }
     </div>
 </div>`;
 

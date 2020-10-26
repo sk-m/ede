@@ -6,6 +6,7 @@ import cookie from "cookie";
 import { sql } from "./server";
 import * as SystemMessage from "./system_message";
 import * as Util from "./utils";
+import * as F2A from "./f2a";
 
 import * as SECRETS from "../secrets.json";
 import { registry_config } from "./registry";
@@ -651,7 +652,7 @@ export async function createElevatedSession(user_id: number): Promise<[string, D
  *
  * @param user_id User's id
  * @param esid esid
- * 
+ *
  * @returns true if valid
  */
 export async function checkElevatedSession(user_id: number, esid: string): Promise<boolean> {
@@ -1056,6 +1057,7 @@ export function loginRoute(req: any, res: any): void {
                 }
             }
 
+            // Check password (preparation)
             const password_split: string = results[0].password.split(";");
 
             const db_password_hash = password_split[1];
@@ -1063,7 +1065,6 @@ export function loginRoute(req: any, res: any): void {
             const db_password_iterations = parseInt(password_split[3], 10);
             const db_password_keylen = parseInt(password_split[4], 10);
 
-            // Check password
             pbkdf2(
                 body_password,
                 db_password_salt,
@@ -1071,11 +1072,32 @@ export function loginRoute(req: any, res: any): void {
                 db_password_keylen
             )
             .then(async (password_hash: Hash) => {
+                // Check if password is correct
                 if(db_password_hash !== password_hash.key) {
                     const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
 
                     res.status(403).send({ error: "invalid_credentials", message: msg.value });
                     return;
+                }
+
+                // Check 2FA
+                const f2a_otp = req.body.f2a_otp || "";
+                const f2a_status = await F2A.check(results[0].id, f2a_otp);
+
+                if(f2a_status.enabled) {
+                    if(!f2a_otp) {
+                        // No code provided
+                        res.status(403).send({ error: "2fa_required" });
+                        return;
+                    }
+                    if(!f2a_status.otp_correct) {
+                        // Incorrect code provided
+                        // TODO Notify user if they used an already used backup code
+                        const msg = (await SystemMessage.get(["login-message-invalidf2aotp"]))["login-message-invalidf2aotp"];
+
+                        res.status(403).send({ error: "invalid_f2a_otp", message: msg.value });
+                        return;
+                    }
                 }
 
                 // Create a session

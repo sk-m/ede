@@ -2,6 +2,14 @@
 # yarn lockfile v1
 
 
+"2fa@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/2fa/-/2fa-0.1.2.tgz#8fcac92a63ad35949b23f00a3e1fd3eabc8b61d9"
+  integrity sha1-j8rJKmOtNZSbI/AKPh/T6ryLYdk=
+  dependencies:
+    qr-image "^3.1.0"
+    thirty-two "0.0.2"
+
 "@babel/code-frame@^7.0.0":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.8.3.tgz#33e25903d7481181534e12ec0a25f16b6fcf419e"
@@ -1847,6 +1855,11 @@ qlobber@^5.0.0:
   resolved "https://registry.yarnpkg.com/qlobber/-/qlobber-5.0.0.tgz#7b5f503eb02be1c88bfaf5b30923bfce801ec325"
   integrity sha512-JDmrgy9+RLFqFEGzVOCf85i3OOOdOtV6iRgWuxxwoCnIxowykISSNJUtrCHoe2G+NYTtfI01GUs1c3xL3dhmCg==
 
+qr-image@^3.1.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/qr-image/-/qr-image-3.2.0.tgz#9fa8295beae50c4a149cf9f909a1db464a8672e8"
+  integrity sha1-n6gpW+rlDEoUnPn5CaHbRkqGcug=
+
 qs@^6.5.1:
   version "6.9.3"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.9.3.tgz#bfadcd296c2d549f1dffa560619132c977f5008e"
@@ -2354,6 +2367,11 @@ text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
   integrity sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
+
+thirty-two@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/thirty-two/-/thirty-two-0.0.2.tgz#4253e29d8cb058f0480267c5698c0e4927e54b6a"
+  integrity sha1-QlPinYywWPBIAmfFaYwOSSflS2o=
 
 through@^2.3.6:
   version "2.3.8"

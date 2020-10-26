@@ -6,6 +6,47 @@ function loginPageScript() {
 
     let login_form_state_is_login = true;
 
+    // 2fa code
+    let login_f2a_otp;
+
+    // 2fa popup
+    function login_get_f2a_code(callback) {
+        const popup_buttons_html = `\
+<div class="left">
+    <button name="close" class="ui-button1 t-frameless w-500">CLOSE</button>
+</div>
+<div class="right">
+    <button name="login" class="ui-button1 t-frameless c-blue w-500">LOG IN</button>
+</div>`;
+
+        const popup_body_html = `\
+<p>Please, enter a 6-digit code from your authenticator app or a one-time use backup code.</p>
+
+<form class="ui-form-container" name="login-f2acheck">
+    <div class="ui-input-box">
+        <div class="popup"></div>
+        <div class="ui-input-name1">6-digit code or backup code</div>
+        <input type="text" name="otp" data-handler="" class="ui-input1 roboto-mono">
+    </div>
+</form>`;
+
+        const popup_el = ede.showPopup("login-f2acheck", "Two-factor authentication", popup_body_html, popup_buttons_html, {
+            close: ede.closePopup,
+            login: () => {
+                // Validate the form
+                const validation_result = ede.form.validate("login-f2acheck");
+                if(validation_result.invalid) return;
+
+                // Get the code
+                login_f2a_otp = ede.form.list["login-f2acheck"].otp.value;
+
+                callback();
+            }
+        }, 460);
+
+        ede.updateForms(popup_el);
+    }
+
     // On form submit
     function login_form_submit() {
         document.getElementById("systempage-login-apiresponse").innerText = "";
@@ -20,7 +61,8 @@ function loginPageScript() {
                 // join auth API call
                 ede.apiCall("auth/login", {
                     username: ede.form.list.login.username.value,
-                    password: ede.form.list.login.password.value
+                    password: ede.form.list.login.password.value,
+                    f2a_otp: login_f2a_otp
                 }, true)
                 .then(response => {
                     if(response.success) {
@@ -29,13 +71,18 @@ function loginPageScript() {
                     }
                 })
                 .catch(error => {
-                    if(error.message) {
+                    // TODO @cleanup switch?
+                    if(error.error === "2fa_required") {
+                        // 2fa required
+                        login_get_f2a_code(login_form_submit);
+                    } else if(error.error === "invalid_f2a_otp") {
+                        // Invalid 2fa one time password, reset it so that the user will get an 2fa popup on next "log in" button click
+                        login_f2a_otp = null;
+
+                        ede.showNotification("login-f2a-invalid", "Error", `Two-factor authentication failed (${ error.message }).`, "error");
+                    } else if(error.error === "blocked") {
                         // User is blocked
-                        if(error.error === "blocked") {
-                            ede.showPopup("login-blocked", "Account is blocked", error.message);
-                        } else {
-                            document.getElementById("systempage-login-apiresponse").innerText = error.message;
-                        }
+                        ede.showPopup("login-blocked", "Account is blocked", error.message);
                     } else {
                         document.getElementById("systempage-login-apiresponse").innerText = `Unknown error occured: ${ error.error }`;
                     }

@@ -36,6 +36,9 @@ import { logoutUserRoute } from "./api/user_logout";
 import { userSettings } from "./systempages/userSettings";
 import { createElevatedSessionRoute } from "./api/user_create_elevated_session";
 import { updateUserPasswordRoute } from "./api/user_update_password";
+import { userStart2FASetupRoute } from "./api/user_start_f2a_setup";
+import { userFinish2FASetupRoute } from "./api/user_finish_f2a_setup";
+import { userDisable2FARoute } from "./api/user_disable_f2a";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -603,6 +606,52 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: updateUserPasswordRoute
+    },
+    "user/start_f2a_setup": {
+        name: "user/start_f2a_setup",
+        method: "POST",
+
+        description: "Start two-factor authentication setup",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {},
+
+        handler: userStart2FASetupRoute
+    },
+    "user/finish_f2a_setup": {
+        name: "user/finish_f2a_setup",
+        method: "POST",
+
+        description: "Finish the two-factor authentication setup",
+
+        required_arguments: ["otp"],
+        required_rights: [],
+
+        arguments: {
+            otp: {
+                name: "otp",
+                display_name: "One-time password",
+
+                type: "string"
+            }
+        },
+
+        handler: userFinish2FASetupRoute
+    },
+    "user/disable_f2a": {
+        name: "user/disable_f2a",
+        method: "POST",
+
+        description: "Disable two-factor authentication",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {},
+
+        handler: userDisable2FARoute
     },
     "page/save": {
         name: "page/save",

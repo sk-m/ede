@@ -94,6 +94,16 @@
     font-weight: 400;
 }
 
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description > p:first-child,
+#systempage-usersettings-root > .settings-root .settings-item > .item-description > p:first-child {
+    margin-top: 0;
+}
+
+#systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description > p:last-child,
+#systempage-usersettings-root > .settings-root .settings-item > .item-description > p:last-child {
+    margin-bottom: 0;
+}
+
 #systempage-usersettings-root > .settings-root .settings-item > .key-value > .key > .item-description > .icon,
 #systempage-usersettings-root > .settings-root .settings-item > .item-description > .icon {
     font-size: 12px;
@@ -161,4 +171,36 @@
 #systempage-usersettings-root > .settings-root .settings-item .status-text.c-red {
     color: var(--color-red);
     background-color: var(--color-red-transparent-1);
+}
+
+#systempage-usersettings-root > .settings-root .settings-item .status-text.c-orange {
+    color: var(--color-orange-darker);
+    background-color: var(--color-orange-transparent-1);
+}
+
+#systempage-usersettings-root > .settings-root .settings-item .status-text {
+    color: var(--color-green-darker);
+    background-color: var(--color-green-transparent-1);
+}
+
+#f2asetup-recoverycodes {
+    display: flex;
+    justify-content: space-around;
+    flex-flow: wrap;
+}
+
+#f2asetup-recoverycodes > div {
+    width: 40%;
+
+    padding: 8px;
+    margin: 10px 0;
+
+    color: var(--color-blue2);
+    font-weight: 600;
+    font-size: 16px;
+    font-family: "Roboto Mono", monospace;
+    text-align: center;
+
+    background-color: var(--color-blue2-transparent-05);
+    border-radius: 3px;
 }

@@ -6,6 +6,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "2fa": "^0.1.2",
     "@types/bitwise": "^2.0.0",
     "@types/cookie": "^0.3.3",
     "@types/diff": "^4.0.2",
