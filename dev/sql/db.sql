@@ -7,6 +7,18 @@
 CREATE DATABASE IF NOT EXISTS `ede_dev_git` /*!40100 DEFAULT CHARACTER SET utf8 */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `ede_dev_git`;
 
+CREATE TABLE IF NOT EXISTS `2fa_data` (
+  `user` int unsigned NOT NULL AUTO_INCREMENT,
+  `secret_key` varchar(64) NOT NULL,
+  `backup_codes` json NOT NULL,
+  `enabled_on` int unsigned DEFAULT NULL,
+  `setup_mode` bit(1) NOT NULL,
+  PRIMARY KEY (`user`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `2fa_data` DISABLE KEYS */;
+/*!40000 ALTER TABLE `2fa_data` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `blocked_addresses` (
   `address` varchar(64) NOT NULL,
   `restrictions` varchar(512) NOT NULL,
