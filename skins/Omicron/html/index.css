@@ -603,3 +603,46 @@
 
     transition: 0.15s ease-in-out;
 }
+
+#ede-global-loading-indicator {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+
+    /* Hidden state */  
+    transform: translateY(100%);
+
+    padding: 6px 10px;
+
+    color: hsl(0, 0%, 10%);
+    font-family: "Roboto", sans-serif;
+    font-size: 12px;
+
+    background-color: var(--color-gray);
+
+    border: 1px solid var(--color-gray2);
+    border-right: 0;
+    border-bottom: 0;
+
+    border-radius: 3px 0 0 0;
+
+    transition: 0.15s;
+}
+
+#ede-global-loading-indicator.shown {
+    transform: translateY(0);
+}
+
+#ede-global-loading-indicator > img {
+    width: 14px;
+    height: 14px;
+
+    margin-right: 3px;
+
+    opacity: 0.85;
+    vertical-align: middle;
+}
+
+#ede-global-loading-indicator > span {
+    vertical-align: middle;
+}
