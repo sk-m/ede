@@ -114,7 +114,7 @@ export async function disable(user_id: number): Promise<true> {
         sql.execute("DELETE FROM `2fa_data` WHERE `user` = ?",
         [user_id],
         (error: any, results: any) => {
-            if(error || results.affectedRows !== 1) {
+            if(error || results.affectedRows < 1) {
                 reject(new Error("User does not have 2FA enabled"));
             } else {
                 resolve(true);
@@ -172,7 +172,7 @@ export async function startSetup(user_id: number): Promise<string> {
 (?, ?, ?, NULL, b'1') AS new ON DUPLICATE KEY UPDATE secret_key = new.secret_key, backup_codes = new.backup_codes",
                 [user_id, secret_key, JSON.stringify(backup_codes_obj)],
                 (error: any, results: any) => {
-                    if(error || results.affectedRows !== 1) {
+                    if(error || results.affectedRows < 1) {
                         Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, backup_codes_error);
                         reject(new Error("Could not start 2FA setup"));
                     } else {
@@ -221,7 +221,7 @@ export async function finishSetup(user_id: number, otp: number): Promise<any> {
                 sql.execute("UPDATE `2fa_data` SET `enabled_on` = UNIX_TIMESTAMP(), `setup_mode` = b'0' WHERE `user` = ?",
                 [user_id],
                 (enable_error: any, enable_results: any) => {
-                    if(enable_error || enable_results.affectedRows !== 1) {
+                    if(enable_error || enable_results.affectedRows < 1) {
                         Util.log(`Could not enable 2FA for user id ${ user_id }`, 3, query_error);
                         reject(new Error("Could not enable 2FA"));
                     } else {
