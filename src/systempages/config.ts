@@ -6,6 +6,7 @@ import * as SystemMessages from "../system_message";
 import { ConfigItemsObject, ConfigItemAccessLevel } from "../config";
 import { registry_config } from "../registry";
 import { GroupsAndRightsObject } from "../right";
+import { UI_CHECKBOX_SVG } from "../constants";
 
 interface CategoriesConstructorResponse {
     html: string;
@@ -58,39 +59,97 @@ restricted_permits: string[], system_messages: SystemMessages.SystemMessagesObje
 
     for(const key in registry_config_snapshot) {
         if(key.startsWith(`${ category_name }.`)) {
+            // TODO @cleanup this is a mess
+
             // Get the actual config item and it's value
             const config_item = registry_config_snapshot[key];
-            const config_value = config_item.is_default ? "" : config_item.value;
+            const config_value = config_item.value === undefined ? "" : config_item.value;
+
+            // Key without the category part
+            const clean_key = key.substr(category_name_length);
 
             let indicator_html = "";
             let buttons_html = "";
             let input_html = "";
 
-            // Check if the item can be changed by the client
-            let changeable = client_can_alter;
-            let viewable = true;
+            // Check item access
+            let changeable;
+            let viewable;
+            let cli_only = false;
 
-            if(config_item.access_level === ConfigItemAccessLevel.rXwX) {
+            // Read
+            if(config_item.read_access === ConfigItemAccessLevel.None) {
+                // Read none, so we infer that write is none to
                 changeable = false;
                 viewable = false;
 
+                cli_only = true;
+
                 indicator_html = `<div class="indicator" title="This config item is CLI-locked and can be changed or viewed using CLI \
 only"><i class="fas fa-eye-slash"></i> CLI Only</div>`;
-            } else if(config_item.access_level === ConfigItemAccessLevel.rAwX) {
-                changeable = false;
-
-                indicator_html = `<div class="indicator" title="This config item is CLI-locked and can be changed using CLI \
-only"><i class="fas fa-lock"></i> CLI Only</div>`;
-            } else if(config_item.access_level === ConfigItemAccessLevel.rPwP) {
+            } else if(config_item.read_access === ConfigItemAccessLevel.Permit) {
+                // Read permit
                 if(restricted_permits.includes(key)) {
-                    indicator_html = `<div class="indicator" title="This config item is restricted, but you have permission to view and \
-change it"><i class="fas fa-lock-open"></i> Permitted</div>`;
+                    viewable = true;
+
+                    indicator_html = `<div class="indicator" title="This config item requires a permit to view it, but you are allowed to \
+"><i class="fas fa-lock-open"></i> Read permitted</div>`;
                 } else {
-                    changeable = false;
                     viewable = false;
 
-                    indicator_html = `<div class="indicator" title="This config item is restricted, you do not have permission to read or \
-modify it"><i class="fas fa-eye-slash"></i> Restricted</div>`;
+                    indicator_html = `<div class="indicator" title="This config item can only be viewed by users with a permit\
+"><i class="fas fa-eye-slash"></i> Locked (read)</div>`;
+                }
+
+                changeable = false;
+            } else if(config_item.read_access === ConfigItemAccessLevel.Right) {
+                // Read right
+                // client_can_alter is only true if the client has a right
+                if(client_can_alter) {
+                    viewable = true;
+
+                    indicator_html = `<div class="indicator" title="This config item requires a right to view it, but you are allowed to \
+"><i class="fas fa-lock-open"></i> Read permitted</div>`;
+                } else {
+                    viewable = false;
+
+                    indicator_html = `<div class="indicator" title="This config item can only be viewed by users with a right to edit the \
+EDE configuration"><i class="fas fa-eye-slash"></i> Locked (read)</div>`;
+                }
+
+                changeable = false;
+            } else {
+                // View all
+                viewable = true;
+                changeable = false;
+            }
+
+            // Write
+            if(!cli_only) {
+                if(config_item.write_access === ConfigItemAccessLevel.None) {
+                    // Write none
+                    changeable = false;
+                    cli_only = true;
+
+                    indicator_html += `<div class="indicator" title="This config item is CLI-locked and can be changed using CLI \
+only"><i class="fas fa-lock"></i> CLI Only (write)</div>`;
+                } else if(config_item.write_access === ConfigItemAccessLevel.Permit) {
+                    // Write permit
+                    if(restricted_permits.includes(key)) {
+                        changeable = true;
+
+                        indicator_html += `<div class="indicator" title="This config item requires a permit to change it, but you are allowed to\
+"><i class="fas fa-lock-open"></i> Write permitted</div>`;
+                    } else {
+                        changeable = false;
+
+                        indicator_html += `<div class="indicator" title="This config item can only be changed by users with a permit\
+"><i class="fas fa-lock"></i> Locked (write)</div>`;
+                    }
+                } else if(config_item.write_access === ConfigItemAccessLevel.Right || config_item.write_access === ConfigItemAccessLevel.All) {
+                    // Write right
+                    // client_can_alter is only true if the client has a right
+                    changeable = client_can_alter;
                 }
             }
 
@@ -122,6 +181,14 @@ modify it"><i class="fas fa-eye-slash"></i> Restricted</div>`;
     <div class="items">${ current_values_html }</div>
     <input text="text"${ config_item.value_pattern ? ` patern="${ config_item.value_pattern }"` : "" }>
 </div>`;
+            } else if(config_item.value_type === "bool") {
+                // Boolean input type (checkbox)
+                input_html = `\
+<div input checkbox class="ui-checkbox-1${ !changeable ? " disabled" : "" }" name="${ config_item.key }" \
+data-cleanvalue="${ config_value === true }" data-checked="${ config_value === true }">
+    <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+    <div class="text">${ clean_key }</div>
+</div>`
             } else {
                 // Text input type
                 input_html = `\
@@ -133,13 +200,13 @@ ${ !changeable ? " disabled": "" }${ config_item.value_pattern ? ` patern="${ co
             result_html += `\
 <form name="${ config_item.key }" class="config-option" data-changeable="${ changeable ? "true" : "false" }">
     <div class="left">
-        <div class="config-option-key">${ key.substr(category_name_length) }${ indicator_html }</div>
+        <div class="config-option-key">${ clean_key }${ indicator_html }</div>
         <div class="config-option-description">${ config_item.description }</div>
         <div class="config-option-internalkey">${ config_item.key }</div>
     </div>
-    ${ !viewable ? "" :
-    `<div class="right">
-        <div class="status"><i class="fas fa-check"></i> Saved successfully</div>
+    <div class="right">
+        ${ !viewable ? `<div class="cli-command">node ./bin/config set ${ key } 'value'</div>` :
+        `<div class="status"><i class="fas fa-check"></i> Saved successfully</div>
         <div class="input-container">
             ${ input_html }
         </div>
@@ -150,9 +217,8 @@ ${ !changeable ? " disabled": "" }${ config_item.value_pattern ? ` patern="${ co
             <div title="Default value" class="ui-text small gray default-value">
                 <code>${ config_item.default_value || "<em>(no default)</em>" }</code>
             </div>
-        </div>
-    </div>`
-    }
+        </div>` }
+    </div>
 </form>`
         }
     }

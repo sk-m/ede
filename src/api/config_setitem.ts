@@ -50,13 +50,13 @@ EDE configuration"));
     const config_item = registry_config_snapshot[requested_key];
 
     // Item is locked from editing (CLI only)
-    if(config_item.access_level === ConfigItemAccessLevel.rXwX || config_item.access_level === ConfigItemAccessLevel.rAwX) {
+    if(config_item.write_access === ConfigItemAccessLevel.None || config_item.read_access === ConfigItemAccessLevel.None) {
         res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "This config item can be modified using CLI only"));
         return;
     }
 
     // Restricted key with no permit
-    if( config_item.access_level === ConfigItemAccessLevel.rPwP &&
+    if( config_item.write_access === ConfigItemAccessLevel.Permit &&
         !client_permits.includes(requested_key)
     ) {
         res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "This config item is restricted and you don't \

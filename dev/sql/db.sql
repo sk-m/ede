@@ -39,26 +39,30 @@ CREATE TABLE IF NOT EXISTS `config` (
   `tags` varchar(256) DEFAULT NULL,
   `description` varchar(1024) DEFAULT NULL,
   `source` varchar(64) NOT NULL,
-  `access_level` bit(2) NOT NULL DEFAULT b'0',
+  `access_level` bit(4) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
-	(1, 'instance.name', 'dev_instance', 'string', '[a-zA-Z0-9_]{1,128}', NULL, NULL, NULL, 'Internal name for the instance', 'ede', b'01'),
-	(2, 'instance.display_name', 'Dev instance', 'string', NULL, NULL, NULL, NULL, 'Display name of this instance', 'ede', b'00'),
-	(3, 'instance.current_skin', NULL, 'string', '[a-zA-Z0-9_]{1,128}', 'Omicron', NULL, NULL, 'Currently active skin', 'ede', b'00'),
-	(4, 'instance.page_subnametext', 'This is a subname text', 'string', NULL, NULL, NULL, NULL, 'The text under the page name', 'ede', b'00'),
-	(5, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'01'),
-	(6, 'auth.password_hash_iterations', NULL, 'int', NULL, '50000', NULL, NULL, 'Number of iterations to execute on the password', 'ede', b'01'),
-	(7, 'auth.password_hash_keylen', NULL, 'int', NULL, '256', NULL, NULL, 'Key length for the password', 'ede', b'01'),
-	(8, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'11'),
-	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'01'),
-	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'01'),
-	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'01'),
-	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'01');
+	(1, 'instance.name', 'dev_instance', 'string', '[a-zA-Z0-9_]{1,128}', NULL, NULL, NULL, 'Internal name for the instance', 'ede', b'1100'),
+	(2, 'instance.display_name', 'Dev instance', 'string', NULL, NULL, NULL, NULL, 'Display name of this instance', 'ede', b'1000'),
+	(3, 'instance.current_skin', NULL, 'string', '[a-zA-Z0-9_]{1,128}', 'Omicron', NULL, NULL, 'Currently active skin', 'ede', b'0100'),
+	(4, 'instance.page_subnametext', 'This is a subname text', 'string', NULL, NULL, NULL, NULL, 'The text under the page name', 'ede', b'0100'),
+	(5, 'auth.sid_size', NULL, 'int', NULL, '256', NULL, NULL, 'Size of the sid cookie', 'ede', b'1100'),
+	(6, 'auth.password_hash_iterations', NULL, 'int', NULL, '50000', NULL, NULL, 'Number of iterations to execute on the password', 'ede', b'1100'),
+	(7, 'auth.password_hash_keylen', NULL, 'int', NULL, '256', NULL, NULL, 'Key length for the password', 'ede', b'1100'),
+	(8, 'auth.recaptcha_secret', NULL, 'string', NULL, NULL, NULL, NULL, 'Recaptcha secret', 'ede', b'1111'),
+	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'1100'),
+	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'1100'),
+	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'1100'),
+	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
+	(13, 'mail.enabled', NULL, 'bool', NULL, 'false', NULL, NULL, 'Enable outbound email. Used for user notification and password restoration', 'ede', b'1000'),
+	(14, 'mail.host', NULL, 'string', NULL, NULL, NULL, NULL, 'Host for outbound email', 'ede', b'1000'),
+	(15, 'mail.user', NULL, 'string', NULL, NULL, NULL, NULL, 'User for outbound email', 'ede', b'1111'),
+	(16, 'mail.password', NULL, 'string', NULL, NULL, NULL, NULL, 'Password for outbound email user', 'ede', b'1111');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (

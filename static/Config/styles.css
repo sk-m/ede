@@ -195,6 +195,12 @@
     margin-left: 20px;
 }
 
+#systempage-config-root > .right-panel > .config-options > .config-option > .right > .cli-command {
+    color: hsl(0, 0%, 20%);
+    font-family: "Roboto Mono", monospace;
+    font-size: 13px;
+}
+
 #systempage-config-root > .right-panel > .config-options > .config-option > .right > .status {
     visibility: hidden;
 

@@ -11,14 +11,17 @@ type ConfigItemValueType = boolean | number | string | JSON | string[] | undefin
 export type ConfigItemsObject = { [key: string]: DatabaseConfigItem };
 
 export enum ConfigItemAccessLevel {
-    /** Read — all, write — users with a right. */
-    rAwR = 0,
-    /** Read — all, write — CLI only. */
-    rAwX = 1,
-    /** Read — users with a permit, write — users with a permit. */
-    rPwP = 2,
-    /** Read — CLI only, write — CLI only. */
-    rXwX = 3,
+    /** All (only for read). */
+    All = 0,
+
+    /** Only for users with modifyconfig right. */
+    Right = 1,
+
+    /** Only for users with a right AND a permit. */
+    Permit = 2,
+
+    /** None (cli access only, for read and write). */
+    None = 3
 }
 
 export interface DatabaseConfigItem {
@@ -37,7 +40,8 @@ export interface DatabaseConfigItem {
     description?: string;
     source: string;
 
-    access_level: ConfigItemAccessLevel;
+    read_access: ConfigItemAccessLevel;
+    write_access: ConfigItemAccessLevel;
 };
 
 /**
@@ -111,6 +115,8 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
                 }
 
                 let raw_value;
+                const raw_access_level = item.access_level.readInt8(0);
+
                 if(item.value) raw_value = item.value;
                 else raw_value = item.default_value;
 
@@ -119,6 +125,8 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
 
                     raw_value,
                     value: castValue(raw_value, item.value_type),
+
+                    // Keep in mind that we compare *raw uncast* value to the default value
                     is_default: !item.value || item.default_value === item.value,
 
                     value_type: item.value_type,
@@ -130,7 +138,11 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
                     description: item.description,
                     source: item.source,
 
-                    access_level: item.access_level.readInt8(0)
+                    // Read access is the two least significant bits (__XX). We mask it with 0011b
+                    read_access: raw_access_level & 0x3,
+
+                    // Write access is the two most significant bits (XX__)
+                    write_access: raw_access_level >> 2
                 };
             }
 
@@ -204,7 +216,8 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
             } break;
 
             case "bool": {
-                if(typeof value !== "boolean") {
+                // Also check if value is represented by a string
+                if(typeof value !== "boolean" && !(value === "true" || value === "false")) {
                     reject(new Error("Invalid value. Expected a boolean"));
                     return;
                 }
