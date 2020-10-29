@@ -14,6 +14,7 @@ export interface ApiRoute {
 
     required_arguments: string[];
     required_rights: string[];
+    required_elevated_session?: true;
 
     arguments?: { [argument_name: string]: ApiArgument };
 

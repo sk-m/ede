@@ -595,6 +595,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: ["new_password"],
         required_rights: [],
+        required_elevated_session: true,
 
         arguments: {
             password: {
@@ -615,6 +616,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: [],
         required_rights: [],
+        required_elevated_session: true,
 
         arguments: {},
 
@@ -628,6 +630,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: ["otp"],
         required_rights: [],
+        required_elevated_session: true,
 
         arguments: {
             otp: {
@@ -648,6 +651,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: [],
         required_rights: [],
+        required_elevated_session: true,
 
         arguments: {},
 
