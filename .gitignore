@@ -6,5 +6,6 @@
 # For now
 /extensions
 
-secrets.json
+/secrets.json
 *.todo
+/report.*

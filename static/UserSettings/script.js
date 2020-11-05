@@ -227,10 +227,69 @@ function userSettingsPageScript() {
         });
     };
 
+    const action_change_email_address = () => {
+        // We need an elevated session to change user's email address
+        ede.createElevatedSession(() => {
+            const change_email = e => {
+                // Validate the form
+                const validation_result = ede.form.validate("user-changeemail");
+                if(validation_result.invalid) return;
+
+                // Get the new email address
+                const new_address = ede.form.list["user-changeemail"].new_address.value;
+
+                e.target.classList.add("loading");
+
+                // Update the email address
+                ede.apiCall("user/request_email_address_change", { new_address }, true)
+                .then(() => {
+                    e.target.classList.remove("loading");
+
+                    ede.closePopup();
+                    ede.showNotification("user-changeemailrequest-success", "Verification email sent", "A verification email was sent to your new address.");
+                })
+                .catch(error => {
+                    e.target.classList.remove("loading");
+
+                    ede.showNotification("user-changeemailrequest-error", "Error", error.error || "Could not change the email address.", "error");
+                })
+            };
+
+            const popup_buttons_html = `\
+<div class="left">
+    <button name="close" class="ui-button1 t-frameless w-500">CLOSE</button>
+</div>
+<div class="right">
+    <button name="change" class="ui-button1 t-frameless c-blue w-500">CHANGE</button>
+</div>`;
+
+            const popup_body_html = `\
+<p>You will recieve a confirmation email on your new address. Your address will be changed only after you follow the link in that email.</p>
+<form class="ui-form-container" name="user-changeemail">
+    <div input-container class="ui-input-box" style="margin: 8px 0">
+        <div class="ui-input-box">
+            <div class="popup"></div>
+            <div class="ui-input-name1">New email address</div>
+            <input type="email" name="new_address" data-handler="email" class="ui-input1">
+        </div>
+    </div>
+</form>`;
+
+            const popup_el = ede.showPopup("user-changeemail", "Change email address", popup_body_html, popup_buttons_html, {
+                close: ede.closePopup,
+                change: e => { change_email(e) }
+            }, 460);
+
+            ede.updateForms(popup_el);
+        });
+    };
+
+
     const actions_map = {
         update_password: action_update_password,
         setup_f2a: action_f2a_setup,
-        disable_f2a: action_f2a_disable
+        disable_f2a: action_f2a_disable,
+        change_email: action_change_email_address
     };
 
     const category_link_els = document.querySelectorAll("#systempage-usersettings-root > .categories-container > .item");

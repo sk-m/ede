@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
@@ -60,9 +60,12 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'1100'),
 	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
 	(13, 'mail.enabled', NULL, 'bool', NULL, 'false', NULL, NULL, 'Enable outbound email. Used for user notification and password restoration', 'ede', b'1000'),
-	(14, 'mail.host', NULL, 'string', NULL, NULL, NULL, NULL, 'Host for outbound email', 'ede', b'1000'),
-	(15, 'mail.user', NULL, 'string', NULL, NULL, NULL, NULL, 'User for outbound email', 'ede', b'1111'),
-	(16, 'mail.password', NULL, 'string', NULL, NULL, NULL, NULL, 'Password for outbound email user', 'ede', b'1111');
+	(14, 'mail.host', NULL, 'string', NULL, NULL, NULL, NULL, 'Host for outbound email', 'ede', b'1010'),
+	(15, 'mail.port', NULL, 'int', NULL, '465', NULL, NULL, 'Oubound email SMTP server port', 'ede', b'1010'),
+	(16, 'mail.user', NULL, 'string', NULL, NULL, NULL, NULL, 'User for outbound email', 'ede', b'1111'),
+	(17, 'mail.password', NULL, 'string', NULL, NULL, NULL, NULL, 'Password for outbound email user', 'ede', b'1111'),
+	(18, 'mail.secure', NULL, 'bool', NULL, 'true', NULL, NULL, 'Use SSL/TLS for outboud email', 'ede', b'1010'),
+	(19, 'mail.ignore_invalid_certs', NULL, 'bool', NULL, 'false', NULL, NULL, 'Ignore unauthorized certificates', 'ede', b'1010');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
@@ -92,6 +95,18 @@ CREATE TABLE IF NOT EXISTS `elevated_user_sessions` (
 
 /*!40000 ALTER TABLE `elevated_user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `elevated_user_sessions` ENABLE KEYS */;
+
+CREATE TABLE IF NOT EXISTS `email_tokens` (
+  `token` varchar(1024) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `user` int unsigned NOT NULL,
+  `type` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',
+  `sent_to` varchar(512) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `valid_until` int unsigned NOT NULL,
+  PRIMARY KEY (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `email_tokens` DISABLE KEYS */;
+/*!40000 ALTER TABLE `email_tokens` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,

@@ -7,6 +7,8 @@ import { sql } from "./server";
 import * as SystemMessage from "./system_message";
 import * as Util from "./utils";
 import * as F2A from "./f2a";
+import * as Mail from "./mail";
+import * as MailTemplates from "./mail_templates";
 
 import * as SECRETS from "../secrets.json";
 import { registry_config } from "./registry";
@@ -83,8 +85,8 @@ export async function pbkdf2(input_string: string, salt: string, iterations: num
 
 // TODO move to Util
 export function formatString(input: string | Buffer): string {
-    if(input instanceof Buffer) return input.toString("base64").replace(/[\+/]/g, "_");
-    return input.replace(/[\+/]/g, "_");
+    if(input instanceof Buffer) return input.toString("base64").replace(/[\+/=]/g, "_");
+    return input.replace(/[\+/=]/g, "_");
 }
 
 /**
@@ -323,6 +325,45 @@ export async function getFromUsername(username: string): Promise<User> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT * FROM `users` WHERE username = ?",
         [username],
+        (error: any, results: any) => {
+            if(error || results.length !== 1) {
+                reject("User not found");
+                return;
+            }
+
+            const user = results[0];
+            const user_password = user.password.split(";");
+
+            let user_blocks = [];
+            if(user.blocks) user_blocks = user.blocks.split(";");
+
+            resolve({
+                id: user.id,
+
+                username: user.username,
+                email_address: user.email_address,
+                email_verified: user.email_verified.readInt8(0) === 1,
+
+                password_hash_salt: user_password[1],
+                password_hash_iterations: user_password[3],
+                password_hash_hash: user_password[2],
+
+                stats: user.stats,
+                blocks: user_blocks
+            } as User);
+        });
+    });
+}
+
+/**
+ * Get user by id
+ *
+ * @param user_id id
+ */
+export async function getById(user_id: number): Promise<User> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("SELECT * FROM `users` WHERE id = ?",
+        [user_id],
         (error: any, results: any) => {
             if(error || results.length !== 1) {
                 reject("User not found");
@@ -814,6 +855,86 @@ export async function invalidateUserSession(user_id: number, session: UserSessio
 }
 
 /**
+ * Create email verification token and add it to the database, invalidating all other email verification tokens of same type for that
+ * user
+ *
+ * @param user_id User's id
+ * @param token_type Type of the token to generate
+ * @param sent_to To what address will the email be sent?
+ * @param token_len Lenght of the new token (in bytes)
+ *
+ * @returns token
+ */
+export async function createEmailToken(user_id: number, token_type: string, sent_to: string, token_len: number = 128): Promise<string> {
+    return new Promise((resolve: any, reject: any) => {
+        crypto.randomBytes(token_len, async (_: any, token_buffer: Buffer) => {
+            const token: string = formatString(token_buffer);
+
+            // Delete tokens of same type and user
+            await sql.execute("DELETE FROM `email_tokens` WHERE `user` = ? AND `type` = ?",
+            [user_id, token_type]);
+
+            // Insert new token
+            sql.execute('INSERT INTO `email_tokens` (`token`, `user`, `type`, `sent_to`, `valid_until`) VALUES (?, ?, ?, ?, UNIX_TIMESTAMP() + 7200)',
+            [token, user_id, token_type, sent_to],
+            (error: any, results: any) => {
+                if(error || results.affectedRows < 1) {
+                    Util.log(`Could not create and save a new email token (user ${ user_id })`, 3, error);
+
+                    reject(new Error("Could not create a new email token"));
+                } else {
+                    resolve(token);
+                }
+            });
+        });
+    });
+}
+
+/**
+ * Check user's email verification token
+ *
+ * @param user_id User's id
+ * @param token token
+ * @param token_type Type of the token
+ * @param delete_token Delete the token from the database after the successfull check (true by default)
+ * 
+ * @returns [is_valid, sent_to] (sent_to is an empty string on an error)
+ */
+export async function checkEmailToken(user_id: number, token: string, token_type: string, delete_token: boolean = true): Promise<[boolean, string]> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("SELECT `valid_until`, `type`, `sent_to` FROM `email_tokens` WHERE `token` = ? AND `user` = ?",
+        [token, user_id],
+        (error: any, results: any) => {
+            if(error || results.length < 1) {
+                // Such token was not found
+                resolve([false, ""]);
+            } else {
+                // Check if the token expired
+                if(results[0].valid_until < Math.floor(new Date().getTime() / 1000)) {
+                    resolve([false, ""]);
+                    return;
+                }
+
+                // Check if token type is correct
+                if(results[0].type !== token_type) {
+                    resolve([false, ""]);
+                    return;
+                }
+
+                resolve([true, results[0].sent_to]);
+
+                if(delete_token) {
+                    // Delete the token
+                    sql.execute("DELETE FROM `email_tokens` WHERE `token` = ? AND `user` = ?",
+                    [token, user_id],
+                    () => undefined);
+                }
+            }
+        });
+    });
+}
+
+/**
  * Update user's password
  *
  * @param user_id User's id
@@ -952,6 +1073,16 @@ export async function joinRoute(req: any, res: any): Promise<void> {
                 res.status(403).send({ error: "create_account_error" });
                 return;
             }
+
+            // Create an email verification token
+            const email_verification_token = await createEmailToken(parseInt(new_user.id, 10), "email_verification", req.body.email);
+
+            // Send email verification email (no need to await or check for errors)
+            Mail.sendToUser(new_user,
+                "Email verification",
+                MailTemplates.email_verification(email_verification_token),
+                true)
+            .catch(() => undefined);
 
             // Create a new session
             await createSession(new_user.id, ip_address, req.headers["user-agent"])

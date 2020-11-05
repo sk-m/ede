@@ -4,6 +4,7 @@ import * as User from "../user";
 import * as Page from "../page";
 import * as F2A from "../f2a";
 import { UI_CHECKBOX_SVG } from "../constants";
+import { sql } from "../server";
 
 async function page_account(client: User.User): Promise<string> {
     const email_text = `\
@@ -80,7 +81,7 @@ ${ client.email_address }
                     <div class="value">
                         ${ email_text }
 
-                        <button class="ui-button1">Change email address</button>
+                        <button class="ui-button1" data-action="change_email">Change email address</button>
                     </div>
                 </div>
             </div>
@@ -170,6 +171,58 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
         // Load JS
         const page_js = fs.readFileSync("./static/UserSettings/script.js", "utf8");
         page.additional_js = [page_js];
+
+        // Check email_token_action
+        if(page.address.query.email_token_action && page.address.query.email_token) {
+            // User wants to change their email address
+            if(page.address.query.email_token_action === "change_email") {
+                const verification_result = await User.checkEmailToken(parseInt(client.id, 10), page.address.query.email_token, "email_change");
+
+                // TODO @hack @cleanup page.additional_js.push
+                if(verification_result[0]) {
+                    // Update the user
+                    await sql.execute("UPDATE `users` SET `email_verified` = 1, `email_address` = ? WHERE id = ?",
+                    [verification_result[1], client.id]);
+
+                    // Get the new user
+                    client = await User.getById(parseInt(client.id, 10));
+
+                    page.additional_js.push(`ede_onready.push(() => { \
+ede.showNotification("useremailchange-success", "New email verified", "Your email address was successfully changed.");
+ede.clearURLParams();\
+});`);
+                } else {
+                    page.additional_js.push(`ede_onready.push(() => { ede.showNotification("useremailchange-error", "Email not changed", "Some error occured.", "error") });`);
+                }
+            }
+
+            // User wants to verify email address
+            else if(page.address.query.email_token_action === "verify_email") {
+                const verification_result = await User.checkEmailToken(parseInt(client.id, 10), page.address.query.email_token, "email_verification");
+
+                // TODO @hack @cleanup page.additional_js.push
+                if(verification_result[0]) {
+                    // Token is correct, check sent_to
+                    if(verification_result[1] !== client.email_address) {
+                        page.additional_js.push(`ede_onready.push(() => { ede.showNotification("useremailverification-error", "Email not verified", "Some error occured.", "error") });`);
+                    } else {
+                        // Everything is correct, update the user
+                        await sql.execute("UPDATE `users` SET `email_verified` = 1 WHERE id = ?",
+                        [client.id]);
+
+                        // Get the new user
+                        client = await User.getById(parseInt(client.id, 10));
+
+                        page.additional_js.push(`ede_onready.push(() => { \
+    ede.showNotification("useremailverification-success", "Email verified", "Your email address was successfully verified.");
+    ede.clearURLParams();\
+    });`);
+                    }
+                } else {
+                    page.additional_js.push(`ede_onready.push(() => { ede.showNotification("useremailverification-error", "Email not verified", "Some error occured.", "error") });`);
+                }
+            }
+        }
 
         page.parsed_content = `\
 <div class="ui-systempage-header-box">

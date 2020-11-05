@@ -87,7 +87,7 @@ export interface PageAddress {
     name: string;
     root_name: string;
 
-    query: string[];
+    query: any;
     url_params: string[];
 
     raw_url: string;

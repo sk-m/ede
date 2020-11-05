@@ -39,7 +39,9 @@ export enum ApiResponseStatus {
 
     unknownerror = "unknownerror",
     permissiondenied = "permissiondenied",
-    invaliddata = "invaliddata"
+    invaliddata = "invaliddata",
+
+    other = "other"
 };
 
 /**

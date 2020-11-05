@@ -39,6 +39,7 @@ import { updateUserPasswordRoute } from "./api/user_update_password";
 import { userStart2FASetupRoute } from "./api/user_start_f2a_setup";
 import { userFinish2FASetupRoute } from "./api/user_finish_f2a_setup";
 import { userDisable2FARoute } from "./api/user_disable_f2a";
+import { requestUserEmailChangeRoute } from "./api/user_request_email_change";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -607,6 +608,27 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
         },
 
         handler: updateUserPasswordRoute
+    },
+    "user/request_email_address_change": {
+        name: "user/request_email_address_change",
+        method: "POST",
+
+        description: "Start the email change proccess",
+
+        required_arguments: ["new_address"],
+        required_rights: [],
+        required_elevated_session: true,
+
+        arguments: {
+            password: {
+                name: "new_address",
+                display_name: "New email address",
+
+                type: "string"
+            }
+        },
+
+        handler: requestUserEmailChangeRoute
     },
     "user/start_f2a_setup": {
         name: "user/start_f2a_setup",

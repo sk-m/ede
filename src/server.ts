@@ -3,6 +3,7 @@ import path from "path";
 
 import mysql from "mysql2";
 import fastify from "fastify";
+import nodemailer from "nodemailer";
 
 import fastify_static = require("fastify-static");
 import fastify_cookie = require("fastify-cookie");
@@ -52,6 +53,9 @@ export const sql: any = mysql.createConnection({
     password: SECRETS["database.pass"],
     database: SECRETS["database.dbname"]
 });
+
+/** @ignore Do not use this object! */
+export let _mailer: any;
 
 sql.connect(serverInit);
 
@@ -127,6 +131,36 @@ async function serverInit(db_error: Error): Promise<void> {
 
         Util.log(`EDE local management server listening on ${ address } (should not be accessible from outside)`);
     });
+
+    // Set up the mailer
+    const registry_config_snapshot = registry_config.get();
+
+    if(registry_config_snapshot["mail.enabled"].value as boolean) {
+        _mailer = nodemailer.createTransport({
+            host: registry_config_snapshot["mail.host"].value as string,
+            port: registry_config_snapshot["mail.port"].value as number,
+            secure: registry_config_snapshot["mail.secure"].value as boolean,
+            auth: {
+              user: registry_config_snapshot["mail.user"].value as string,
+              pass: registry_config_snapshot["mail.password"].value as string
+            },
+            tls: {
+                rejectUnauthorized: !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean)
+            }
+        });
+
+        _mailer.verify((error: any, success: boolean) => {
+            if(error) {
+                Util.log(`Mailer could not connect to the mail server`, 3, error);
+            } else {
+                Util.log(`Mailer was successfully connected to the mail server`);
+            }
+        });
+
+
+    } else {
+        _mailer = false;
+    }
 
     // Register ede hooks
     registry_hooks.set({
