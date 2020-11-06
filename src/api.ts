@@ -110,7 +110,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         const page = await Page.getRaw(req.query.revid, undefined, undefined, get_deleted);
 
         // Do we have to render?
-        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, add_div_tag)).content;
+        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, {}, add_div_tag)).content;
 
         res.send(page);
     } else {

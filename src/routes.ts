@@ -46,6 +46,11 @@ export function pageTitleParser(raw_title: string, default_namespace: string = "
         name = pathname;
     }
 
+    // Remove the \n at the end of the name
+    if(name[name.length - 1] === '\n') {
+        name = name.substring(0, namespace.length - 1);
+    }
+
     return { name, namespace, query, url_params, root_name };
 }
 

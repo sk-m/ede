@@ -264,6 +264,7 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
     });
 }
 
+// TODO allow admins to edit this object (maybe even have different restrictions for different namespaces?)
 /**
  * Sanitize raw wikitext (remove disallowed HTML tags and attributes)
  *
@@ -273,8 +274,8 @@ export function sanitizeWikitext(input: string): string {
     return sanitizeHtml(input, {
         allowedTags: ["div", "span", "br", "code", "small", "sup", "sub", "s"],
         allowedAttributes: {
-            div: ["class", "style"],
-            span: ["class", "style"],
+            div: ["class", "style", "title"],
+            span: ["class", "style", "title"],
         },
 
         disallowedTagsMode: "escape"
@@ -861,7 +862,9 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `vi
                 resolve(page);
             });
         } else {
-            reject(new Error("either revid or a namespace and name pair required"));
+            
+
+            reject([new Error("either revid or a namespace and name pair required"), page]);
             return;
         }
     });
@@ -873,8 +876,8 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `vi
  * @param address [[PageAddress]] object
  */
 // TODO flag to only get the raw content and don't render
-export async function get(address: PageAddress, client: User.User, add_div_tag: boolean = true): Promise<ResponsePage> {
-    return new Promise((resolve: any) => {
+export async function get(address: PageAddress, client: User.User, template_params?: any, add_div_tag: boolean = true): Promise<ResponsePage> {
+    return new Promise(async (resolve: any) => {
         // Get the namespace handler
         const namespace = registry_namespaces.get()[address.namespace] as Namespace;
 
@@ -923,7 +926,7 @@ export async function get(address: PageAddress, client: User.User, add_div_tag: 
                     page.badges.push(error_sysmsgs["page-badge-namespacenotfound"].value);
                 }
 
-                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, add_div_tag)).content;
+                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, template_params || {}, add_div_tag)).content;
 
                 common_resolve(page);
             });
@@ -937,10 +940,14 @@ export async function get(address: PageAddress, client: User.User, add_div_tag: 
                 return;
             });
         } else {
+            // TODO @cleanup
             // Main / nonexistent namespace
             getRaw(undefined, address.namespace, address.name)
             .then(async (page: ResponsePage) => {
                 resolve(await commonHandler(page));
+            })
+            .catch(async (rejection: any[]) => {
+                resolve(await commonHandler(rejection[1]));
             });
         }
     });
