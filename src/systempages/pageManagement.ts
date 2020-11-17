@@ -196,7 +196,7 @@ async function delete_page(queried_page: Page.PageInfo, queried_page_title: stri
 
 export async function wikiPageManagement(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
-        const queried_page_fullname = page.address.url_params[2];
+        const queried_page_fullname = page.address.query.title;
 
         const page_config: Page.SystempageConfig = {
             page,
@@ -255,7 +255,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 <div class="ui-info-box">
     <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
     <div class="text ui-text">Deleted pages with such name were found. You can manage them here — \
-    <a href="/System:DeletedWikiPages/${ queried_page_fullname }">System:DeletedWikiPages/${ queried_page_fullname }</a>.</div>
+    <a href="/System:DeletedWikiPages?title=${ queried_page_fullname }">${ queried_page_fullname }</a>.</div>
 </div>`;
             }
 
@@ -304,7 +304,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 type: "link",
                 text: "Page info",
                 icon: "fas fa-info-circle",
-                href: `/System:WikiPageManagement/info/${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/info?title=${ queried_page_fullname }`
             },
             {
                 type: "link",
@@ -326,20 +326,20 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 type: "link",
                 text: "Move page (rename)",
                 icon: "fas fa-arrow-right",
-                href: `/System:WikiPageManagement/move/${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/move?title=${ queried_page_fullname }`
             },
             {
                 type: "link",
                 text: "Edit restriction settings",
                 icon: "fas fa-unlock",
-                href: `/System:WikiPageManagement/restrictions/${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/restrictions?title=${ queried_page_fullname }`
             },
             {
                 type: "link",
                 text: "Delete page",
                 additional_classes: "red",
                 icon: "fas fa-trash",
-                href: `/System:WikiPageManagement/delete/${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/delete?title=${ queried_page_fullname }`
             }
         ] };
 

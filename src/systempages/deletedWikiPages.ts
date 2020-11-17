@@ -10,7 +10,7 @@ import { registry_namespaces } from "../registry";
 
 export async function deletedWikiPages(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
-        const queried_page_fullname = page.address.url_params[1];
+        const queried_page_fullname = page.address.query.title;
 
         const page_config: Page.SystempageConfig = {
             page,

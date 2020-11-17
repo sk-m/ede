@@ -149,7 +149,7 @@ Is it hidden?</i>";
         // Restore the page
         ede.apiCall("page/restore", final_params, true)
         .then(response => {
-            ede.navigate(`/System:WikiPageManagement/info/${ response.new_title }`);
+            ede.navigate(`/System:WikiPageManagement/info?title=${ response.new_title }`);
 
             ede.showNotification("wikipagerestore-success", "Page restored", "Page successfully restored.");
         })

@@ -22,7 +22,9 @@ function wikipageMovePageScript() {
         }
 
         // Take the querried page address from the url
-        final_params.title = ede.current_page.address.url_params[2];
+        final_params.title = ede.current_page.address.query.title;
+
+        final_params.new_name = encodeURIComponent(final_params.new_name);
 
         // Disable the button
         e.target.classList.add("loading");
@@ -30,7 +32,7 @@ function wikipageMovePageScript() {
         // Move the page
         ede.apiCall("page/move", final_params, true)
         .then(() => {
-            ede.navigate(`/System:WikiPageManagement/info/${ final_params.new_namespace }:${ final_params.new_name }`);
+            ede.navigate(`/System:WikiPageManagement/info?title=${ final_params.new_namespace }:${ final_params.new_name }`);
 
             ede.showNotification("movewikipage-success", "Success", "Page moved successfully.");
         })

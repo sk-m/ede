@@ -38,7 +38,7 @@ function wikipageDeletePageScript() {
         }
 
         // Take the querried page address from the url
-        final_params.title = ede.current_page.address.url_params[2];
+        final_params.title = ede.current_page.address.query.title;
 
         // Disable the button
         e.target.classList.add("loading");

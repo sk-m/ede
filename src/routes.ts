@@ -4,6 +4,7 @@ import * as Page from "./page";
 import { registry_skins, registry_config } from "./registry";
 import * as Util from "./utils";
 import * as User from "./user";
+import he from "he";
 
 export function pageTitleParser(raw_title: string, default_namespace: string = "Main"): any {
     let name: string;
@@ -51,7 +52,14 @@ export function pageTitleParser(raw_title: string, default_namespace: string = "
         name = name.substring(0, namespace.length - 1);
     }
 
-    return { name, namespace, query, url_params, root_name };
+    return {
+        name,
+        display_name: he.encode(decodeURIComponent(name)),
+        namespace,
+        query,
+        url_params,
+        root_name
+    };
 }
 
 /** @ignore */
