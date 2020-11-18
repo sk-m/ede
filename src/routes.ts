@@ -52,9 +52,17 @@ export function pageTitleParser(raw_title: string, default_namespace: string = "
         name = name.substring(0, namespace.length - 1);
     }
 
+    // TODO @performance
+    const display_name = he.encode(decodeURIComponent(name));
+    const display_namespace = he.encode(decodeURIComponent(namespace));
+
+    const display_title = `${ display_namespace }:${ display_name }`
+
     return {
         name,
-        display_name: he.encode(decodeURIComponent(name)),
+        display_name,
+        display_namespace,
+        display_title,
         namespace,
         query,
         url_params,

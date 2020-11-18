@@ -206,8 +206,9 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             body_html: ""
         }
 
-        // Check if page name was provided
         if(!queried_page_fullname) {
+            // No title provided
+
             page_config.header_config = {
                 icon: "fas fa-file-alt",
                 title: "Page Management",
@@ -221,12 +222,17 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">Page title</div>
-        <input type="text" name="page_name" data-handler="page_name" class="ui-input1">
+        <input type="text" name="page_title" data-handler="page_title" class="ui-input1">
     </div>
     <div class="ui-form-container right margin-top">
         <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query page</button>
     </div>
 </form>`;
+
+            // Load query js
+            const page_js = fs.readFileSync("./static/PageManagement/query.js", "utf8");
+
+            page_config.page.additional_js = [page_js];
 
             resolve(page_config);
             return;
@@ -238,11 +244,15 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
         const page_query: any = await Page.getInfo(page_address.namespace, page_address.name, true);
 
         if(page_query[0] === true) {
+            // Title was provided, but such page does not exist
+
             page_config.header_config = {
                 icon: "fas fa-file-alt",
-                title: "Page Management",
+                title: page_address.display_title,
                 description: "Page not found"
             };
+
+            page_config.breadcrumbs_data.push([page_address.display_title, "fas fa-file"]);
 
             page_config.body_html = `\
 <div class="ui-info-box c-orange">
@@ -255,7 +265,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 <div class="ui-info-box">
     <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
     <div class="text ui-text">Deleted pages with such name were found. You can manage them here — \
-    <a href="/System:DeletedWikiPages?title=${ queried_page_fullname }">${ queried_page_fullname }</a>.</div>
+    <a href="/System:DeletedWikiPages?title=${ page_address.display_title }">${ page_address.display_title }</a>.</div>
 </div>`;
             }
 
@@ -304,19 +314,25 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 type: "link",
                 text: "Page info",
                 icon: "fas fa-info-circle",
-                href: `/System:WikiPageManagement/info?title=${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/info?title=${ page_address.display_title }`
             },
             {
                 type: "link",
                 text: "View page",
                 icon: "fas fa-eye",
-                href: `/${ queried_page_fullname }`
+                href: `/${ page_address.display_title }`
             },
             {
                 type: "link",
                 text: "Edit page",
                 icon: "fas fa-pen",
-                href: `/${ queried_page_fullname }?v=edit`
+                href: `/${ page_address.display_title }?v=edit`
+            },
+            {
+                type: "link",
+                text: "Archives for this title",
+                icon: "fas fa-archive",
+                href: `/System:DeletedWikiPages?title=${ page_address.display_title }`
             },
             {
                 type: "heading",
@@ -326,20 +342,20 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 type: "link",
                 text: "Move page (rename)",
                 icon: "fas fa-arrow-right",
-                href: `/System:WikiPageManagement/move?title=${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/move?title=${ page_address.display_title }`
             },
             {
                 type: "link",
                 text: "Edit restriction settings",
                 icon: "fas fa-unlock",
-                href: `/System:WikiPageManagement/restrictions?title=${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/restrictions?title=${ page_address.display_title }`
             },
             {
                 type: "link",
                 text: "Delete page",
                 additional_classes: "red",
                 icon: "fas fa-trash",
-                href: `/System:WikiPageManagement/delete?title=${ queried_page_fullname }`
+                href: `/System:WikiPageManagement/delete?title=${ page_address.display_title }`
             }
         ] };
 

@@ -20,8 +20,14 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
             body_html: ""
         }
 
-        // Check if page name was provided
+        // Get page js
+        const page_js = fs.readFileSync("./static/DeletedWikiPages/script.js", "utf8");
+
+        page_config.page.additional_js = [page_js];
+
         if(!queried_page_fullname) {
+            // No page title
+
             page_config.header_config = {
                 icon: "fas fa-archive",
                 title: "Deleted Pages",
@@ -35,7 +41,7 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">Page title</div>
-        <input type="text" name="page_name" data-handler="page_name" class="ui-input1">
+        <input type="text" name="page_title" data-handler="page_title" class="ui-input1">
     </div>
     <div class="ui-form-container right margin-top">
         <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Query page</button>
@@ -54,13 +60,19 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         }
 
         if(!client_groups || !client_groups.rights.wiki_restorepage) {
+            // No permission
+
             page_config.header_config = {
                 icon: "fas fa-archive",
                 title: "Deleted Pages",
                 description: `Access denied`
             };
 
-            page_config.body_html = "You don't have permission to view or restore wiki pages.";
+            page_config.body_html = `\
+            <div class="ui-info-box c-red">
+                <div class="icon"><i class="fas fa-times"></i></div>
+                <div class="text">You don't have permission to view or restore wiki pages.</div>
+            </div>`;
 
             resolve(page_config);
             return;
@@ -73,17 +85,23 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         const deleted_page_query: any = await Page.getDeletedPagesInfo(page_address.namespace, page_address.name);
 
         // Page with such name currenly exists
-        let page_with_such_name_exists = existent_page_query[1].length !== 0;
+        const page_with_such_name_exists = existent_page_query[1].length !== 0;
 
         // No pages in archive found
         if(deleted_page_query.length === 0) {
             page_config.header_config = {
                 icon: "fas fa-archive",
-                title: "Deleted Pages",
-                description: `No records for ${ queried_page_fullname }`
+                title: `${ page_address.display_title } — Archive`,
+                description: `No records found`
             };
 
-            page_config.body_html = "No records found for the requested title.";
+            page_config.body_html = `\
+            <div class="ui-info-box c-red">
+                <div class="icon"><i class="fas fa-times"></i></div>
+                <div class="text">No records were found for the requested title.</div>
+            </div>`;
+
+            page_config.breadcrumbs_data.push([page_address.display_title, "fas fa-file"]);
 
             resolve(page_config);
             return;
@@ -94,20 +112,17 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         // Header
         page_config.header_config = {
             icon: "fas fa-archive",
-            title: `${ queried_page_fullname } — Archive`
+            title: `${ page_address.display_title } — Archive`
         };
 
         // Breadcrumbs
-        page_config.breadcrumbs_data.push([queried_page_fullname, "fas fa-file"]);
-
-        // Get js and css
-        const page_js = fs.readFileSync("./static/DeletedWikiPages/script.js", "utf8");
-
-        page_config.page.additional_js = [page_js];
+        page_config.breadcrumbs_data.push([page_address.display_title, "fas fa-file"]);
 
         // Get users
         const users: any = {};
         const userids: string[] = [];
+
+        // TODO figure out what i was trying to do here :P
         let user_query_error = false;
 
         for(const p of deleted_page_query) {

@@ -86,7 +86,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         res.send(page);
     } else if(req.query.revid) {
         // Get by revid
-        let get_deleted = false
+        let get_deleted = false;
 
         if(req.query.allow_deleted) {
             // User wants to get a deleted revision, check if they have the right to do so
@@ -110,7 +110,9 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         const page = await Page.getRaw(req.query.revid, undefined, undefined, get_deleted);
 
         // Do we have to render?
-        if(!req.query.get_raw && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, {}, add_div_tag)).content;
+        if(req.query.get_raw === "false" && page.raw_content) {
+            page.parsed_content = (await renderWikitext(page.raw_content, {}, add_div_tag)).content;
+        }
 
         res.send(page);
     } else {
@@ -145,7 +147,7 @@ export async function RootRoute(req: any, res: any): Promise<void> {
 
                 // Check for required arguments
                 for(const required_arg of api_route_object.required_arguments) {
-                    if(!req.body.hasOwnProperty(required_arg)) {
+                    if(!req.body.hasOwnProperty(required_arg) || req.body[required_arg] === "null") {
                         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Parameter '${ required_arg }' is required`));
                         return;
                     }

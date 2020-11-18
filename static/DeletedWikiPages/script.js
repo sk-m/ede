@@ -1,11 +1,20 @@
 function deletedWikiPagesPageScript() {
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
+    const query_form = ede.form.list["deletedwikipages-query"];
+
+    // Check if the query form is available
+    if(query_form) {
+        // On query
+        query_form.submit.onclick = () => {
+            const validation_result = ede.form.validate("deletedwikipages-query");
+
+            if(!validation_result.invalid) {
+                ede.navigate("/System:DeletedWikiPages/info?title=" + query_form.page_title.value);
+            }
         }
-    });
+
+        // If there is just a query form, do not continue
+        return;
+    }
 
     const revisions_container = document.getElementById("deletedwikipages-revisions-container");
     const revisions_status_text = document.getElementById("deletedwikipages-revisions-status-text");
@@ -18,6 +27,17 @@ function deletedWikiPagesPageScript() {
     let retrieve_rendered_revisions = false;
 
     const restore_form = ede.form.list["deletedwikipages-restoreform"];
+
+    // If the page was not found, a restore form will not be present
+    if(!restore_form) return;
+
+    // Disable submit on enter key
+    window.addEventListener("keydown", e => {
+        if(e.keyCode === 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     // Get rendered revisions checkbox
     const retrieve_rendered_revisions_checkbox = ede.form.list["deletedwikipages-preview"].retrieve_rendered_revisions;

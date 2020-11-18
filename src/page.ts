@@ -443,7 +443,7 @@ export async function restorePage(page_id: number, new_namespace?: string, new_n
 SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
         [page_id, page_id],
         async (get_error: any, results: any) => {
-            if(get_error || results.length < 1) {
+            if(get_error || results[0].length < 1) {
                 reject();
                 return;
             }
@@ -780,6 +780,8 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
 export async function getRaw(revid?: number, namespace?: string, name?: string, get_deleted: boolean = false,
 client_visibility: number = 0): Promise<ResponsePage> {
     return new Promise(async (resolve: any, reject: any) => {
+        // TODO @placeholder we do not populate the address object
+
         const time_start = process.hrtime();
         const page: ResponsePage = {
             address: {
@@ -862,8 +864,6 @@ WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `vi
                 resolve(page);
             });
         } else {
-            
-
             reject([new Error("either revid or a namespace and name pair required"), page]);
             return;
         }
