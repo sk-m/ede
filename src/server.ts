@@ -68,6 +68,22 @@ async function serverInit(db_error: Error): Promise<void> {
         process.exit(1);
     }
 
+    // Database logging
+    if(process.env.EDE_DB_LOGGING === "1") {
+        Util.log("Database logging enabled", 0);
+        let i = 1;
+
+        const oldQuery = sql.query;
+
+        sql.query = (...args: any) => {
+            const queryCmd = oldQuery.apply(sql, args);
+            Util.log(`DB query #${ i }: ${ queryCmd.sql }`, 0);
+            i++;
+
+            return queryCmd;
+        }
+    }
+
     // TODO We should check if the config is correct
     // Things to check: instance.domain
 
