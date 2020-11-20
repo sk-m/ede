@@ -241,7 +241,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
         // Get the page
         const page_address = pageTitleParser(queried_page_fullname);
 
-        const page_query: any = await Page.getInfo(page_address.namespace, page_address.name, true);
+        const page_query: any = await Page.getPageInfo(page_address, true);
 
         if(page_query[0] === true) {
             // Title was provided, but such page does not exist
@@ -269,11 +269,11 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 </div>`;
             }
 
-            const log_entries = await Log.getEntries(["deletewikipage", "movewikipage"], undefined, queried_page_fullname);
+            const log_entries = await Log.getEntries(["deletewikipage", "movewikipage", "restorewikipage"], undefined, page_address.title);
 
             page_config.body_html += `\
 <div class="ui-form-box">
-    ${ UI.constructFormBoxTitleBar("delete_move_logs", "Delete and move logs for this page") }
+    ${ UI.constructFormBoxTitleBar("delete_move_logs", "Delete, restore and move logs for this page") }
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`
@@ -292,17 +292,14 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
             client_groups = await User.getUserGroupRights(client.id).catch(() => undefined);
         }
 
-        // We have the info about the page
-        const page_fullname = `${ queried_page.namespace }:${ queried_page.name }`;
-
         // Header
         page_config.header_config = {
             icon: "fas fa-file",
-            title: page_fullname
+            title: page_address.display_title
         };
 
         // Breadcrumbs
-        page_config.breadcrumbs_data.push([page_fullname, "fas fa-file"]);
+        page_config.breadcrumbs_data.push([page_address.display_title, "fas fa-file"]);
 
         // Sidebar
         page_config.sidebar_config = { links: [
@@ -368,10 +365,10 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 page_config.breadcrumbs_data.push(["Delete"]);
                 page_config.header_config = {
                     icon: "fas fa-trash",
-                    title: `Delete ${ page_fullname}`
+                    title: `Delete ${ page_address.display_title }`
                 };
 
-                page_config.body_html = await delete_page(queried_page, queried_page_fullname, client, client_groups || undefined);
+                page_config.body_html = await delete_page(queried_page, page_address.title, client, client_groups || undefined);
             } break;
             case "move": {
                 const page_js = fs.readFileSync("./static/PageManagement/move.js", "utf8");
@@ -381,14 +378,14 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 page_config.breadcrumbs_data.push(["Move"]);
                 page_config.header_config = {
                     icon: "fas fa-file-export",
-                    title: `Move ${ page_fullname}`
+                    title: `Move ${ page_address.display_title }`
                 };
 
-                page_config.body_html = await move_page(queried_page, queried_page_fullname, client, client_groups || undefined);
+                page_config.body_html = await move_page(queried_page, page_address.title, client, client_groups || undefined);
             } break;
             default: {
                 page_config.breadcrumbs_data.push(["Info"]);
-                page_config.body_html = await info_page(queried_page, queried_page_fullname, client);
+                page_config.body_html = await info_page(queried_page, page_address.title, client);
             }
         }
 

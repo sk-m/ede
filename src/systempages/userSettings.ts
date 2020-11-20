@@ -181,7 +181,7 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
                 // TODO @hack @cleanup page.additional_js.push
                 if(verification_result[0]) {
                     // Update the user
-                    await sql.execute("UPDATE `users` SET `email_verified` = 1, `email_address` = ? WHERE id = ?",
+                    await sql.promise().execute("UPDATE `users` SET `email_verified` = 1, `email_address` = ? WHERE id = ?",
                     [verification_result[1], client.id]);
 
                     // Get the new user
@@ -207,7 +207,7 @@ ede.clearURLParams();\
                         page.additional_js.push(`ede_onready.push(() => { ede.showNotification("useremailverification-error", "Email not verified", "Some error occured.", "error") });`);
                     } else {
                         // Everything is correct, update the user
-                        await sql.execute("UPDATE `users` SET `email_verified` = 1 WHERE id = ?",
+                        await sql.promise().execute("UPDATE `users` SET `email_verified` = 1 WHERE id = ?",
                         [client.id]);
 
                         // Get the new user

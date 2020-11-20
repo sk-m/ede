@@ -1,9 +1,9 @@
 import * as User from "../user";
 import * as Page from "../page";
-import * as Util from "../utils";
 import { apiResponse, ApiResponseStatus } from "../api";
 import { GroupsAndRightsObject } from "../right";
 import { registry_namespaces } from "../registry";
+import { pageTitleParser } from "../routes";
 
 export async function pageSaveRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
@@ -14,11 +14,12 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     }
 
     // Check if namespace exists
-    const registry_namespaces_snapshot = registry_namespaces.get();
-    const clean_namespace_name = Util.sanitize(req.body.page_namespace);
+    const page_address = pageTitleParser(req.body.page_title);
 
-    if(!registry_namespaces_snapshot[clean_namespace_name]) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Namespace '${ clean_namespace_name }' does not exist`));
+    const registry_namespaces_snapshot = registry_namespaces.get();
+
+    if(!registry_namespaces_snapshot[page_address.namespace]) {
+        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Namespace '${ page_address.namespace }' does not exist`));
         return;
     }
 
@@ -29,12 +30,12 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     await User.getUserGroupRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         // Page editing
-        if(grouprights.rights.wiki_edit && grouprights.rights.wiki_edit.namespaces.includes(clean_namespace_name)) {
+        if(grouprights.rights.wiki_edit && grouprights.rights.wiki_edit.namespaces.includes(page_address.namespace)) {
             client_permissions_error = false;
         }
 
         // Page creation
-        if(grouprights.rights.wiki_createpage && grouprights.rights.wiki_createpage.namespaces.includes(clean_namespace_name)) {
+        if(grouprights.rights.wiki_createpage && grouprights.rights.wiki_createpage.namespaces.includes(page_address.namespace)) {
             client_can_create_pages = true;
         }
     })
@@ -45,15 +46,7 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
         return;
     }
 
-    const page_address: Page.PageAddress = {
-        namespace: clean_namespace_name,
-        name: req.body.page_name,
-
-        raw_url: "",
-        query: [],
-        url_params: []
-    }
-
+    // TODO use new Rejection()
     Page.createRevision(page_address, req.body.page_content, client_user, req.body.summary || "", undefined, client_can_create_pages)
     .then(() => {
         res.send(apiResponse(ApiResponseStatus.success));

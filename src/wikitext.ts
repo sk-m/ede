@@ -530,10 +530,7 @@ export async function renderWikitext(input: string, template_params: any, add_ta
                             // All params are already placed in their appropriate places
                             write(page.parsed_content);
                         } else {
-                            // Template was not found, write a warning to the document
-                            const title = `${ address.namespace }:${ address.name }`;
-
-                            write(`<span style="font-family: monospace; color: var(--color-red)">!! <a class="ui-text monospace" href="/${ title }">${ title }</a> !!</span>`);
+                            write(`<span style="font-family: monospace; color: var(--color-red)">!! <a class="ui-text monospace" href="/${ address.title }">${ address.title }</a> !!</span>`);
                         }
 
                         i += 1;
@@ -556,17 +553,16 @@ export async function renderWikitext(input: string, template_params: any, add_ta
 
                     // Parse the title and get the address of the link
                     const address = pageTitleParser(link_params[0]);
-                    const title = `${ address.namespace }:${ address.name }`;
 
                     // We got all the params from the buffer and don't need it anymore. Disable writing to buffer and reset it
                     flag_write_to_buffer = false;
                     buffer_str = "";
 
                     // Text for the link (if provided - it's the first argument, if not - just set the text to the link address)
-                    const link_text = link_params[1] || title;
+                    const link_text = link_params[1] || address.title;
 
                     // Write the link to the document
-                    write(`<a class="ui-text" href="/${ title }">${ link_text }</a>`);
+                    write(`<a class="ui-text" href="/${ address.title }">${ link_text }</a>`);
 
                     i += 1;
                 } else {

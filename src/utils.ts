@@ -29,6 +29,7 @@ enum Colors {
     BgWhite = "\x1b[47m"
 }
 
+const debug_text = `[${ Colors.Bright }${ Colors.FgYellow } DEBUG ${ Colors.Reset }]`;
 const info_text = `[${ Colors.FgCyan } INFO ${ Colors.Reset }]`;
 const warn_text = `[${ Colors.FgYellow } WARN ${ Colors.Reset }]${ Colors.FgYellow }`;
 const error_text = `[${ Colors.FgRed } EROR ${ Colors.Reset }]${ Colors.FgRed }`;
@@ -45,6 +46,7 @@ export function log(message: string, type: number = 1, error?: Error): void {
     let brackets_text = info_text;
 
     switch(type) {
+        case 0: { brackets_text = debug_text } break;
         case 2: { brackets_text = warn_text } break;
         case 3: { brackets_text = error_text } break;
         case 4: { brackets_text = crit_text } break;
@@ -115,4 +117,28 @@ export function formatTimeString(timestamp: number): string {
     const months = Math.round((years * sPerYear - elapsed) / sPerMonth);
 
     return `${ years } year(s), ${ months } month(s)`;
+}
+
+export enum RejectionType {
+    GENERAL_UNKNOWN,
+    GENERAL_INVALID_DATA,
+    GENERAL_ACCESS_DENIED,
+
+    PAGE_NOT_FOUND,
+    PAGE_DELETED,
+    PAGE_REVISION_HIDDEN,
+    PAGE_NAME_TAKEN,
+
+    NAMESPACE_ERROR,
+
+}
+
+export class Rejection {
+    type: RejectionType;
+    client_message?: string;
+
+    constructor(type: RejectionType, client_message?: string) {
+        this.type = type;
+        this.client_message = client_message || "Some error occured";
+    }
 }

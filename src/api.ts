@@ -4,6 +4,7 @@ import * as User from "./user";
 import { registry_apiRoutes } from "./registry";
 import { GroupsAndRightsObject } from "./right";
 import { renderWikitext } from "./wikitext";
+import { Rejection, RejectionType } from "./utils";
 
 export type ApiRoutesObject = { [route_name: string]: ApiRoute };
 export interface ApiRoute {
@@ -70,7 +71,16 @@ export function apiResponse(status: ApiResponseStatus, additional_data?: any): a
     return response;
 }
 
-// TODO @draft
+// TODO @name
+export function apiError(rejection: Rejection): any {
+    return {
+        status: "error",
+        error_type: RejectionType[rejection.type],
+        message: rejection.client_message
+    }
+}
+
+// TODO @draft @move move this somewhere else
 export async function getPageRoute(req: any, res: any, client_user?: User.User, add_div_tag: boolean = true): Promise<void> {
     if(req.query.title) {
         // Get by title
@@ -107,7 +117,22 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         }
 
         // Get the page
-        const page = await Page.getRaw(req.query.revid, undefined, undefined, get_deleted);
+        let page;
+        let sql_error: Rejection | undefined;
+
+        page = await Page.getPageByRevid(req.query.revid, get_deleted)
+        .catch((rejection_and_page: [Rejection, Page.ResponsePage | undefined]) => {
+            if(rejection_and_page[1] !== undefined) {
+                page = rejection_and_page[1];
+            } else {
+                sql_error = rejection_and_page[0];
+            }
+        });
+
+        if(sql_error || !page) {
+            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, (sql_error as Rejection).client_message));
+            return;
+        }
 
         // Do we have to render?
         if(req.query.get_raw === "false" && page.raw_content) {
@@ -121,9 +146,15 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
 }
 
 export async function RootRoute(req: any, res: any): Promise<void> {
+    let client_user;
+
+    // Check if user wants to execute something anonymously
+    if(!req.query || req.query.g_anonymous !== "true") {
+        client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
+    }
+
     // TODO catch may be a bug here
     // TODO we dont't allways need to get the user. This is inefficient
-    const client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
 
     const registry_apiRoutes_snapshot = registry_apiRoutes.get();
     const route_name = req.params["*"].substring(1);
@@ -147,7 +178,7 @@ export async function RootRoute(req: any, res: any): Promise<void> {
 
                 // Check for required arguments
                 for(const required_arg of api_route_object.required_arguments) {
-                    if(!req.body.hasOwnProperty(required_arg) || req.body[required_arg] === "null") {
+                    if(!req.body.hasOwnProperty(required_arg)) {
                         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Parameter '${ required_arg }' is required`));
                         return;
                     }

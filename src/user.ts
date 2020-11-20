@@ -871,7 +871,7 @@ export async function createEmailToken(user_id: number, token_type: string, sent
             const token: string = formatString(token_buffer);
 
             // Delete tokens of same type and user
-            await sql.execute("DELETE FROM `email_tokens` WHERE `user` = ? AND `type` = ?",
+            await sql.promise().execute("DELETE FROM `email_tokens` WHERE `user` = ? AND `type` = ?",
             [user_id, token_type]);
 
             // Insert new token

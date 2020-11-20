@@ -320,7 +320,7 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 });
 
 export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins);
-export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getNamespacesFromDB);
+export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getAllNamespacesFromDB);
 
 export const registry_page_info_types = new RegistryContainer<Page.PageInfoTypes>("ede", undefined, {
     hiddentitle: {
@@ -685,21 +685,14 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         description: "Save thae page, creating a new revision",
 
-        required_arguments: ["page_namespace", "page_name", "page_content", "csrf_token"],
+        required_arguments: ["page_title", "page_content", "csrf_token"],
         required_rights: ["wiki_edit", "?wiki_createpage"],
 
         arguments: {
-            page_namespace: {
-                name: "page_namespace",
-                display_name: "Page namespace",
-                description: "Namespace of the target page (use with <code>page_name</code>)",
-
-                type: "string"
-            },
-            page_name: {
-                name: "page_name",
-                display_name: "Page name",
-                description: "Name of the target page, without the namespace part (use with <code>page_namespace</code>)",
+            page_title: {
+                name: "page_title",
+                display_name: "Page title",
+                description: "Full page title",
 
                 type: "string"
             },

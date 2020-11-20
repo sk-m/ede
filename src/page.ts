@@ -12,6 +12,7 @@ import { renderWikitext } from "./wikitext";
 import sanitizeHtml from "sanitize-html";
 import bitwise from "bitwise";
 import { UInt8 } from "bitwise/types";
+import { pageTitleParser } from "./routes";
 
 export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
 
@@ -86,6 +87,11 @@ export interface PageAddress {
     namespace: string;
     name: string;
     root_name: string;
+    title: string;
+
+    display_name: string;
+    display_namespace: string;
+    display_title: string;
 
     query: any;
     url_params: string[];
@@ -100,7 +106,7 @@ export interface Revision {
     user?: number;
 
     content?: string;
-    content_hash: string;
+    content_hash?: string;
 
     summary?: string;
 
@@ -113,8 +119,8 @@ export interface Revision {
 
     timestamp: number;
 
-    bytes_size: number;
-    bytes_change: number;
+    bytes_size?: number;
+    bytes_change?: number;
 
     is_deleted: boolean;
 
@@ -176,10 +182,14 @@ export interface Namespace {
     handler?: (address: PageAddress, client: User.User) => Promise<ResponsePage>;
 }
 
-// TODO This is not the right way to do it
+/**
+ * Handler for a System namespace. Only used internally, you probably do not want to call this.
+ * @ignore
+ */
 export async function systemNamespaceHandler(address: PageAddress, client: User.User): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
-        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];        
+        // Get the "System page" badge (which is just a system message)
+        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];
 
         // Sets the content to notfound system message and appends a notfound badge
         const notFound = (notfound_page: ResponsePage) => {
@@ -196,10 +206,9 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
             });
         }
 
+        // Create a page response
         let page: ResponsePage = {
             address,
-
-            display_title: address.root_name,
 
             badges: [systempage_badge_sysmsg.value],
 
@@ -215,19 +224,28 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         const registry_systempages_snapshot = registry_systempages.get();
         const lowercase_name = address.root_name.toLowerCase();
 
+        // Check if such system page exists
         if(registry_systempages_snapshot[lowercase_name]) {
             const systempage: SystemPageDescriptor = registry_systempages_snapshot[lowercase_name];
 
-            page.display_title = systempage.display_title;
+            page.address.display_title = systempage.display_title;
 
             if(systempage.systempage_config) {
+                // This particular systempage uses a systempage_config, use a builder to render it
+
                 page = systempageBuilder(await systempage.systempage_config(page, client));
             } else if(systempage.dynamic_content) {
+                // This particular systempage just returns some content. Call it's render function
+
                 page = await systempage.dynamic_content(page, client);
             } else {
+                // This particular systempage just returns some *static* content
+
                 page.parsed_content = systempage.static_content;
             }
         } else {
+            // Page was not found
+
             page = await notFound(page) as ResponsePage;
         }
 
@@ -240,7 +258,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
  *
  * @category Registry updater
  */
-export async function getNamespacesFromDB(): Promise<NamespacesObject> {
+export async function getAllNamespacesFromDB(): Promise<NamespacesObject> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT * FROM `namespaces`", (error: Error, results: any) => {
             if(error) {
@@ -252,11 +270,8 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
 
             const namespaces: NamespacesObject = {};
 
-            // We should have a namespace_info JSON object instead (like pages do)
             for(const namespace of results) {
-                namespaces[namespace.name] = {
-                    ...namespace,
-                };
+                namespaces[namespace.name] = namespace;
             }
 
             resolve(namespaces);
@@ -266,7 +281,7 @@ export async function getNamespacesFromDB(): Promise<NamespacesObject> {
 
 // TODO allow admins to edit this object (maybe even have different restrictions for different namespaces?)
 /**
- * Sanitize raw wikitext (remove disallowed HTML tags and attributes)
+ * Sanitize raw wikitext (remove/sanitize disallowed HTML tags and attributes)
  *
  * @param input raw wikitext
  */
@@ -286,95 +301,113 @@ export function sanitizeWikitext(input: string): string {
 /**
  * Create a new revision (edit)
  *
- * @param page_address [[PageAddress]] object
+ * @param page_address page address object. *Must* be sanitized! Use pageTitleParser() to get one
  * @param new_raw_content new raw content
  * @param user user that created a revision
  * @param summary a short summary
- * @param tags tags for the revision
- * @param allow_page_creation if true, will reject, if the target page does not exist. If false, will create that page
+ * @param tags tags for the revision (WIP)
+ * @param allow_page_creation if false, will reject, if the target page does not exist. If true, will create that page
  */
 export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string,
     tags?: string[], allow_page_creation: boolean = false): Promise<void> {
     return new Promise(async (resolve: any, reject: any) => {
+        // Sanitize the raw content (we do not render here, just sanitize)
         const clean_content = sanitizeWikitext(new_raw_content);
+
+        // Get the size of the raw content
         const content_size = clean_content.length;
+
+        // TODO we can check the size here
 
         // Create a content hash
         const shasum = crypto.createHash("sha1");
         shasum.update(clean_content);
 
-        // Create a timestamp
+        // Create a current timestamp
         const created_on = Math.floor(new Date().getTime() / 1000);
 
         // Check if the page exisists
-        let page_created = false;
-        let target_page_id: any = await new Promise((resolve_page: any) => {
-            sql.execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-            [page_address.namespace, page_address.name],
-            (error: any, results: any) => {
-                if(!error && results[0]) {
-                    resolve_page(results[0].id);
-                } else {
-                    resolve_page(false);
-                }
-            });
+        let target_page_id: number | false;
+        let sql_error = false;
+
+        const find_results = await sql.promise().execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
+        [page_address.namespace, page_address.name])
+        .catch((error: Error) => {
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new page"));
+            Util.log("Could not create a new page", 3, error);
+
+            sql_error = true;
         });
 
-        // Page does not exist, create it
-        if(target_page_id === false) {
+        if(sql_error) return;
+
+        if(find_results[0].length !== 0) {
+            // Page exists, get the id
+
+            target_page_id = find_results[0][0].id;
+        } else {
+            // Page does not exist, create it
+
             if(!allow_page_creation) {
-                reject("page_not_found");
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Page not found"));
                 return;
             }
 
-            page_created = true;
+            // TODO @placeholder
+            // Check and sanitize the title
+            if(!page_address.name.match(/^[^|#<>{}\[\]]+$/) ||
+                page_address.name.length < 1 ||
+                page_address.name.length > 255 ||
+                page_address.name[0] === ":" ||
+                page_address.name[0] === " " ||
+                page_address.name.endsWith(" ") ||
+                page_address.name[0] === "." ||
+                page_address.name[0] === "/" ||
+                page_address.name.includes("  ") ||
+                page_address.name.includes("./") ||
+                page_address.name.includes("/.")) {
+                reject("invalid_title");
+                return;
+            }
 
             const page_info = {
                 created_on,
                 created_by: user.id
             };
 
-            target_page_id = await new Promise((resolve_new_page: any) => {
-                sql.execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
-VALUES (?, ?, NULL, ?, '{}')",
-                [page_address.namespace, page_address.name, JSON.stringify(page_info)],
-                (error: any, results: any) => {
-                    if(!error && results.insertId) {
-                        resolve_new_page(results.insertId);
-                    } else {
-                        resolve_new_page(error);
-                    }
-                });
+            // Create the actual page
+            const create_results = await sql.promise().execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`,\
+            `action_restrictions`) VALUES (?, ?, NULL, ?, '{}')",
+            [page_address.namespace, page_address.name, JSON.stringify(page_info)])
+            .catch((error: Error) => {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new page"));
+                Util.log("Could not create a new page", 3, error);
+
+                sql_error = true;
             });
 
-            const full_address = `${ page_address.namespace }:${ page_address.name }`;
+            if(sql_error) return;
+
+            target_page_id = create_results[0].insertId;
 
             // Log page creation
-            Log.createEntry("createwikipage", user.id, full_address,
-            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ full_address }">${ full_address }</a> \
+            Log.createEntry("createwikipage", user.id, page_address.title,
+            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ page_address.title }">${ page_address.title }</a> \
 (<code>${ target_page_id }</code>)`, "");
         }
 
-        // We could not create the page
-        if(target_page_id instanceof Error) {
-            reject(target_page_id);
-            return;
-        }
-
-        const bytes_change_str = page_created ? content_size : `${ content_size } - @last_rev_size`;
+        // We now have a page (we either created it, or found it)
 
         // Create a new revision and update the page
-        // TODO @cleanup there is probably a better way to do this
-        sql.query(`SET @last_rev_size := (SELECT \`bytes_size\` FROM \`revisions\` WHERE \`page\` = ? ORDER BY id DESC LIMIT 1); \
-INSERT INTO \`revisions\` (\`page\`, \`user\`, \`content\`, \`content_hash\`, \`summary\`, \`timestamp\`, \`bytes_size\`, \`bytes_change\`)\
- VALUES (?, ?, ?, ?, ?, ?, ?, ${ bytes_change_str }); \
-UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
-[target_page_id, target_page_id, user.id, clean_content, shasum.digest("hex"), summary, created_on, content_size, target_page_id],
+        sql.execute(`CALL wiki_create_revision(?, ?, ?, ?, ?, ?)`,
+[target_page_id, user.id, clean_content, shasum.digest("hex"), summary, content_size],
 (error: any) => {
             if(!error) {
                 resolve();
             } else {
-                reject(error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new revision"));
+                Util.log(`Could not create a new revision for a page (pageid ${ target_page_id || "?" })`, 3, error);
+                return;
             }
         });
     });
@@ -383,47 +416,20 @@ UPDATE \`wiki_pages\` SET \`revision\` = LAST_INSERT_ID() WHERE id = ?`,
 /**
  * Delete the page
  *
- * @param page_id internal page id
- * @param completely_remove completely remove all related records (except logs) from the database?
+ * @param page_id target page id
  */
-export async function deletePage(page_id: number, deleted_user_id: string, summary?: string, completely_remove: boolean = false): Promise<void> {
+export async function deletePage(page_id: number, deleted_user_id: string, summary?: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
-        if(!completely_remove) {
-            // First, get the page
-            sql.execute("SELECT * FROM `wiki_pages` WHERE id = ?",
-            [page_id],
-            (get_error: any, results: any) => {
-                if(get_error || results.length < 1) {
-                    reject(get_error);
-                    return;
-                }
+        sql.execute("CALL wiki_delete_page(?, ?, ?)",
+        [page_id, deleted_user_id, summary],
+        (error: any, results: any) => {
+            if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not delete a wiki page. It might not exist."));
+                return;
+            }
 
-                const page = results[0];
-
-                // Delete the page
-                sql.query("INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, \
-`deleted_by`, `deleted_on`, `delete_summary`) \
-VALUES (?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP(), ?); DELETE FROM `wiki_pages` WHERE id = ?; UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = ?",
-                [page_id, page.namespace, page.name, JSON.stringify(page.page_info), JSON.stringify(page.action_restrictions),
-                deleted_user_id, summary, page_id, page_id],
-                (del_error: any) => {
-                    if(!del_error) resolve();
-                    else reject(del_error);
-                });
-            });
-        } else {
-            // TODO!
-            reject();
-            return;
-
-            sql.query("#$&(*invalid)  DELETE FROM `revisions` WHERE `page` = ?; DELETE FROM `wiki_pages` WHERE id = ?; \
-UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','deletewikipage') AND `target` = ?",
-            [page_id, page_id, page_id],
-            (error: any) => {
-                if(!error) resolve();
-                else reject(error);
-            });
-        }
+            resolve();
+        });
     });
 }
 
@@ -434,9 +440,9 @@ UPDATE `logs` SET `visibility_level` = b'1' WHERE `type` IN ('createwikipage','d
  * @param new_namespace new namespace for the page (will be checked for content_model)
  * @param new_name new name for the page
  *
- * @returns [new page id, new page title, old page title]
+ * @returns [new page id, new page address, old page address]
  */
-export async function restorePage(page_id: number, new_namespace?: string, new_name?: string): Promise<string> {
+export async function restorePage(page_id: number, new_namespace?: string, new_name?: string): Promise<[number, PageAddress, PageAddress]> {
     return new Promise((resolve: any, reject: any) => {
         // Get the deleted page and the last revision
         sql.query("SELECT id FROM `revisions` WHERE `page` = ? ORDER BY id DESC LIMIT 1; \
@@ -444,48 +450,64 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
         [page_id, page_id],
         async (get_error: any, results: any) => {
             if(get_error || results[0].length < 1) {
-                reject();
+                // No such page in the archive;
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not find such page in the archive"));
                 return;
             }
 
             const deleted_page = results[1][0];
             const revid = results[0][0].id;
 
+            // New new namespace and/or a new name provided, use old ones
             if(!new_namespace) new_namespace = deleted_page.namespace;
             if(!new_name) new_name = deleted_page.name;
 
-            // Check if namespace is correct
-            const registry_namespaces_snapshot = registry_namespaces.get();
+            // Get the new namespace
+            const new_namespace_obj = registry_namespaces.get()[new_namespace as string];
 
-            if(registry_namespaces_snapshot[new_namespace as string].content_model !== "wiki") {
-                reject(new Error("Unable to move page to a non-wiki namespace"));
+            // Check if target namespace exists
+            if(!new_namespace_obj) {
+                reject(new Util.Rejection(Util.RejectionType.NAMESPACE_ERROR, "Target namespace does not exist"));
                 return;
             }
 
+            // Check if target namespace has a correct content model
+            if(new_namespace_obj.content_model !== "wiki") {
+                reject(new Util.Rejection(Util.RejectionType.NAMESPACE_ERROR, "Can not restore a page to a non-wiki namespace"));
+                return;
+            }
+
+            // Get old and new address
+            const old_address = pageTitleParser(`${ deleted_page.namespace }:${ deleted_page.name }`);
+            const new_address = pageTitleParser(`${ new_namespace }:${ new_name }`);
+
             // Check if the page with target title already exists
-            const current_page_query = await getInfo(new_namespace as string, new_name as string);
+            const current_page_query = await getPageInfo(new_address);
 
             if(current_page_query[1].length !== 0) {
-                reject(new Error("A page with such title already exists"));
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NAME_TAKEN, "A page with such title already exists"));
                 return;
             }
 
             // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and
             // delete the record from `deleted_wiki_pages`)
-            sql.query("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`) \
-            VALUES (?, ?, ?, ?, ?); SET @new_pageid = LAST_INSERT_ID(); UPDATE `revisions` SET `page` = @new_pageid, `is_deleted` = b'0' WHERE `page` = ?; \
-            DELETE FROM `deleted_wiki_pages` WHERE `pageid` = ?; SELECT @new_pageid",
-            [new_namespace as string, new_name as string, revid, JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions),
-            page_id, page_id, page_id],
+            sql.execute("SELECT wiki_restore_page(?, ?, ?, ?, ?, ?) AS new_pageid",
+            [page_id, new_address.namespace, new_address.name, revid,
+            JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions)],
             (restore_error: any, restore_results: any) => {
-                const new_pageid = restore_results[4][0]["@new_pageid"];
+                if(restore_error) {
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not restore a page"));
+                    Util.log("Could not restore a page", 3, restore_error);
 
-                if(!restore_error) resolve([
-                    new_pageid,
-                    `${ new_namespace as string }:${ new_name as string }`,
-                    `${ deleted_page.namespace }:${ deleted_page.name }`
+                    return;
+                }
+
+                // Page successfully restored
+                resolve([
+                    /* [0] => new pageid */ restore_results[0].new_pageid,
+                    /* [1] => new address */ new_address,
+                    /* [2] => old address */ old_address
                 ]);
-                else reject();
             });
         });
     });
@@ -494,51 +516,75 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
 /**
  * Move (rename) the page
  *
- * @param page_id internal page id
+ * @param page_id target page id
  * @param new_namespace name of the namespace to move the page into
  * @param new_name new name for the page
  */
 export async function movePage(page_id: number, new_namespace: string, new_name: string): Promise<void> {
     return new Promise(async (resolve: any, reject: any) => {
+        // Get the new namespace
         const new_namespace_obj = registry_namespaces.get()[new_namespace];
 
+        // Check if target namespace exists
         if(!new_namespace_obj) {
-            reject(new Error(`Namespace '${ new_namespace }' does not exist.`));
+            reject(new Util.Rejection(Util.RejectionType.NAMESPACE_ERROR, "Target namespace does not exist"));
             return;
         }
 
+        // Check if target namespace has a correct content model
         if(new_namespace_obj.content_model !== "wiki") {
-            reject(new Error(`You can only move pages to namespaces with 'wiki' content model.`));
+            reject(new Util.Rejection(Util.RejectionType.NAMESPACE_ERROR, "Can not move a page to a non-wiki namespace"));
             return;
         }
+
+        // TODO @cleanup this feels wrong
+        // We have to make sure the title is encoded, but if the client sends an already encoded title, we would encode it twice, which
+        // we don't want. Thats why we decode it first just to make sure
+        const raw_title = `${ encodeURIComponent(decodeURIComponent(new_namespace)) }:${ encodeURIComponent(decodeURIComponent(new_name)) }`;
+        const address = pageTitleParser(raw_title);
 
         // Check if the page with target title already exists
-        const current_page_query = await getInfo(new_namespace, new_name);
+        const current_page_query = await getPageInfo(address);
 
         if(current_page_query[1].length !== 0) {
-            reject(new Error("A page with such title already exists"));
+            reject(new Util.Rejection(Util.RejectionType.PAGE_NAME_TAKEN, "A page with such title already exists"));
             return;
         }
 
+        // Move the page
         sql.execute("UPDATE `wiki_pages` SET `namespace` = ?, `name` = ? WHERE id = ?",
         [new_namespace, new_name, page_id],
-        (error: any) => {
-            if(!error) resolve();
-            else reject();
+        (error: any, results: any) => {
+            if(error || results.affectedRows < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not move a page"));
+                Util.log(`Could not move a page (${ new_namespace }:${ new_name })`, 3, error);
+
+                return;
+            }
+
+            resolve();
         });
     });
 }
 
-export async function getDeletedPagesInfo(namespace: string, name: string): Promise<PageInfo[]> {
+/**
+ * Get info about a deleted page
+ *
+ * @param address target page's address
+ */
+export async function getDeletedPageInfo(address: PageAddress): Promise<PageInfo[]> {
     return new Promise((resolve: any) => {
         sql.execute("SELECT * FROM `deleted_wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-        [namespace, name],
+        [address.namespace, address.name],
         (deleted_error: any, deleted_results: any) => {
             if(deleted_error || deleted_results.length === 0) {
+                // No pages with such title found
+
                 resolve([]);
                 return;
             }
 
+            // Construct results
             const final_results: PageInfo[] = [];
 
             for(const page of deleted_results) {
@@ -550,49 +596,35 @@ export async function getDeletedPagesInfo(namespace: string, name: string): Prom
                 })
             }
 
-            // Deleted page is ready
             resolve(final_results);
         });
     });
 }
 
-export async function getInfo(namespace: string, name: string, get_deleted: boolean = false): Promise<[boolean, PageInfo[]]> {
+/**
+ * Get info about a page
+ *
+ * @param address target page's address
+ * @param get_deleted get deleted pages?
+ */
+export async function getPageInfo(address: PageAddress, get_deleted: boolean = false): Promise<[boolean, PageInfo[]]> {
     return new Promise((resolve: any) => {
         // Try to get the page
         sql.execute("SELECT * FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ? LIMIT 1",
-        [namespace, name],
-        (normal_error: any, normal_results: any) => {
+        [address.namespace, address.name],
+        async (normal_error: any, normal_results: any) => {
             if(!normal_error && normal_results.length !== 0) {
-                // Normal page is ready
+                // Normal page is ready (not deleted)
                 resolve([false, [{
                     ...normal_results[0],
 
                     is_deleted: false
                 }]]);
             } else if(get_deleted) {
-                // The page was deleted
-                sql.execute("SELECT * FROM `deleted_wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-                [namespace, name],
-                (deleted_error: any, deleted_results: any) => {
-                    if(deleted_error || deleted_results.length === 0) {
-                        resolve([true, []]);
-                        return;
-                    }
+                // The page was deleted and we were requested to det the deleted page
+                const deleted_results = await getDeletedPageInfo(address);
 
-                    const final_results: PageInfo[] = [];
-
-                    for(const page of deleted_results) {
-                        final_results.push({
-                            ...page,
-
-                            id: page.pageid,
-                            is_deleted: true
-                        })
-                    }
-
-                    // Deleted page is ready
-                    resolve([true, final_results]);
-                });
+                resolve([true, deleted_results]);
             } else {
                 resolve([true, []]);
             }
@@ -600,7 +632,12 @@ export async function getInfo(namespace: string, name: string, get_deleted: bool
     });
 }
 
-function parseRevisionVisibility(raw_byte: UInt8): RevisionVisibility {
+/**
+ * Parse revision visibility buffer
+ *
+ * @param raw_bytes raw bytes
+ */
+function parseRevisionVisibility(raw_bytes: UInt8): RevisionVisibility {
     /*
     Visibility format.
 
@@ -623,7 +660,7 @@ function parseRevisionVisibility(raw_byte: UInt8): RevisionVisibility {
     s: summary
     */
 
-    const bits = bitwise.byte.read(raw_byte);
+    const bits = bitwise.byte.read(raw_bytes);
 
     return {
         overall_visibility: bitwise.byte.write([0, 0, 0, 0, 0, 0, bits[3], bits[4]]),
@@ -638,7 +675,7 @@ function parseRevisionVisibility(raw_byte: UInt8): RevisionVisibility {
  * Get revisions for a page
  *
  * @param page_id get revisions for this page
- * @param user_id get revisions by this user
+ * @param user_id get revisions by this user (WIP)
  * @param get_deleted also get deleted revisions
  * @param apply_filter remove hidden fields from the resulting objects. So, if user_hidden is true, then user field will be null
  * @param filter_client_visibility client's visibility level (used only with apply_filter)
@@ -646,6 +683,7 @@ function parseRevisionVisibility(raw_byte: UInt8): RevisionVisibility {
 export async function getPageRevisions(page_id?: string, user_id?: string, get_deleted: boolean = false, apply_filter: boolean = true,
 filter_client_visibility: number = 0): Promise<{ [revid: number]: Revision }> {
     return new Promise((resolve: any) => {
+        // Construct a query
         let query = "\
 SELECT id, `page`, `user`, `content_hash`, `summary`, `visibility`, `tags`, `timestamp`, `bytes_size`, `bytes_change`, `is_deleted` \
 FROM `revisions` WHERE `page` = ?";
@@ -654,95 +692,130 @@ FROM `revisions` WHERE `page` = ?";
             query += " AND `is_deleted` = b'0'";
         }
 
+        // Get the revisions
         sql.execute(query, [page_id], async (revs_error: any, results: any) => {
             if(revs_error) {
-                resolve([]);
-            } else {
-                // Get users
-                const users_query: string[] = [];
-                const users: any = {};
+                // Some error occured, just return an empty object
+                resolve({});
+                return;
+            }
 
-                for(const result of results) {
-                    if(!users_query.includes(result.user)) users_query.push(result.user);
-                }
+            // Get users, so we can create links to user pages and display their names
+            const users_query: string[] = [];
+            const users: any = {};
 
-                // Query users
-                await new Promise((resolve_users: any) => {
-                    sql.query(`SELECT id, \`username\` FROM \`users\` WHERE id IN (${ users_query.join(",") })`,
-                    (users_error: any, users_results: any) => {
-                        if(!users_error) {
-                            for(const user of users_results) {
-                                users[user.id] = user.username;
-                            }
-                        }
+            // Get all user ids that we encountered
+            for(const result of results) {
+                // Make sure we dont't include the same user more than once in our query
+                if(!users_query.includes(result.user)) users_query.push(result.user);
+            }
 
-                        resolve_users();
-                    });
-                });
+            // Get users
+            // TODO @cleanup idk about that approach
+            let sql_error = false;
 
-                // Construct final results
-                const final_results: { [revid: number]: Revision } = {};
+            const users_results = await sql.promise().query(`SELECT id, \`username\` FROM \`users\` WHERE id IN (${ users_query.join(",") })`)
+            .catch((error: Error) => {
+                resolve({});
+                Util.log("Could not query users for a getPageRevisions function", 3, error);
 
-                for(const result of results) {
-                    const visibility = parseRevisionVisibility(result.visibility.readInt8(0));
+                sql_error = true;
+            });
 
-                    // Completely hidden, don't even add to the results object
-                    if(apply_filter && visibility.overall_visibility > 1 && filter_client_visibility < visibility.overall_visibility)
-                        continue;
+            if(sql_error) return;
 
-                    const revision = {
-                        ...result,
+            // Make a { id: username } object
+            for(const user of users_results[0]) {
+                users[user.id] = user.username;
+            }
 
-                        user: users[result.user],
+            // Construct final results
+            const final_results: { [revid: number]: Revision } = {};
 
-                        tags: result.tags ? result.tags.split(",") : [],
-                        visibility: null,
+            for(const result of results) {
+                // Parse the visibility
+                const visibility = parseRevisionVisibility(result.visibility.readInt8(0));
 
-                        overall_visibility: visibility.overall_visibility,
-                        user_hidden: visibility.user_hidden,
-                        content_hidden: visibility.content_hidden,
-                        summary_hidden: visibility.summary_hidden,
+                // Completely hidden, and filter is enabled, don't even add to the results object
+                if(apply_filter && visibility.overall_visibility > 1 && filter_client_visibility < visibility.overall_visibility)
+                    continue;
 
-                        is_deleted: result.is_deleted.readInt8(0) === 1
-                    };
+                const revision = {
+                    ...result,
 
-                    // Filter
-                    // TODO @performance
-                    if(apply_filter && (filter_client_visibility === 0 || filter_client_visibility < visibility.overall_visibility)) {
-                        if(visibility.overall_visibility > 0) {
-                            revision.user = null;
+                    user: users[result.user],
+
+                    tags: result.tags ? result.tags.split(",") : [],
+                    visibility: null,
+
+                    overall_visibility: visibility.overall_visibility,
+                    user_hidden: visibility.user_hidden,
+                    content_hidden: visibility.content_hidden,
+                    summary_hidden: visibility.summary_hidden,
+
+                    is_deleted: result.is_deleted.readInt8(0) === 1
+                };
+
+                // Filter is enabled, and client's visibility is lower than required -> expunge some data
+                if(apply_filter && (filter_client_visibility === 0 || filter_client_visibility < visibility.overall_visibility)) {
+                    if(visibility.overall_visibility > 0) {
+                        // Overal visibility is higher than 0 (visible for all) -> delete all data
+
+                        revision.user = null;
+                        revision.summary = null;
+
+                        revision.content = null;
+                        revision.bytes_size = 0;
+                        revision.bytes_change = 0;
+                        revision.content_hash = null;
+                    } else {
+                        // Overal visibility is at 0 (visible for all) -> only delete some data that has to be deleted
+
+                        if(revision.user_hidden) revision.user = null;
+                        if(revision.summary_hidden) revision.summary = null;
+
+                        if(revision.content_hidden) {
                             revision.content = null;
-                            revision.summary = null;
-                        } else {
-                            if(revision.user_hidden) revision.user = null;
-                            if(revision.content_hidden) revision.content = null;
-                            if(revision.summary_hidden) revision.summary = null;
-                        }
-
-                        revision._filter_applied = true;
+                            revision.content_hash = null;
+                            revision.bytes_size = 0;
+                            revision.bytes_change = 0;
+                         }
                     }
 
-                    final_results[revision.id] = revision;
+                    revision._filter_applied = true;
                 }
 
-                resolve(final_results);
+                final_results[revision.id] = revision;
             }
+
+            resolve(final_results);
         });
     });
 }
 
-export async function getRevisionsDiff(rev_from: number, rev_to: number, client_visibility: number = 0, get_html: boolean = false): Promise<JsDiff.Change[] | string> {
+/**
+ * Diff two revisions
+ *
+ * @param rev_from id of a revision to use as a `from`
+ * @param rev_to id of a revision to use as the `to`
+ * @param client_visibility client's visibility level
+ * @param get_html get as html
+ */
+export async function getRevisionsDiff(rev_from: number, rev_to: number, client_visibility: number = 0, get_html: boolean = false):
+    Promise<JsDiff.Change[] | string> {
     return new Promise((resolve: any, reject: any) => {
+        // Trying to compare a revision to itself
         if(rev_from === rev_to) {
-            reject(new Error("Ids are the same"));
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Can not compare a revision to itself"));
             return;
         }
 
+        // Get the revisions
         sql.execute("SELECT `content`, `visibility` FROM `revisions` WHERE `is_deleted` = b'0' AND id IN (?, ?)",
         [rev_from, rev_to],
         (error: any, results: any) => {
             if(error || results.length !== 2) {
-                reject();
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not get revisions"));
                 return;
             }
 
@@ -754,15 +827,16 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
             || client_visibility < visibility_from.overall_visibility
             || client_visibility < visibility_to.overall_visibility) {
                 if(visibility_from.overall_visibility > 0 || visibility_to.overall_visibility > 0) {
-                    reject(new Error("One of the revisions is hidden"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "One of the revisions is hidden"));
                     return;
                 } else if(visibility_from.content_hidden || visibility_to.content_hidden) {
-                    reject(new Error("Content of one of the revisions is hidden"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "Content of one of the revisions is hidden"));
                     return;
                 }
             }
 
-            // TODO @performance @placeholder Use normal diff, not the js implementation. It consumes a lot of memory and hangs when working on large revision
+            // TODO @performance @placeholder Use normal diff, not the js implementation. It consumes a lot of memory
+            // and hangs when working on large revisions
             const diff = JsDiff.diffLines(results[0].content, results[1].content);
 
             if(get_html) {
@@ -775,24 +849,95 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
 }
 
 /**
- * Get raw page content
+ * Get page by revid (not rendered)
+ *
+ * @param revid revision id
+ * @param get_deleted get content even if the page is deleted?
+ * @param client_visibility client's visibility level
+ *
+ * Returns [Rejection, ResponsePage | undefined] on rejection
+ *
+ * @returns response page
  */
-export async function getRaw(revid?: number, namespace?: string, name?: string, get_deleted: boolean = false,
-client_visibility: number = 0): Promise<ResponsePage> {
+export async function getPageByRevid(revid: number, get_deleted: boolean = false, client_visibility: number = 0): Promise<ResponsePage> {
     return new Promise(async (resolve: any, reject: any) => {
-        // TODO @placeholder we do not populate the address object
+        // Get the page and the last revision from the database
+        sql.execute("CALL wiki_get_page_by_revid(?)",
+        [revid],
+        (error: any, results: any) => {
+            if(error || results[0].length !== 1) {
+                // Page was not found
 
-        const time_start = process.hrtime();
+                reject([new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Page not found"), undefined]);
+                return;
+            } else {
+                // No errors reported, page found
+
+                const db_results = results[0][0];
+
+                // TODO @cleanup allow pageTitleParser to just take a namespace and a name
+                const page_address = pageTitleParser(`${ db_results.namespace }:${ db_results.name }`);
+
+                const page: ResponsePage = {
+                    address: page_address,
+                    pageid: db_results.pageid,
+                    current_revision: db_results.current_revid,
+
+                    additional_css: [],
+                    additional_js: [],
+
+                    badges: [],
+                    info: {},
+
+                    status: []
+                };
+
+                // Check revision visibility
+                const visibility = parseRevisionVisibility(db_results.visibility.readInt8(0));
+
+                // Check if deleted
+                const is_deleted = db_results.is_deleted.readInt8(0) === 1;
+
+                if(is_deleted && !get_deleted) {
+                    // Deleted page, getting deleted pages disallowed by the argument
+
+                    reject([new Util.Rejection(Util.RejectionType.PAGE_DELETED, "Page not found"), undefined]);
+                } else if(visibility.content_hidden && (client_visibility === 0 || client_visibility < visibility.overall_visibility)) {
+                    // Hidden revision, client visibility level is too low
+
+                    // Content hidden, remove it
+                    page.raw_content = "";
+                    page.status = ["page_revision_hidden"];
+
+                    reject([new Util.Rejection(Util.RejectionType.PAGE_REVISION_HIDDEN, "Revision is hidden"), page]);
+                } else {
+                    // Everything is ok, return the page
+
+                    page.raw_content = db_results.content;
+                    resolve(page);
+                }
+            }
+        });
+    });
+}
+
+/**
+ * Get page by address (not rendered)
+ *
+ * @param page_address page address object
+ * @param get_deleted get content even if the page is deleted?
+ * @param client_visibility client's visibility level
+ *
+ * Returns [Rejection, ResponsePage] on rejection
+ *
+ * @returns response page
+ */
+export async function getPageByAddress(page_address: PageAddress, get_deleted: boolean = false, client_visibility: number = 0): Promise<ResponsePage> {
+    return new Promise(async (resolve: any, reject: any) => {
+        // TODO implement get_deleted.
+
         const page: ResponsePage = {
-            address: {
-                namespace: "",
-                name: "",
-                root_name: "",
-
-                raw_url: "",
-                query: [],
-                url_params: []
-            },
+            address: page_address,
 
             additional_css: [],
             additional_js: [],
@@ -803,80 +948,58 @@ client_visibility: number = 0): Promise<ResponsePage> {
             status: []
         };
 
-        if(namespace && name) {
-            // Get by title
-            page.address.name = name;
-            page.address.namespace = namespace;
+        // Get the page and the last revision from the database
+        sql.execute("CALL wiki_get_page(?, ?)",
+        [page_address.namespace, page_address.name],
+        (error: any, results: any) => {
+            if(error || results[0].length !== 1) {
+                // Page was not found
 
-            sql.query("SET @pageid = NULL; SET @revid = NULL; SELECT id, `revision` INTO @pageid, @revid FROM `wiki_pages` \
-WHERE `namespace` = ? AND `name` = ? LIMIT 1; SELECT id, @pageid, `content`, `visibility` FROM `revisions` WHERE id = @revid;",
-            [namespace, name],
-            (error: any, results: any) => {
-                if(error || !results[3][0]) {
-                    // Page was not found
-                    page.status.push("page_not_found");
+                page.status = ["page_not_found"];
+
+                reject([new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Page not found"), page]);
+                return;
+            } else {
+                // No errors reported, page found
+
+                const db_results = results[0][0];
+
+                // Update the page
+                page.pageid = db_results.pageid;
+                page.current_revision = db_results.revid;
+
+                // Check revision visibility
+                const visibility = parseRevisionVisibility(db_results.visibility.readInt8(0));
+
+                if(visibility.content_hidden && (client_visibility === 0 || client_visibility < visibility.overall_visibility)) {
+                    // Hidden revision, client visibility level is too low
+
+                    // Content hidden, remove it
+                    page.raw_content = "";
+                    page.status = ["page_revision_hidden"];
+
+                    reject([new Util.Rejection(Util.RejectionType.PAGE_REVISION_HIDDEN, "Revision is hidden"), page]);
                 } else {
-                    const db_page = results[3][0];
+                    // Everything is ok, return the page
 
-                    page.pageid = db_page["@pageid"];
-                    page.current_revision = db_page.id;
-
-                    // Check revision visibility
-                    const visibility = parseRevisionVisibility(db_page.visibility.readInt8(0));
-
-                    if(visibility.content_hidden && (client_visibility === 0 || client_visibility < visibility.overall_visibility)) {
-                        page.status.push("revision_hidden");
-                    } else {
-                        page.raw_content = db_page.content;
-                    }
+                    page.raw_content = db_results.content;
+                    resolve(page);
                 }
-
-                page.access_time_ms = process.hrtime(time_start)[1] / 1000000;
-
-                resolve(page);
-            });
-        } else if(revid) {
-            // Get by revid
-            sql.execute("SELECT `content`, `visibility`, `is_deleted` FROM `revisions` WHERE id = ?",
-            [revid],
-            (error: any, results: any) => {
-                if(error || results.length !== 1) {
-                    // Page was not found
-                    page.status.push("page_not_found");
-                } else {
-                    const db_page = results[0];
-
-                    // Check revision visibility
-                    const visibility = parseRevisionVisibility(db_page.visibility.readInt8(0));
-
-                    if(visibility.content_hidden && (client_visibility === 0 || client_visibility < visibility.overall_visibility)) {
-                        page.status.push("revision_hidden");
-                    } else if(db_page.is_deleted && !get_deleted) {
-                        page.status.push("page_not_found");
-                        page.status.push("page_deleted");
-                    } else {
-                        page.raw_content = db_page.content;
-                    }
-                }
-
-                page.access_time_ms = process.hrtime(time_start)[1] / 1000000;
-
-                resolve(page);
-            });
-        } else {
-            reject([new Error("either revid or a namespace and name pair required"), page]);
-            return;
-        }
+            }
+        });
     });
 }
 
 /**
- * Get page (rendered and ready to be served to the client)
+ * Get a page
  *
- * @param address [[PageAddress]] object
+ * @param address page's address
+ * @param client client
+ * @param template_params template params that will be passed to the wikitextRenderer
+ * @param add_div_tag
  */
-// TODO flag to only get the raw content and don't render
-export async function get(address: PageAddress, client: User.User, template_params?: any, add_div_tag: boolean = true): Promise<ResponsePage> {
+export async function get(address: PageAddress, client: User.User, template_params?: any, add_div_tag: boolean = true):
+    Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
         // Get the namespace handler
         const namespace = registry_namespaces.get()[address.namespace] as Namespace;
@@ -894,60 +1017,81 @@ export async function get(address: PageAddress, client: User.User, template_para
                         "page-badge-namespacenotfound"
                     ];
 
-                    if(page.status.includes("page_deleted")) {
-                        sysmsgs_query.push("page-error-deleted");
-                    }
-
                     // Get error system messages (we preload page-badge-namespacenotfound)
                     error_sysmsgs = await SystemMessage.get(sysmsgs_query);
-                    page.parsed_content = "";
 
-                    if(page.status.includes("page_deleted")) {
-                        page.parsed_content += error_sysmsgs["page-error-deleted"].value + "<br>";
-                    }
+                    // Set page's content to the notfound message
+                    page.parsed_content = error_sysmsgs["page-error-notfound"].value;
 
-                    page.parsed_content += error_sysmsgs["page-error-notfound"].value;
+                    // Set a notfound badge
                     page.badges.push(error_sysmsgs["page-badge-pagenotfound"].value);
+                }
+
+                // Revision was hidden
+                if(page.status.includes("page_revision_hidden")) {
+                    // Get page-error-revisionhidden system message
+                    error_sysmsgs = await SystemMessage.get([
+                        "page-error-revisionhidden"
+                    ]);
+
+                    // Set page's content to the notfound message
+                    page.parsed_content = error_sysmsgs["page-error-revisionhidden"].value;
                 }
 
                 // Check if namespace exists
                 if(namespace) {
-                    // Inherit info items
+                    // Namespace exists
+
+                    // Inherit info items from the namespace
                     // tslint:disable-next-line: forin
                     for(const info_item_name in namespace.info) {
                         if(!page.info.hasOwnProperty(info_item_name)) page.info[info_item_name] = namespace.info[info_item_name];
                     }
 
-                    page.display_title = `${ !namespace.info.hiddennamespacename ? (namespace.name + ":") : "" }${ address.name }`;
+                    // Hide the namespace, if title is set to hidden
+                    if(namespace.info.hiddennamespacename) {
+                        page.address.display_title = page.address.display_title.substring(page.address.display_namespace.length + 1);
+                    }
                 } else {
-                    page.display_title = `${ address.namespace }:${ address.name }`;
+                    // Namespace does not exist
+
+                    // Set a status
                     page.status.push("namespace_not_found");
 
+                    // Set a badge
                     page.badges.push(error_sysmsgs["page-badge-namespacenotfound"].value);
                 }
 
-                if(!page.parsed_content && page.raw_content) page.parsed_content = (await renderWikitext(page.raw_content, template_params || {}, add_div_tag)).content;
+                // Render content, passing the template params
+                if(!page.parsed_content && page.raw_content) {
+                    page.parsed_content = (await renderWikitext(page.raw_content, template_params || {}, add_div_tag)).content;
+                }
 
                 common_resolve(page);
             });
         };
 
-        // Namespace handler is available
+        // Namespace handler is available, do not use the common one, just call the handler
         if(namespace && namespace.handler) {
             namespace.handler(address, client)
             .then((page: ResponsePage) => {
                 resolve(page);
                 return;
             });
+
+            // TODO? edge case if the handler rejects for some reason
         } else {
-            // TODO @cleanup
-            // Main / nonexistent namespace
-            getRaw(undefined, address.namespace, address.name)
+            // Main / nonexistent namespace, use the common namespace handler
+            getPageByAddress(address)
             .then(async (page: ResponsePage) => {
+                // Page was found
+
                 resolve(await commonHandler(page));
             })
-            .catch(async (rejection: any[]) => {
-                resolve(await commonHandler(rejection[1]));
+            .catch(async (rejection_and_page: [Util.Rejection, ResponsePage]) => {
+                // Some error occured, the page was probably not found
+
+                resolve(await commonHandler(rejection_and_page[1]));
             });
         }
     });

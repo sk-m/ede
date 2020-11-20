@@ -47,7 +47,7 @@ function wikipageDeletePageScript() {
         ede.apiCall("page/delete", final_params, true)
         .then(() => {
             // TODO implement quickrefresh (maybe)
-            ede.refresh();
+            ede.navigate(`/System:DeletedWikiPages?title=${ final_params.title }`);
 
             ede.showNotification("deletewikipage-success", "Success", "Page deleted successfully.");
         })

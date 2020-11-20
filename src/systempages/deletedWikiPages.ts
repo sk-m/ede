@@ -81,8 +81,8 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         // Get the page
         const page_address = pageTitleParser(queried_page_fullname);
 
-        const existent_page_query: any = await Page.getInfo(page_address.namespace, page_address.name);
-        const deleted_page_query: any = await Page.getDeletedPagesInfo(page_address.namespace, page_address.name);
+        const existent_page_query: any = await Page.getPageInfo(page_address);
+        const deleted_page_query: any = await Page.getDeletedPageInfo(page_address);
 
         // Page with such name currenly exists
         const page_with_such_name_exists = existent_page_query[1].length !== 0;

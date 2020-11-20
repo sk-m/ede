@@ -73,14 +73,23 @@ async function serverInit(db_error: Error): Promise<void> {
         Util.log("Database logging enabled", 0);
         let i = 1;
 
-        const oldQuery = sql.query;
+        const old_query = sql.query;
+        const old_execute = sql.execute;
 
         sql.query = (...args: any) => {
-            const queryCmd = oldQuery.apply(sql, args);
-            Util.log(`DB query #${ i }: ${ queryCmd.sql }`, 0);
+            const query_cmd = old_query.apply(sql, args);
+            Util.log(`DB query #${ i }: ${ query_cmd.sql }`, 0);
             i++;
 
-            return queryCmd;
+            return query_cmd;
+        }
+
+        sql.execute = (...args: any) => {
+            const execute_cmd = old_execute.apply(sql, args);
+            Util.log(`DB execute #${ i }: ${ execute_cmd.sql }`, 0);
+            i++;
+
+            return execute_cmd;
         }
     }
 

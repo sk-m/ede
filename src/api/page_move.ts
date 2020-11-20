@@ -16,7 +16,7 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
     let client_permissions_error = true;
 
     // Parse the title
-    const address = pageTitleParser(req.body.title);
+    const old_address = pageTitleParser(req.body.title);
 
     // Check if client has the rights to move pages
     await User.getUserGroupRights(client_user.id)
@@ -31,14 +31,14 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
     }
 
     // Check if user changed something
-    if(address.namespace === req.body.new_namespace && address.name === req.body.new_name) {
+    if(old_address.namespace === req.body.new_namespace && old_address.name === req.body.new_name) {
         res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Nothing changed"));
         return;
     }
 
     // Get the page
     sql.execute("SELECT id FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-    [address.namespace, address.name],
+    [old_address.namespace, old_address.name],
     (query_error: any, results: any) => {
         if(query_error || results.length < 1) {
             res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested page was not found"));
@@ -48,16 +48,17 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
             Page.movePage(results[0].id, req.body.new_namespace, req.body.new_name)
             .then(() => {
                 const new_title = `${ req.body.new_namespace }:${ req.body.new_name }`;
+                const new_address = pageTitleParser(new_title);
 
                 // TODO idk about this solution
 
                 // Log for old title
-                Log.createEntry("movewikipage", client_user.id, req.body.title,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <i><a href="/${ req.body.title }">${ req.body.title }</a></i> to <a href="/${ new_title }">${ new_title }</a> (<code>${ results[0].id }</code>)`, req.body.summary);
+                Log.createEntry("movewikipage", client_user.id, old_address.title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <i><a href="/${ old_address.title }">${ old_address.display_title }</a></i> to <a href="/${ new_address.title }">${ new_address.display_title }</a> (<code>${ results[0].id }</code>)`, req.body.summary);
 
                 // Log for new title
-                Log.createEntry("movewikipage", client_user.id, new_title,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <a href="/${ req.body.title }">${ req.body.title }</a> to <i><a href="/${ new_title }">${ new_title }</a></i> (<code>${ results[0].id }</code>)`, req.body.summary);
+                Log.createEntry("movewikipage", client_user.id, new_address.title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> moved wiki page <a href="/${ old_address.title }">${ old_address.display_title }</a> to <i><a href="/${ new_address.title }">${ new_address.display_title }</a></i> (<code>${ results[0].id }</code>)`, req.body.summary);
 
                 res.send(apiResponse(ApiResponseStatus.success));
             })

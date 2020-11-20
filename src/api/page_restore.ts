@@ -29,12 +29,20 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
 
     // Restore the page
     Page.restorePage(req.body.pageid, is_new_name && req.body.new_namespace, is_new_name && req.body.new_name)
-    .then((new_page: any) => {
-        Log.createEntry("restorewikipage", client_user.id, new_page[1],
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <a href="/${ new_page[2] }">${ new_page[2] }</a> \
-${ is_new_name ? `to <a href="/${ new_page[1] }">${ new_page[1] }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page[0] }</code>)`, req.body.summary);
+    .then((new_page_data: [number, /* new */ Page.PageAddress, /* old */ Page.PageAddress]) => {
+        // TODO idk about this approach
 
-        res.send(apiResponse(ApiResponseStatus.success, { new_title: new_page[1] }));
+        // Log for new page
+        Log.createEntry("restorewikipage", client_user.id, new_page_data[1].title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a> \
+${ is_new_name ? `to <i><a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a></i> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
+
+        // Log for old page
+        Log.createEntry("restorewikipage", client_user.id, new_page_data[2].title,
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <i><a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a></i> \
+${ is_new_name ? `to <a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
+
+        res.send(apiResponse(ApiResponseStatus.success, { new_title: new_page_data[1].title }));
     })
     .catch((error: any) => {
         // TODO save error to a log

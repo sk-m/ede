@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `pageid` int unsigned NOT NULL,
   `namespace` varchar(64) NOT NULL,
-  `name` tinytext NOT NULL,
+  `name` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
   `deleted_by` int unsigned NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
   `delete_summary` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pageid` (`pageid`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `deleted_wiki_pages` DISABLE KEYS */;
 /*!40000 ALTER TABLE `deleted_wiki_pages` ENABLE KEYS */;
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS `logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
   `executor` int unsigned NOT NULL,
-  `target` varchar(256) NOT NULL,
-  `action_text` varchar(2048) NOT NULL DEFAULT '',
+  `target` varchar(256) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
+  `action_text` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL DEFAULT '',
   `summary_text` varchar(1024) NOT NULL DEFAULT '',
   `created_on` int unsigned NOT NULL,
   `visibility_level` tinyint unsigned NOT NULL DEFAULT '0',
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS `revisions` (
 CREATE TABLE IF NOT EXISTS `system_messages` (
   `id` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
-  `value` text,
+  `value` text CHARACTER SET utf16 COLLATE utf16_unicode_ci,
   `default_value` text,
   `rev_history` json NOT NULL,
   `deletable` bit(1) NOT NULL DEFAULT b'0',
@@ -292,10 +292,117 @@ CREATE TABLE IF NOT EXISTS `user_tracking` (
 /*!40000 ALTER TABLE `user_tracking` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_tracking` ENABLE KEYS */;
 
+DELIMITER //
+CREATE PROCEDURE `wiki_create_revision`(
+	IN `p_page_id` INT,
+	IN `p_user_id` INT,
+	IN `p_content` MEDIUMTEXT,
+	IN `p_content_hash` VARCHAR(50),
+	IN `p_summary` VARCHAR(1024),
+	IN `p_bytes_size` INT
+)
+    NO SQL
+    COMMENT 'Creates a new revision for a wiki page'
+BEGIN
+	DECLARE l_last_rev_size INT;
+	DECLARE l_bytes_change INT;
+
+	# Get the size of the last revision
+	SELECT `bytes_size` INTO l_last_rev_size FROM `revisions` WHERE `page` = p_page_id ORDER BY id DESC LIMIT 1;
+
+
+	# Calculate size change (set to 0 if new page)
+	SET l_bytes_change = IFNULL((SELECT p_bytes_size - l_last_rev_size), 0);
+
+	# Create a new revision
+	INSERT INTO `revisions` (`page`, `user`, `content`, `content_hash`, `summary`, `timestamp`, `bytes_size`, `bytes_change`)
+	VALUES (p_page_id, p_user_id, p_content, p_content_hash, p_summary, UNIX_TIMESTAMP(), p_bytes_size, l_bytes_change);
+
+	# Update the page
+	UPDATE `wiki_pages` SET `revision` = LAST_INSERT_ID() WHERE id = p_page_id;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `wiki_delete_page`(
+	IN `p_page_id` INT,
+	IN `p_deleted_by` INT,
+	IN `p_delete_summary` VARCHAR(1024)
+)
+    NO SQL
+    COMMENT 'Delete (move to archive) a wiki page'
+BEGIN
+	DECLARE l_page_namespace VARCHAR(64);
+	DECLARE l_page_name VARCHAR(2048);
+	DECLARE l_page_info JSON;
+	DECLARE l_page_action_restrictions JSON;
+	
+	# Get the page
+	SELECT `namespace`, `name`, `page_info`, `action_restrictions` INTO l_page_namespace, l_page_name, l_page_info, l_page_action_restrictions
+	FROM `wiki_pages` WHERE id = p_page_id;
+	
+	# Create an archive entry
+	INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, `deleted_by`, `deleted_on`, `delete_summary`)
+	VALUES (p_page_id, l_page_namespace, l_page_name, l_page_info, l_page_action_restrictions, p_deleted_by, UNIX_TIMESTAMP(), p_delete_summary);
+	
+	# Delete the page from the wiki_pages
+	DELETE FROM `wiki_pages` WHERE id = p_page_id;
+	
+	# Hide (delete) all related revisions
+	UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = p_page_id;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `wiki_get_page`(
+	IN `p_namespace` VARCHAR(64),
+	IN `p_name` VARCHAR(2048)
+)
+    NO SQL
+    COMMENT 'Get a wiki page and it''s content'
+BEGIN
+	DECLARE l_pageid INT;
+	DECLARE l_revid INT;
+
+	# Find a last revision id for a page
+	SELECT id, `revision` INTO l_pageid, l_revid FROM `wiki_pages` WHERE `namespace` = p_namespace AND `name` = p_name LIMIT 1;
+	
+	# "Return" the page id, revision id and some info about a revision
+	SELECT id AS revid, l_pageid AS pageid, `content`, `visibility` FROM `revisions` WHERE id = l_revid;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `wiki_get_page_by_revid`(
+	IN `p_revid` INT
+)
+    NO SQL
+    COMMENT 'Get a wiki page by the revid'
+BEGIN
+	DECLARE l_pageid INT;
+	DECLARE l_content TEXT;
+	DECLARE l_visibility BIT(5);
+	DECLARE l_namespace VARCHAR(64);
+	DECLARE l_name VARCHAR(2048);
+	DECLARE l_is_deleted BIT(1);
+
+	# Get a revision by provided revid and get it's pageid
+	SELECT `page`, `content`, `visibility`, `is_deleted` INTO l_pageid, l_content, l_visibility, l_is_deleted FROM `revisions` WHERE id = p_revid LIMIT 1;
+
+	IF l_is_deleted = b'1' THEN
+		# Get deleted page
+		SELECT l_is_deleted AS is_deleted, l_pageid AS pageid, l_content AS content, l_visibility AS visibility, `name`, `namespace` FROM `deleted_wiki_pages` WHERE `pageid` = l_pageid LIMIT 1;
+	ELSE
+		#Get normal page
+		SELECT l_is_deleted AS is_deleted, l_pageid AS pageid, l_content AS content, `revision` AS current_revid, l_visibility AS visibility, `name`, `namespace` FROM `wiki_pages` WHERE id = l_pageid LIMIT 1;
+	END IF;
+END//
+DELIMITER ;
+
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `namespace` varchar(64) DEFAULT NULL,
-  `name` tinytext NOT NULL,
+  `name` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
   `revision` bigint unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
@@ -308,6 +415,38 @@ CREATE TABLE IF NOT EXISTS `wiki_pages` (
 
 /*!40000 ALTER TABLE `wiki_pages` DISABLE KEYS */;
 /*!40000 ALTER TABLE `wiki_pages` ENABLE KEYS */;
+
+DELIMITER //
+CREATE FUNCTION `wiki_restore_page`(
+	`p_old_pageid` INT,
+	`p_namespace` VARCHAR(64),
+	`p_name` VARCHAR(2048),
+	`p_revid` INT,
+	`p_page_info` JSON,
+	`p_action_restrictions` JSON
+) RETURNS int
+    NO SQL
+    COMMENT 'Restore a wiki page'
+BEGIN
+	DECLARE l_new_pageid INT;
+
+	# Create a new page (restore)
+	INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`)
+   VALUES (p_namespace, p_name, p_revid, p_page_info, p_action_restrictions);
+	
+	# Get the new page id
+	SET l_new_pageid = LAST_INSERT_ID();
+	
+	# Undelete revisions
+	UPDATE `revisions` SET `page` = l_new_pageid, `is_deleted` = b'0' WHERE `page` = p_old_pageid;
+   
+   # Delete the page from the archive
+   DELETE FROM `deleted_wiki_pages` WHERE `pageid` = p_old_pageid;
+	
+	# Return the new pageid
+	RETURN l_new_pageid;
+END//
+DELIMITER ;
 
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
