@@ -27,7 +27,7 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     let client_can_create_pages = false;
 
     // Check if client has the rights to update this page's content
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         // Page editing
         if(grouprights.rights.wiki_edit && grouprights.rights.wiki_edit.namespaces.includes(page_address.namespace)) {

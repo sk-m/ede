@@ -86,7 +86,7 @@ ${ query_form_html }
 
             // Get client's rights
             if(client) {
-                await User.getUserGroupRights(client.id)
+                await User.getRights(client.id)
                 .then((client_grouprights: GroupsAndRightsObject) => {
                     if(client_grouprights.rights.editsystemmessages) client_can_modify = true;
                 })

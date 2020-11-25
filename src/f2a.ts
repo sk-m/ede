@@ -15,8 +15,8 @@ interface CheckResult {
 /**
  * Check if the user has f2a enabled and (if provided) one time password is valid
  *
- * @param user_id User's id
- * @param otp User's one-time password or backup code
+ * @param user_id user's id
+ * @param otp user's one-time password or backup code
  */
 export async function check(user_id: number, otp?: string): Promise<CheckResult> {
     // TODO @cleanup

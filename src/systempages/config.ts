@@ -247,7 +247,7 @@ export async function config(page: Page.ResponsePage, client: User.User): Promis
 
         // Check if client can modify the config
         if(client) {
-            await User.getUserGroupRights(client.id)
+            await User.getRights(client.id)
             .then((client_rights: GroupsAndRightsObject) => {
                 if(client_rights.rights.modifyconfig) {
                     client_can_alter = true;

@@ -289,7 +289,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
         // Get client's groups
         if(client) {
-            client_groups = await User.getUserGroupRights(client.id).catch(() => undefined);
+            client_groups = await User.getRights(client.id).catch(() => undefined);
         }
 
         // Header

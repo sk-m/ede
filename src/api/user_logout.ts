@@ -1,5 +1,6 @@
 import * as User from "../user";
-import { apiResponse, ApiResponseStatus } from "../api";
+import * as Util from "../utils";
+import { apiError, apiResponse, ApiResponseStatus } from "../api";
 import { registry_config } from "../registry";
 
 export async function logoutUserRoute(_: any, res: any, client_user?: User.User): Promise<void> {
@@ -9,8 +10,11 @@ export async function logoutUserRoute(_: any, res: any, client_user?: User.User)
         return;
     }
 
+    console.log(client_user);
+    
+
     // TODO @cleanup User::id should be an int, not a string
-    User.invalidateUserSession(parseInt(client_user.id, 10), client_user.current_session)
+    User.invalidateUserSession(client_user.id, client_user.current_session.session_token)
     .then(() => {
         const registry_config_snapshot = registry_config.get();
 
@@ -21,8 +25,11 @@ export async function logoutUserRoute(_: any, res: any, client_user?: User.User)
 
         res.send(apiResponse(ApiResponseStatus.success));
     })
-    .catch(() => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Could not log out"));
+    .catch((rejection: Util.Rejection) => {
+        console.log(rejection);
+        
+
+        res.status(403).send(apiError(rejection));
         // TODO log this incident to file
         // TODO also might be nice to have a systempage with such incidents
     });

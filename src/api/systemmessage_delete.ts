@@ -13,7 +13,7 @@ export async function systemmessageDeleteRoute(req: any, res: any, client_user?:
 
     let client_permissions_error = true;
     // Check if client has the rights to delete systemmessages
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((client_grouprights: GroupsAndRightsObject) => {
         if(client_grouprights.rights.editsystemmessages) client_permissions_error = false;
     })

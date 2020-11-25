@@ -1,4 +1,12 @@
 import he from "he";
+import crypto from "crypto"
+
+export interface Hash {
+    readonly salt: string,
+    readonly key: string,
+    readonly iterations: number,
+    readonly keylen: number
+}
 
 /** @ignore */
 enum Colors {
@@ -119,10 +127,41 @@ export function formatTimeString(timestamp: number): string {
     return `${ years } year(s), ${ months } month(s)`;
 }
 
+/**
+ * Transform a buffer to a cookie and url safe string
+ *
+ * @param input input buffer
+ */
+export function sanitizeBuffer(input: string | Buffer): string {
+    if(input instanceof Buffer) return input.toString("base64").replace(/[\+/=]/g, "_");
+    return input.replace(/[\+/=]/g, "_");
+}
+
+/**
+ * crypto.pbkdf2 wrapper
+ */
+export async function pbkdf2(input_string: string, salt: string, iterations: number, keylen: number): Promise<Hash> {
+    return new Promise((resolve: any) => {
+        crypto.pbkdf2(input_string, salt, iterations, keylen, "sha512",
+        (_hash_error: any, derived_key: Buffer) => {
+            // TODO maybe handle the error?
+            resolve({
+                salt,
+                key: derived_key.toString("base64"),
+                iterations,
+                keylen
+            });
+        });
+    });
+}
+
 export enum RejectionType {
     GENERAL_UNKNOWN,
     GENERAL_INVALID_DATA,
     GENERAL_ACCESS_DENIED,
+
+    USER_NOT_FOUND,
+    USER_SESSION_INVALID,
 
     PAGE_NOT_FOUND,
     PAGE_DELETED,

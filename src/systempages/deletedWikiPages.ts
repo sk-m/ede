@@ -56,7 +56,7 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
 
         // Get client's groups
         if(client) {
-            client_groups = await User.getUserGroupRights(client.id).catch(() => undefined);
+            client_groups = await User.getRights(client.id).catch(() => undefined);
         }
 
         if(!client_groups || !client_groups.rights.wiki_restorepage) {
@@ -123,7 +123,7 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         const userids: string[] = [];
 
         // TODO figure out what i was trying to do here :P
-        let user_query_error = false;
+        // let user_query_error = false;
 
         for(const p of deleted_page_query) {
             if(!userids.includes(p.deleted_by)){
@@ -136,7 +136,7 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
             sql.query(`SELECT id, \`username\` FROM \`users\` WHERE id IN (${ userids.join(",") })`,
             (error: any, results: any) => {
                 if(error || results.length === 0) {
-                    user_query_error = true;
+                    // user_query_error = true;
                 } else {
                     for(const result of results) {
                         users[result.id] = result.username;

@@ -16,12 +16,12 @@
 	// 	"description": "Log output to console"
 	// }
 
-	"Print to console": {
+	"New rejection": {
 		"scope": "typescript",
 		"prefix": "rejection",
 		"body": [
 			"reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, \"$1\"));",
-            "Util.log(\"$1\", 3, error);",
+            "Util.log(`$1`, 3, error);",
 			"",
             "return;"
 		],

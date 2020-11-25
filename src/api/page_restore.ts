@@ -14,7 +14,7 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
     let client_permissions_error = true;
 
     // Check if client has the rights to restore pages
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_restorepage) client_permissions_error = false;
     })

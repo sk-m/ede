@@ -103,7 +103,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
             let client_permissions_error = true;
 
             if(client_user) {
-                await User.getUserGroupRights(client_user.id)
+                await User.getRights(client_user.id)
                 .then((grouprights: GroupsAndRightsObject) => {
                     if(grouprights.rights.wiki_restorepage) {
                         // Main right

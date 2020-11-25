@@ -23,7 +23,7 @@ export async function updateUserGroupMembershipRoute(req: any, res: any, client_
     let target_user_grouprights: any;
 
     // Check if client has the rights to modify user's group membership
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         client_grouprights = grouprights;
 
@@ -49,7 +49,7 @@ user's group membership"));
     }
 
     // Get target user's groups
-    target_user_grouprights = await User.getUserGroupRights(target_user.id).catch(() => {
+    target_user_grouprights = await User.getRights(target_user.id).catch(() => {
         target_user_error = true;
     })
 

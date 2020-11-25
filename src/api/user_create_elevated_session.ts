@@ -1,4 +1,5 @@
 import * as User from "../user";
+import * as Util from "../utils";
 import { apiResponse, ApiResponseStatus } from "../api";
 import { registry_config } from "../registry";
 import { sql } from "../server";
@@ -28,20 +29,20 @@ export async function createElevatedSessionRoute(req: any, res: any, client_user
 
         // Check password
         // TODO move this function to Util
-        User.pbkdf2(
+        Util.pbkdf2(
             req.body.password,
             db_password_salt,
             db_password_iterations,
             db_password_keylen
         )
-        .then(async (password_hash: User.Hash) => {
+        .then(async (password_hash: Util.Hash) => {
             if(db_password_hash !== password_hash.key) {
                 res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Invalid password"));
                 return;
             }
 
             // Create an elevated session
-            User.createElevatedSession(parseInt(client_user.id, 10))
+            User.createElevatedSession(client_user.id)
             .then((result: any[]) => {
                 const registry_config_snapshot = registry_config.get();
 

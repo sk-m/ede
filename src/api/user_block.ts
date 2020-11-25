@@ -16,7 +16,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     let client_restricted_groups: string[] = [];
 
     // Check if client has the rights to block users
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((client_grouprights: GroupsAndRightsObject) => {
         if(client_grouprights.rights.blockuser) {
             client_permissions_error = false;
@@ -51,7 +51,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     // Get the target user
     User.getFromUsername(req.body.username)
     .then(async (target_user: User.User) => {
-        User.getUserGroupRights(target_user.id)
+        User.getRights(target_user.id)
         .then(async (target_user_groups: GroupsAndRightsObject) => {
             let error_group: string | false = false;
 

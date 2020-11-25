@@ -1,31 +1,27 @@
 import crypto from "crypto";
-import request from "request";
 import { v4 as uuidv4 } from "uuid";
 import cookie from "cookie";
 
 import { sql } from "./server";
-import * as SystemMessage from "./system_message";
 import * as Util from "./utils";
-import * as F2A from "./f2a";
-import * as Mail from "./mail";
-import * as MailTemplates from "./mail_templates";
 
-import * as SECRETS from "../secrets.json";
+
 import { registry_config } from "./registry";
 import { SECURITY_COOKIE_SID_SIZE, SECURITY_COOKIE_SALT_SIZE, SECURITY_CSRF_TOKEN_SIZE, SECURITY_SID_HASHING_ITERATIONS, SECURITY_SID_HASHING_KEYLEN } from "./constants";
 import { GroupsObject, Group, GroupsAndRightsObject } from "./right";
 
 export interface User {
-    id: string;
+    id: number;
 
     username: string;
 
     email_address?: string;
     email_verified?: boolean;
 
-    password_hash_salt?: string;
-    password_hash_iterations?: number;
-    password_hash_keylen?: number;
+    password_hash_hash: string;
+    password_hash_salt: string;
+    password_hash_iterations: number;
+    password_hash_keylen: number;
 
     stats?: UserStats;
     blocks: string[];
@@ -60,53 +56,46 @@ export enum UsernameAvailability {
     Forbidden
 }
 
-export interface Hash {
-    readonly salt: string,
-    readonly key: string,
-    readonly iterations: number,
-    readonly keylen: number
-}
-
-// TODO move to Util
-export async function pbkdf2(input_string: string, salt: string, iterations: number, keylen: number): Promise<Hash> {
-    return new Promise((resolve: any) => {
-        crypto.pbkdf2(input_string, salt, iterations, keylen, "sha512",
-        (_hash_error: any, derived_key: Buffer) => {
-            // TODO maybe handle the error?
-            resolve({
-                salt,
-                key: derived_key.toString("base64"),
-                iterations,
-                keylen
-            });
-        });
-    });
-}
-
-// TODO move to Util
-export function formatString(input: string | Buffer): string {
-    if(input instanceof Buffer) return input.toString("base64").replace(/[\+/=]/g, "_");
-    return input.replace(/[\+/=]/g, "_");
-}
-
 /**
  * Check if username is valid and not already taken
  *
- * @param username Username
+ * @param username username
  */
 export async function checkUsername(username: string): Promise<UsernameAvailability> {
     return new Promise((resolve: any) => {
         if(
-            !username || username === "" ||
-            !username.match(/^[A-Za-z0-9_]{2,32}$/) ||
-            !/[A-Za-z_]/.test(username.charAt(0))
+            !username ||
+            !username.match(/^[A-Za-z0-9_]{2,32}$/) ||  // Chcek for the correct format
+            !/[A-Za-z_]/.test(username.charAt(0))       // Ensure that the first char is a letter or an underscore
         ) {
             resolve(UsernameAvailability.InvalidFormat);
             return;
         }
 
+        const forbidden_usernames: string[] = [
+            "admin",
+            "administrator",
+            "moderator",
+            "hostmaster",
+            "webmaster",
+            "root",
+            "sysadmin",
+            "ede",
+            "wiki"
+        ];
+
+        // Check for forbidden usernames
+        // TODO make this list modifiable from EDE Config page
+        if(forbidden_usernames.indexOf(username) > -1) {
+            resolve(UsernameAvailability.Forbidden);
+            return;
+        }
+
+        // Check if such username is already taken
+
         // TODO probably wont work because of toLowerCase(). Maybe we should have username and display_username in the database?
-        sql.execute(`SELECT id FROM \`users\` WHERE username = ?`,
+        // Currently, our database is set up in the way that makes the username field *not* case-sensitive, so this should work for now
+        sql.execute(`SELECT id FROM \`users\` WHERE username = ? LIMIT 1`,
         [username.toLowerCase()],
         (error: any, results: any) => {
             if(error || results.length !== 0) resolve(UsernameAvailability.Taken);
@@ -116,20 +105,24 @@ export async function checkUsername(username: string): Promise<UsernameAvailabil
 }
 
 /**
+ * Get all user groups and assigned to them rights from the database
+ *
  * @category Registry updater
  */
 export async function getAllUserGroups(): Promise<any> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT `name`, `added_rights`, `right_arguments` FROM `user_groups`", (error: any, results: any) => {
             if(error || results.length < 1) {
-                Util.log("Could not get all user groups from the database", 3);
+                Util.log("Could not get all user groups from the database", 4, error);
 
-                reject();
+                process.exit(1);
             } else {
                 const result_object: GroupsObject = {};
+
                 for(const group of results) {
                     let added_rights = [];
 
+                    // TODO @cleanup replace delimiter with `|`
                     if(group.added_rights) {
                         added_rights = group.added_rights.split(";");
                     }
@@ -149,151 +142,181 @@ export async function getAllUserGroups(): Promise<any> {
 }
 
 /**
- * Update the user group in the database (does not update the registry container)
+ * Save user group to the database (does not update the registry container)
  *
- * @param user_group new user group
+ * @param user_group new user group object
  */
-export async function saveUserGroup(user_group: Group): Promise<true> {
+export async function saveUserGroup(user_group: Group): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("UPDATE `user_groups` SET `added_rights` = ?, `right_arguments` = ? WHERE `name` = ?",
         [user_group.added_rights.join(";"), JSON.stringify(user_group.right_arguments), user_group.name],
         (error: any, results: any) => {
             if(error || results.length < 1) {
-                Util.log(`Could not save user group '${ user_group.name }' to the database`, 3, error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not save user group to the database"));
 
-                reject(error);
+                Util.log(`Could not save user group '${ user_group.name }' to the database`, 3, error);
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Create a new user groups without rights
+ * Create a new user group (without rights)
  *
- * @param name Internal name of the new user group
+ * @param name internal name of the new user group
  */
-export async function createUserGroup(name: string): Promise<true> {
+export async function createUserGroup(name: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("INSERT INTO `user_groups` (`name`,`added_rights`,`right_arguments`) VALUES (?, '', '{}')",
         [name],
         (error: any, results: any) => {
             if(error || results.length < 1) {
-                Util.log(`Could not create a new user group '${ name }'`, 3, error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user group"));
 
-                reject(error);
+                Util.log(`Could not create a new user group '${ name }'`, 3, error);
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Delete user group
+ * Delete user group (no checks to see if the deletion of this group is disabled from the EDE config)
  *
  * @param name Internal name of the group to be deleted
  */
-export async function deleteUserGroup(name: string): Promise<true> {
+export async function deleteUserGroup(name: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("DELETE FROM `user_groups` WHERE `name` = ?",
         [name],
         (error: any) => {
             if(error) {
-                Util.log(`Could not delete '${ name }' user group`, 3, error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not delete user group"));
 
-                reject(error);
+                Util.log(`Could not delete '${ name }' user group`, 3, error);
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 // TODO @performance
+// TODO I have an idea on how to make this a lot faster in the todo.todo file --max
 /**
- * Get user's groups and rights with parameters
+ * Get *all* groups and rights assigned to a user. With arguments
  *
  * @param user_id user's id
  */
-export async function getUserGroupRights(user_id: string | number): Promise<GroupsAndRightsObject> {
+export async function getRights(user_id: number): Promise<GroupsAndRightsObject> {
     return new Promise((resolve: any, reject: any) => {
         const result: GroupsAndRightsObject = {
             groups: [],
             rights: {}
         };
 
-        // An array to keep track of rights we already encountered
+        // An array to keep track of rights we have already encountered
         const rights_arr: string[] = [];
 
-        // Get every group the requested user is in
+        // Get every group name the requested user is in
         sql.execute("SELECT `group` FROM `user_group_membership` WHERE `user` = ?",
         [user_id],
         (group_error: any, group_results: any) => {
             if(group_error) {
-                reject(group_error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not a list of user's groups"));
+                Util.log(`Could not a list of user's groups (user id ${ user_id })`, 3, group_error);
+
                 return;
             } else {
+                // We have a list of user's groups
+
+                // Save the groups to the result object
                 for(const group of group_results) {
                     result.groups.push(group.group);
                 }
 
-                // Get every right for that particular group
+                // Get every right for every group the user is in
                 sql.query(`SELECT \`added_rights\`, \`right_arguments\` FROM \`user_groups\` WHERE \`name\` IN ('${ result.groups.join("','") }')`,
                 (right_error: any, right_results: any) => {
                     if(right_error) {
-                        reject(right_error);
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not get rights assigned to a user group(s)"));
+                        Util.log(`Could not get rights assigned to a user group(s) (${ result.groups.join("','") })`, 3, right_error);
+
                         return;
                     } else {
-                        // Go through all groups
+                        // We have all rights assigned to user's groups
+
+                        // Go through all the groups
                         for(const group of right_results) {
                             let added_rights = [];
 
+                            // Get the rights assigned to this group
                             if(group.added_rights) {
                                 added_rights = group.added_rights.split(";");
                             }
 
-                            // Go through all rights this group provides
+                            // Go through all rights assigned to this group
                             for(const right_name of added_rights) {
-                                // Check if client already has this right
+                                // Check if client already has this right from a group we checked earlier
                                 if(rights_arr.includes(right_name)) {
-                                    // This right was provided from an earlier group, we have to merge the existing arguments for this right
-                                    // with the new ones
+                                    // This right was provided from an earlier group, we have to merge the existing arguments for this
+                                    // right that were provided by an earlier group with the new ones, provided by this group
 
-                                    // Go through all new arguments
+                                    // Go through all the new arguments
                                     for(const argument_name in group.right_arguments[right_name]) {
                                         // Check if argument is not just {}
+                                        // If it is, we do not have to merge anything
+
                                         if( group.right_arguments[right_name][argument_name] &&
                                             group.right_arguments[right_name][argument_name] !== {}
                                         ) {
+                                            // Get the name of the argument that we are working with
                                             const argument_value = group.right_arguments[right_name][argument_name];
 
+                                            // Merge this argument
                                             if(argument_value instanceof Boolean) {
-                                                // Boolean
+                                                // Argument is of boolean type
                                                 // If the argument is already set to false in some other group, but is is set to true in
                                                 // this one, set the final value to true
+
+                                                // If the argument is already true, we don't do anything
+
                                                 if(argument_value === true) {
                                                     result.rights[right_name][argument_name] = true;
                                                 }
                                             } else if(argument_value instanceof Array) {
-                                                // Push array item only if not already included
-                                                for(const array_el of argument_value) {
-                                                    // Add empty arguments array, if there isn't one
-                                                    if(result.rights[right_name][argument_name] === undefined) {
-                                                        result.rights[right_name][argument_name] = [];
-                                                    }
+                                                // Argument is of array type
 
-                                                    if(!result.rights[right_name][argument_name].includes(array_el)) {
-                                                        result.rights[right_name][argument_name].push(array_el)
+                                                // If this argument is not already present in the results object, we can just set it to
+                                                // this argument to save time and not iterate over every array item, because we know
+                                                // that we just have to append everything as the current array is currently empty
+                                                if(result.rights[right_name][argument_name] === undefined) {
+                                                    result.rights[right_name][argument_name] = argument_value;
+                                                } else {
+                                                    // This argument is already present in the results object, so we have to add the
+                                                    // new array items that are not already present
+
+                                                    for(const array_item of argument_value) {
+                                                        // We push array items only if they are not already included
+
+                                                        if(result.rights[right_name][argument_name].indexOf(array_item) < 0) {
+                                                            result.rights[right_name][argument_name].push(array_item)
+                                                        }
                                                     }
                                                 }
                                             } else if(argument_value instanceof Object) {
-                                                // Object
-                                                result.rights[right_name][argument_name] = { ...result.rights[right_name][argument_name],
-                                                ...argument_value };
+                                                // Argument is of object type, concat this object with the one that is already in
+                                                // the rersults object
+
+                                                result.rights[right_name][argument_name] = {
+                                                    ...result.rights[right_name][argument_name],
+                                                    ...argument_value
+                                                };
                                             } else {
-                                                // Any other type
+                                                // Argument is of any other type - just update the value of the argument
                                                 result.rights[right_name][argument_name] = argument_value;
                                             }
                                         }
@@ -308,6 +331,7 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
                             }
                         }
 
+                        // Everything is ready
                         resolve(result);
                     }
                 });
@@ -323,34 +347,38 @@ export async function getUserGroupRights(user_id: string | number): Promise<Grou
  */
 export async function getFromUsername(username: string): Promise<User> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("SELECT * FROM `users` WHERE username = ?",
+        sql.execute("SELECT * FROM `users` WHERE username = ? LIMIT 1",
         [username],
         (error: any, results: any) => {
             if(error || results.length !== 1) {
-                reject("User not found");
+                reject(new Util.Rejection(Util.RejectionType.USER_NOT_FOUND, "Could not find a user with such username"));
                 return;
             }
 
-            const user = results[0];
-            const user_password = user.password.split(";");
+            const db_user = results[0];
+            const user_password = db_user.password.split(";");
 
             let user_blocks = [];
-            if(user.blocks) user_blocks = user.blocks.split(";");
+            if(db_user.blocks) user_blocks = db_user.blocks.split(";");
 
-            resolve({
-                id: user.id,
+            // Return the user
+            const user: User = {
+                id: db_user.id,
 
-                username: user.username,
-                email_address: user.email_address,
-                email_verified: user.email_verified.readInt8(0) === 1,
+                username: db_user.username,
+                email_address: db_user.email_address,
+                email_verified: db_user.email_verified.readInt8(0) === 1,
 
-                password_hash_salt: user_password[1],
-                password_hash_iterations: user_password[3],
-                password_hash_hash: user_password[2],
+                password_hash_hash: user_password[1],
+                password_hash_salt: user_password[2],
+                password_hash_iterations: parseInt(user_password[3], 10),
+                password_hash_keylen: parseInt(user_password[4], 10),
 
-                stats: user.stats,
+                stats: db_user.stats,
                 blocks: user_blocks
-            } as User);
+            };
+
+            resolve(user);
         });
     });
 }
@@ -366,139 +394,145 @@ export async function getById(user_id: number): Promise<User> {
         [user_id],
         (error: any, results: any) => {
             if(error || results.length !== 1) {
-                reject("User not found");
+                reject(new Util.Rejection(Util.RejectionType.USER_NOT_FOUND, "Could not find a user with such id"));
                 return;
             }
 
-            const user = results[0];
-            const user_password = user.password.split(";");
+            const db_user = results[0];
+            const user_password = db_user.password.split(";");
 
             let user_blocks = [];
-            if(user.blocks) user_blocks = user.blocks.split(";");
+            if(db_user.blocks) user_blocks = db_user.blocks.split(";");
 
-            resolve({
-                id: user.id,
+            // Return the user
+            const user: User = {
+                id: db_user.id,
 
-                username: user.username,
-                email_address: user.email_address,
-                email_verified: user.email_verified.readInt8(0) === 1,
+                username: db_user.username,
+                email_address: db_user.email_address,
+                email_verified: db_user.email_verified.readInt8(0) === 1,
 
-                password_hash_salt: user_password[1],
-                password_hash_iterations: user_password[3],
-                password_hash_hash: user_password[2],
+                password_hash_hash: user_password[1],
+                password_hash_salt: user_password[2],
+                password_hash_iterations: parseInt(user_password[3], 10),
+                password_hash_keylen: parseInt(user_password[4], 10),
 
-                stats: user.stats,
+                stats: db_user.stats,
                 blocks: user_blocks
-            } as User);
+            };
+
+            resolve(user);
         });
     });
 }
 
-// TODO! @placeholder csrf_tokens are still disabled
-export async function getFromSession(http_request: any, csrf_token: string): Promise<User> {
-    return new Promise(async (resolve: any, reject: any) => {
+/**
+ * Get a user by their session
+ *
+ * @param http_request http request object
+ */
+export async function getFromSession(http_request: any): Promise<User> {
+    return new Promise(async (resolve: any, reject: any) => {   
+        // Check if headers were provided
         if(!http_request.headers) {
-            // TODO rename this types of messages. They should be descriptive
-            reject("no_headers_provided");
+            reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "Could not read user's session data"));
             return;
         }
 
+        // Check if cookies were provided
         if(!http_request.headers.cookie) {
-            reject("no_cookies_provided");
+            reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "Could not read user's session cookies"));
             return;
         }
 
+        // Parse the cookies
         const cookies: any = cookie.parse(http_request.headers.cookie);
 
+        // Check if required cookis were provided
         if(!cookies.st || !cookies.sid) {
-            reject("no_session_cookies_provided");
+            reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "No user session cookies provided"));
             return;
         }
 
+        // Get the current timestamp
         const now = Math.floor(new Date().getTime() / 1000);
 
+        // Extract user's id and session token from the `st` cookie
         const st_split: string[] = cookies.st.split(":");
 
-        const st_uid: string = st_split[0];
+        const st_uid = parseInt(st_split[0], 10);
         const st_st: string = st_split[1];
 
         // Get and validate the session
-        sql.execute("SELECT * FROM `user_sessions` WHERE `user` = ? AND `session_token` = ?",
+        sql.execute("CALL `user_get_with_session`(?, ?)",
         [st_uid, st_st],
-        async (session_error: any, session_results: any) => {
-            if(session_error || session_results.length !== 1) {
-                reject("session_token_not_found");
+        async (error: any, results: any) => {
+            if(error || results[0].length !== 1) {
+                reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "Invalid user session"));
                 return;
             }
 
-            const session = session_results[0];
+            const db_response = results[0][0];
 
             // Check if session expired
-            if(session.expires_on < now) {
-                reject("session_expired_or_invalidated");
+            if(db_response.session_expires_on < now) {
+                reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "User session expired"));
                 return;
             }
 
-            // // Found user session, check csrf token
-            // if(csrf_token !== session.csrf_token) {
-            //     reject("csrf_check_failed");
-            //     return;
-            // }
+            /*
+                We store a hashed sid in the database for additinal security, but it makes getting users by their session slower, as
+                we have to hash it every single time.
+            */
 
-            // Hash sid
-            const cookie_sid_hash: Hash = await pbkdf2(cookies.sid, session.sid_salt,
+            // Hash sid provided by the user
+            const cookie_sid_hash: Util.Hash = await Util.pbkdf2(cookies.sid, db_response.session_sid_salt,
             SECURITY_SID_HASHING_ITERATIONS, SECURITY_SID_HASHING_KEYLEN);
 
-            if(cookie_sid_hash.key === session.sid_hash) {
-                // Get the user
-                sql.execute("SELECT * FROM `users` WHERE id = ?",
-                [st_uid],
-                (user_error: any, user_results: any) => {
-                    if(user_error || !user_results) {
-                        reject(user_error);
-                        return;
+            // Check if hashes match
+            if(cookie_sid_hash.key === db_response.session_sid_hash) {
+                // Hashes match => user provided session is correct => return the user
+
+                const user_password = db_response.user_password.split(";");
+
+                let user_blocks = [];
+                if(db_response.user_blocks) user_blocks = db_response.user_blocks.split(";");
+
+                // Return the user
+                const user: User = {
+                    id: st_uid,
+
+                    username: db_response.user_username,
+                    email_address: db_response.user_email_address,
+                    email_verified: db_response.user_email_verified.readInt8(0) === 1,
+
+                    password_hash_hash: user_password[1],
+                    password_hash_salt: user_password[2],
+                    password_hash_iterations: parseInt(user_password[3], 10),
+                    password_hash_keylen: parseInt(user_password[4], 10),
+
+                    stats: db_response.user_stats,
+                    blocks: user_blocks,
+
+                    current_session: {
+                        cookie_sid: cookies.sid,
+
+                        session_token: st_st,
+
+                        sid_hash: db_response.session_sid_hash,
+                        sid_salt: db_response.session_sid_salt,
+
+                        csrf_token: db_response.session_csrf_token,
+
+                        ip_address: http_request.headers["x-forwarded-for"] || http_request.ip,
+                        user_agent: http_request.headers["user-agent"],
+
+                        created_on: db_response.session_created_on,
+                        expires_on: db_response.session_expires_on
                     }
+                };
 
-                    const user = user_results[0];
-                    const user_password = user.password.split(";");
-
-                    let user_blocks = [];
-                    if(user.blocks) user_blocks = user.blocks.split(";");
-
-                    resolve({
-                        id: user.id,
-
-                        username: user.username,
-                        email_address: user.email_address,
-                        email_verified: user.email_verified.readInt8(0) === 1,
-
-                        password_hash_salt: user_password[1],
-                        password_hash_iterations: user_password[3],
-                        password_hash_hash: user_password[2],
-
-                        stats: user.stats,
-                        blocks: user_blocks,
-
-                        current_session: {
-                            cookie_sid: cookies.sid,
-
-                            session_token: session.session_token,
-
-                            sid_hash: session.sid_hash,
-                            sid_salt: session.sid_salt,
-
-                            csrf_token: session.csrf_token,
-
-                            ip_address: http_request.headers["x-forwarded-for"] || http_request.ip,
-                            user_agent: http_request.headers["user-agent"],
-
-                            created_on: session.created_on,
-                            expires_on: session.expires_on
-                        }
-                    } as User);
-
-                    return;
-                })
+                resolve(user);
             } else {
                 reject("sids_do_not_match");
                 return;
@@ -510,14 +544,15 @@ export async function getFromSession(http_request: any, csrf_token: string): Pro
 /**
  * Create a user (!! without any checks !!)
  *
- * Use this function only if you are sure the credentials are safe. No checks will be executed
+ * Use this function only if you are sure the credentials are safe. No checks will be executed.
  *
- * @param username Username
- * @param password Clear-text password
- * @param email_address Email address
+ * @param username username
+ * @param password clear-text password
+ * @param email_address email address
  */
 export async function create(username: string, password: string, email_address: string): Promise<User> {
     return new Promise(async (resolve: any, reject: any) => {
+        // Create user stats object
         const user_stats: UserStats = {
             created_on: Math.floor(new Date().getTime() / 1000)
         }
@@ -527,13 +562,16 @@ export async function create(username: string, password: string, email_address: 
 
         // Generate the salt for the password
         crypto.randomBytes(registry_config_snapshot["auth.sid_size"].value as number, (_: any, password_salt_buffer: Buffer) => {
-            const password_hash_salt: string = formatString(password_salt_buffer);
+            const password_hash_salt: string = Util.sanitizeBuffer(password_salt_buffer);
 
+            // Use the hashing config from the EDE Config
             const password_hash_iterations = registry_config_snapshot["auth.password_hash_iterations"].value as number;
             const password_hash_keylen = registry_config_snapshot["auth.password_hash_keylen"].value as number;
 
-            pbkdf2(password, password_hash_salt, password_hash_iterations, password_hash_keylen)
-            .then((password_hash: Hash) => {
+            // Hash the password
+            Util.pbkdf2(password, password_hash_salt, password_hash_iterations, password_hash_keylen)
+            .then((password_hash: Util.Hash) => {
+                // Format the password hash and config string
                 const database_password_string: string =
                 `pbkdf2;${ password_hash.key };${ password_hash_salt };${ password_hash_iterations };\
 ${ password_hash_keylen }`;
@@ -543,26 +581,36 @@ ${ password_hash_keylen }`;
                 [username, email_address, database_password_string, JSON.stringify(user_stats)],
                 (error: any, results: any) => {
                     if(error) {
-                        reject(new Error(`User creation failed, username might be taken (${ error.message })`));
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user"));
+                        Util.log(`Could not create a new user`, 3, error);
                     } else {
-                        // Return user object
-                        resolve({
+                        // User created successfully, return it
+
+                        const user: User = {
                             id: results.insertId,
 
                             username,
                             email_address,
                             email_verified: false,
 
+                            blocks: [],
+
+                            password_hash_hash: password_hash.key,
                             password_hash_salt,
                             password_hash_iterations,
                             password_hash_keylen,
 
                             stats: user_stats
-                        } as User);
+                        };
+
+                        resolve(user);
                     }
                 });
             })
-            .catch((error: Error) => { reject(error) });
+            .catch((error: Error) => { 
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user"));
+                Util.log(`Could not create a new user: hashing failed`, 3, error);
+            });
         });
     });
 }
@@ -574,17 +622,18 @@ ${ password_hash_keylen }`;
  * @param ip_address target user's ip address
  * @param user_agent target user's user agent
  */
-export async function newUserTrackingRecord(user_id: number, ip_address: string, user_agent: string): Promise<true> {
+export async function newUserTrackingRecord(user_id: number, ip_address: string, user_agent: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("INSERT INTO `user_tracking` (`user`, `ip_address`, `user_agent`, `timestamp`) VALUES (?, ?, ?, UNIX_TIMESTAMP())",
         [user_id, ip_address, user_agent],
         (error: any, results: any) => {
             if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN));
                 Util.log(`Could not create a new user_tracking record for user id ${ user_id }`, 3, error);
 
-                reject(error);
+                return;
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
@@ -594,10 +643,10 @@ export async function newUserTrackingRecord(user_id: number, ip_address: string,
  * Create a new user session
  *
  * @param user user's internal id (id column in the database)
- * @param ip_address IP address of client
- * @param user_agent Client's useragent
+ * @param ip_address client's ip address
+ * @param user_agent client's useragent
  */
-export async function createSession(user_id: string, ip_address: string, user_agent: string): Promise<UserSession> {
+export async function createSession(user_id: number, ip_address: string, user_agent: string): Promise<UserSession> {
     return new Promise(async (resolve: any, reject: any) => {
         // Generate sid
         crypto.randomBytes(SECURITY_COOKIE_SID_SIZE, (_sid_error: any, sid_buffer: Buffer) => {
@@ -605,14 +654,18 @@ export async function createSession(user_id: string, ip_address: string, user_ag
         crypto.randomBytes(SECURITY_COOKIE_SALT_SIZE, (_sid_salt_error: any, sid_salt_buffer: Buffer) => {
         // Generate csrf_token
         crypto.randomBytes(SECURITY_CSRF_TOKEN_SIZE, (_csrf_token_error: any, csrf_token_buffer: Buffer) => {
-            const cookie_sid: string = formatString(sid_buffer);
+            // Get sid string that is safe for a cookie
+            const cookie_sid: string = Util.sanitizeBuffer(sid_buffer);
 
             // Hash sid
-            pbkdf2(cookie_sid, sid_salt_buffer.toString("base64"), SECURITY_SID_HASHING_ITERATIONS,
+            Util.pbkdf2(cookie_sid, sid_salt_buffer.toString("base64"), SECURITY_SID_HASHING_ITERATIONS,
             SECURITY_SID_HASHING_KEYLEN)
-            .then((sidHash: Hash) => {
+            .then((sidHash: Util.Hash) => {
+                // Generate a random session token
                 const session_token: string = uuidv4();
-                const csrf_token: string = formatString(csrf_token_buffer);
+
+                // Make a safe csrf_token string
+                const csrf_token: string = Util.sanitizeBuffer(csrf_token_buffer);
 
                 const now: number = Math.floor(new Date().getTime() / 1000);
                 const expires_on: number = now + (registry_config.get()["auth.session_cookie_ttl"].value as number);
@@ -638,16 +691,24 @@ export async function createSession(user_id: string, ip_address: string, user_ag
 `expires_on`, `created_on`) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 [user_id, session_token, sidHash.key, sidHash.salt, csrf_token, expires_on, now],
                 (error: any) => {
-                    if(error) { reject(error) }
-                    else resolve(session);
+                    if(error) { 
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user session"));
+                        Util.log(`Could not create a new user session`, 3, error);
+                    }
+
+                    // Session successfully created, return it
+                    resolve(session);
                 });
 
-                // Create a new user_tracking record. We don't have to await it
-                // TODO @performance @cleanup parseInt
-                newUserTrackingRecord(parseInt(user_id, 10), ip_address, user_agent);
+                // Create a new user_tracking record. We don't have to await here
+                newUserTrackingRecord(user_id, ip_address, user_agent)
+                .catch((rejection: Util.Rejection) => {
+                    Util.log(rejection.client_message || "could not create a newUserTrackingRecord", 3);
+                });
             })
             .catch((error: Error) => {
-                reject(error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not hash a sid"));
+                Util.log(`Could not hash a sid`, 3, error);
             });
         });
         });
@@ -658,7 +719,7 @@ export async function createSession(user_id: string, ip_address: string, user_ag
 /**
  * Create an elevated session
  *
- * @param user_id User's id
+ * @param user_id user's id
  *
  * @returns [esid, Date object (time when the session will be invalid)]
  */
@@ -670,16 +731,16 @@ export async function createElevatedSession(user_id: number): Promise<[string, D
 
         // Generate esid
         crypto.randomBytes(128, (_esid_error: any, esid_buffer: Buffer) => {
-            const esid = formatString(esid_buffer);
+            // Create a cookie-safe sid string
+            const esid = Util.sanitizeBuffer(esid_buffer);
 
             // Create an elevated session
             sql.execute("INSERT INTO `elevated_user_sessions` (`user`, `esid`, `valid_until`) VALUES (?, ?, ?)",
             [user_id, esid, valid_until_unix],
             (error: any, results: any) => {
                 if(error || results.length < 1) {
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new elevated session"));
                     Util.log(`Could not create a new elevated session for user id ${ user_id }`, 3, error);
-
-                    reject(new Error("Could not create a new elevated session for a user"));
                 } else {
                     resolve([esid, valid_until]);
                 }
@@ -691,7 +752,7 @@ export async function createElevatedSession(user_id: number): Promise<[string, D
 /**
  * Check elevated session validity
  *
- * @param user_id User's id
+ * @param user_id user's id
  * @param esid esid
  *
  * @returns true if valid
@@ -705,7 +766,7 @@ export async function checkElevatedSession(user_id: number, esid: string): Promi
 
         const now: number = Math.floor(new Date().getTime() / 1000);
 
-        // Get the session
+        // Get the elevated session
         sql.execute("SELECT `valid_until` FROM `elevated_user_sessions` WHERE `user` = ? AND `esid` = ?",
         [user_id, esid],
         (error: any, results: any) => {
@@ -723,83 +784,89 @@ export async function checkElevatedSession(user_id: number, esid: string): Promi
 /**
  * Update user's blocks
  *
- * @param user_id User's id
- * @param restrictions Array of restrictions
+ * @param user_id user's id
+ * @param restrictions array of restrictions
  */
-export async function updateUserBlocks(user_id: number, restrictions: string[]): Promise<true> {
+export async function updateUserBlocks(user_id: number, restrictions: string[]): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         let blocks_string;
 
+        // Create a blocks string
         if(restrictions.length === 0) blocks_string = "";
         else blocks_string = Util.sanitize(restrictions.join(";"));
 
+        // Update the user
         sql.execute("UPDATE `users` SET `blocks` = ? WHERE id = ?",
         [blocks_string, user_id],
         (error: any, results: any) => {
             if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's blocks"));
                 Util.log(`Could not update blocks for user id ${ user_id }`, 3, error);
-
-                reject(error);
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Block address
+ * Block an ip address
  *
- * @param address Address to block
- * @param restrictions Array of restrictions
+ * This function will not append new restrictions, it will instead replace them with new ones
+ *
+ * @param address address to block
+ * @param restrictions array of restrictions
  */
-export async function blockAddress(address: string, restrictions: string[]): Promise<true> {
-    // TODO @placeholder this function will not append new restrictions, it will instead replace them with new once. Fix that!
+export async function blockAddress(address: string, restrictions: string[]): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         if(!address) {
-            reject(new Error("Invalid address"));
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Invalid address"));
             return;
         }
 
         let blocks_string;
 
+        // Construct blocks string
         if(restrictions.length === 0) blocks_string = "";
         else blocks_string = Util.sanitize(restrictions.join(";"));
 
+        // Add a record to the database
         sql.execute("INSERT INTO `blocked_addresses` (`address`, `restrictions`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `restrictions` = ?",
         [address, blocks_string, blocks_string],
         (error: any, results: any) => {
             if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not change block settings for an ip-address"));
                 Util.log(`Could not change block settings for address ${ address }`, 3, error);
-
-                reject(new Error("Could not block an address"));
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Get address blocks
+ * Get blocks for an ip-address
  *
- * @param address Address to block
+ * @param address address to query
  */
 export async function getAddressBlocks(address: string): Promise<string[]> {
-    // TODO this will not work for ranges like 124.173.1.0/24
+    // TODO this will not work for ranges or CIDR addresses (like 124.173.1.0/24)
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT `restrictions` FROM `blocked_addresses` WHERE `address` = ?",
         [address],
         (error: any, results: any) => {
             if(error) {
                 // Could not get address blocks
-                Util.log(`Could not get block settings for address ${ address }`, 3, error);
 
-                reject(new Error("Could not get block settings for an address"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not get block setting for an ip-address"));
+                Util.log(`Could not get block setting for address ${ address }`, 3, error);
             } else if(results.length !== 1) {
                 // The address is not blocked in any way
+
                 resolve([]);
             } else {
+                // The address is blocked
+
                 const raw_restrictions = results[0].restrictions;
                 let final_restrictions: string[] = [];
 
@@ -812,76 +879,75 @@ export async function getAddressBlocks(address: string): Promise<string[]> {
 }
 
 /**
- * Destroy user's sessions
+ * Destroy all user's sessions
  *
- * @param user_id User's id
+ * @param user_id user's id
  */
-export async function destroyUserSessions(user_id: number): Promise<true> {
+export async function destroyUserSessions(user_id: number): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("UPDATE `user_sessions` SET `expires_on` = 1 WHERE `user` = ?",
         [user_id],
         (error: any, results: any) => {
             if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not destroy user's sessions"));
                 Util.log(`Could not destroy sessions for user id ${ user_id }`, 3, error);
-
-                reject(new Error("Could not invalidate all user sessions"));
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Invalidate user's session
+ * Invalidate a particular user session
  *
- * @param user_id User's id
- * @param session Session to invalidate
+ * @param user_id user's id
+ * @param session_token token of a session to invalidate
  */
-export async function invalidateUserSession(user_id: number, session: UserSession): Promise<true> {
+export async function invalidateUserSession(user_id: number, session_token: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("UPDATE `user_sessions` SET `expires_on` = 1 WHERE `user` = ? AND `session_token` = ?",
-        [user_id, session.session_token],
+        [user_id, session_token],
         (error: any, results: any) => {
             if(error || results.length < 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not invalidate user's session"));
                 Util.log(`Could not invalidate user's session (user ${ user_id })`, 3, error);
-
-                reject(new Error("Could not invalidate user session"));
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
 }
 
 /**
- * Create email verification token and add it to the database, invalidating all other email verification tokens of same type for that
+ * Create an email verification token and add it to the database, invalidating all other email verification tokens of same type for that
  * user
  *
- * @param user_id User's id
- * @param token_type Type of the token to generate
- * @param sent_to To what address will the email be sent?
- * @param token_len Lenght of the new token (in bytes)
+ * @param user_id user's id
+ * @param token_type type of the token to generate
+ * @param sent_to to what address will the email be sent?
+ * @param token_len lenght of the new token (in bytes)
  *
- * @returns token
+ * @returns new token
  */
 export async function createEmailToken(user_id: number, token_type: string, sent_to: string, token_len: number = 128): Promise<string> {
     return new Promise((resolve: any, reject: any) => {
+        // Generate a token
         crypto.randomBytes(token_len, async (_: any, token_buffer: Buffer) => {
-            const token: string = formatString(token_buffer);
+            // Create a safe token string
+            const token: string = Util.sanitizeBuffer(token_buffer);
 
-            // Delete tokens of same type and user
+            // Delete tokens of the same type and user
             await sql.promise().execute("DELETE FROM `email_tokens` WHERE `user` = ? AND `type` = ?",
             [user_id, token_type]);
 
-            // Insert new token
+            // Insert the new token
             sql.execute('INSERT INTO `email_tokens` (`token`, `user`, `type`, `sent_to`, `valid_until`) VALUES (?, ?, ?, ?, UNIX_TIMESTAMP() + 7200)',
             [token, user_id, token_type, sent_to],
             (error: any, results: any) => {
                 if(error || results.affectedRows < 1) {
-                    Util.log(`Could not create and save a new email token (user ${ user_id })`, 3, error);
-
-                    reject(new Error("Could not create a new email token"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new email token"));
+                    Util.log(`Could not create and save a new email token for user id ${ user_id }`, 3, error);
                 } else {
                     resolve(token);
                 }
@@ -893,15 +959,16 @@ export async function createEmailToken(user_id: number, token_type: string, sent
 /**
  * Check user's email verification token
  *
- * @param user_id User's id
+ * @param user_id user's id
  * @param token token
- * @param token_type Type of the token
- * @param delete_token Delete the token from the database after the successfull check (true by default)
- * 
- * @returns [is_valid, sent_to] (sent_to is an empty string on an error)
+ * @param token_type type of the token
+ * @param delete_token delete the token from the database after the successfull check (true by default)
+ *
+ * @returns [is_valid, sent_to] (sent_to is an empty string if the token is invalid)
  */
-export async function checkEmailToken(user_id: number, token: string, token_type: string, delete_token: boolean = true): Promise<[boolean, string]> {
-    return new Promise((resolve: any, reject: any) => {
+export async function checkEmailToken(user_id: number, token: string, token_type: string, delete_token: boolean = true):
+Promise<[boolean, string]> {
+    return new Promise((resolve: any) => {
         sql.execute("SELECT `valid_until`, `type`, `sent_to` FROM `email_tokens` WHERE `token` = ? AND `user` = ?",
         [token, user_id],
         (error: any, results: any) => {
@@ -921,13 +988,15 @@ export async function checkEmailToken(user_id: number, token: string, token_type
                     return;
                 }
 
+                // Token is correct, return the sent_to address
                 resolve([true, results[0].sent_to]);
 
                 if(delete_token) {
-                    // Delete the token
-                    sql.execute("DELETE FROM `email_tokens` WHERE `token` = ? AND `user` = ?",
-                    [token, user_id],
-                    () => undefined);
+                    // Delete the token from the database. No need to await here
+                    sql.promise().execute("DELETE FROM `email_tokens` WHERE `token` = ? AND `user` = ?", [token, user_id])
+                    .catch((delete_error: Error) => {
+                        Util.log("Could not delete an email token from the database", 3, delete_error);
+                    });
                 }
             }
         });
@@ -937,24 +1006,27 @@ export async function checkEmailToken(user_id: number, token: string, token_type
 /**
  * Update user's password
  *
- * @param user_id User's id
- * @param password New password in clear text
+ * @param user_id user's id
+ * @param password new password in clear text
  */
-export async function updateUserPassword(user_id: number, password: string): Promise<true> {
+export async function updateUserPassword(user_id: number, password: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         // Get a snapshot of the registry config to use later in the function
         const registry_config_snapshot = registry_config.get();
 
         // Generate the salt for the new password
-        // TODO @placeholder we should use something like auth.password_salt size instead of this. Sid's salt size has nothing to do with a password
-        crypto.randomBytes(registry_config_snapshot["auth.sid_size"].value as number, (_: any, password_salt_buffer: Buffer) => {
-            const password_hash_salt: string = formatString(password_salt_buffer);
+        // TODO @placeholder we should use something like auth.password_salt size instead of hardcoded 512
+        crypto.randomBytes(512, (_: any, password_salt_buffer: Buffer) => {
+            const password_hash_salt: string = password_salt_buffer.toString("base64");
 
+            // Get the hashing config from the EDE config
             const password_hash_iterations = registry_config_snapshot["auth.password_hash_iterations"].value as number;
             const password_hash_keylen = registry_config_snapshot["auth.password_hash_keylen"].value as number;
 
-            pbkdf2(password, password_hash_salt, password_hash_iterations, password_hash_keylen)
-            .then((password_hash: Hash) => {
+            // Hash the password
+            Util.pbkdf2(password, password_hash_salt, password_hash_iterations, password_hash_keylen)
+            .then((password_hash: Util.Hash) => {
+                // Create a formatted password string with hashing configuration
                 const database_password_string: string =
                 `pbkdf2;${ password_hash.key };${ password_hash_salt };${ password_hash_iterations };\
 ${ password_hash_keylen }`;
@@ -964,311 +1036,15 @@ ${ password_hash_keylen }`;
                 [database_password_string, user_id],
                 (error: any) => {
                     if(error) {
-                        Util.log(`Could not update user's password (user ${ user_id })`, 3, error);
-
-                        reject(new Error("Could not update user's password"));
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's password"));
+                        Util.log(`Could not update a password for user id ${ user_id }`, 3, error);
                     } else {
-                        resolve(true);
+                        resolve();
                     }
                 });
-            }).catch(() => {
-                reject(new Error("Could not update user's password"));
-            });
-        });
-    });
-}
-
-export async function joinRoute(req: any, res: any): Promise<void> {
-    // Get ip address of a client
-    const ip_address: string = req.headers["x-forwarded-for"] || req.ip;
-
-    // Check if ip is blocked from creating new accounts
-    const ip_blocks = await getAddressBlocks(ip_address);
-
-    if(Array.isArray(ip_blocks) && ip_blocks.includes("account_creation")) {
-        const msg = (await SystemMessage.get(["login-join-message-ipblocked"]))["login-join-message-ipblocked"];
-
-        res.status(403).send({ error: "ip_blocked", message: msg.value });
-        return;
-    }
-
-    // Get a snapshot of the registry config to use later in the function
-    const registry_config_snapshot = registry_config.get();
-
-    // Check if client sent nothing
-    if(!req.body) {
-        res.status(403).send({ error: "no_body_recieved" });
-        return;
-    }
-
-    const response_notes: string[] = [];
-
-    // Check if captcha token was provided
-    // if(!req.body.captcha_token) {
-    //     res.status(403).send({ error: "captcha_error" });
-    //     return;
-    // }
-
-    // Check username
-    const username_status: UsernameAvailability = await checkUsername(req.body.username);
-
-    switch(username_status) {
-        case UsernameAvailability.InvalidFormat:
-            res.status(403).send({ error: "username_format" });
-            return;
-        case UsernameAvailability.Forbidden:
-            res.status(403).send({ error: "username_forbidden" });
-            return;
-        case UsernameAvailability.Taken:
-            res.status(403).send({ error: "username_taken" });
-            return;
-
-        default:
-    }
-
-    // Check user-agent header
-    if(!req.headers["user-agent"] || !req.headers["user-agent"].match(/^[A-Za-z0-9()\/\.,:; ]{1,512}$/)) {
-        res.status(403).send({ error: "user_agent_format" });
-        return;
-    }
-
-    // Check email
-    if(!req.body.email.match(/^[A-Za-z0-9_@\.-]{6,128}$/)) {
-        res.status(403).send({ error: "email_format" });
-        return;
-    }
-
-    const password: string = decodeURI(req.body.password);
-
-    // Check password
-    if(password.length < 8 || password.length > 512) {
-        res.status(403).send({ error: "password_format" });
-        return;
-    }
-
-    // Check recaptcha
-    request.get(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${
-        process.env.EDE_DEV !== "1"
-        ? registry_config_snapshot["auth.recaptcha_secret"].value as string
-        : SECRETS.tokens.recaptcha_dev }&response=${ req.body.captcha_token }`,
-        async (captcha_error: any, _: any, captcha_response: string): Promise<void> => {
-            // Captcha check failed
-            // TODO! CAPTCHA DISABLED!
-            if(false && (captcha_error || !JSON.parse(captcha_response).success)) {
-                res.status(403).send({ error: "captcha_error" });
-                return;
-            }
-
-            // Create a new user
-            let new_user: User;
-
-            try {
-                new_user = await create(
-                    req.body.username,
-                    password,
-                    req.body.email
-                );
-            } catch (error) {
-                res.status(403).send({ error: "create_account_error" });
-                return;
-            }
-
-            // Create an email verification token
-            const email_verification_token = await createEmailToken(parseInt(new_user.id, 10), "email_verification", req.body.email);
-
-            // Send email verification email (no need to await or check for errors)
-            Mail.sendToUser(new_user,
-                "Email verification",
-                MailTemplates.email_verification(email_verification_token),
-                true)
-            .catch(() => undefined);
-
-            // Create a new session
-            await createSession(new_user.id, ip_address, req.headers["user-agent"])
-            .then((user_session: UserSession) => {
-                // Return a new session
-                res.header("x-csrf-token", user_session.csrf_token);
-
-                // TODO ADD SECURE AND SAMESITE!!!!!!
-                res.setCookie("sid", user_session.cookie_sid, {
-                    domain: registry_config_snapshot["instance.domain"].value as string,
-                    path: "/",
-                    httpOnly: true,
-                    sameSite: true,
-                    secure: false,
-                    encode: String
-                });
-
-                res.setCookie("st", `${ new_user.id }:${ user_session.session_token }`, {
-                    domain: registry_config_snapshot["instance.domain"].value as string,
-                    path: "/",
-                    httpOnly: false,
-                    sameSite: true,
-                    secure: false,
-                    encode: String
-                });
-
-                res.send({ success: true, notes: response_notes });
-                return;
-            })
-            .catch(() => {
-                res.status(403).send({ error: "create_session_error" });
-                return;
-            });
-        }
-    );
-}
-
-export function loginRoute(req: any, res: any): void {
-    // * Get client's IP address * //
-    const ip_address: string = req.headers["x-forwarded-for"] || req.ip;
-
-    const response_notes: string[] = [];
-
-    // Body
-    if(!req.body) {
-        res.status(403).send({ error: "no_body_recieved" });
-        return;
-    }
-
-    // TODO Captcha
-    // if(!req.body.captcha_token) {
-    //     res.status(403).send({ error: "captcha_error" });
-    //     return;
-    // }
-
-    // Username and password
-    if(!req.body.password || !req.body.username) {
-        res.status(403).send({ error: "no_credentials" });
-        return;
-    }
-
-    // Get a snapshot of the registry config to use later in the function
-    const registry_config_snapshot = registry_config.get();
-
-    const body_password: string = decodeURI(req.body.password);
-
-    // Check captcha
-    request.get(
-        `https://www.google.com/recaptcha/api/siteverify?secret=${
-        process.env.EDE_DEV !== "1"
-        ? registry_config_snapshot["auth.recaptcha_secret"].value as string
-        : SECRETS.tokens.recaptcha_dev }&response=${ req.body.captcha_token }`,
-        (captcha_error: any, _: any, captcha_response: string): void => {
-
-        // Captcha check failed
-        // TODO! capcha disabled
-        if(false && (captcha_error || !JSON.parse(captcha_response).success)) {
-            res.status(403).send({ error: "captcha_error" });
-            return;
-        }
-
-        // Get user
-        sql.execute("SELECT id, `username`, `password`, `blocks` FROM `users` WHERE username = ?",
-        [req.body.username],
-        async (error: any, results: any) => {
-            if(error || results.length !== 1) {
-                const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
-
-                res.status(403).send({ error: "invalid_credentials", message: msg.value });
-                return;
-            }
-
-            // Check if user is blocked from logging in
-            if(results[0].blocks) {
-                const blocks = results[0].blocks.split(";");
-
-                // User is locked out, get the appropriate system message
-                if(blocks.includes("lockout")) {
-                    const msg = (await SystemMessage.get(["login-message-blocked"]))["login-message-blocked"];
-
-                    res.status(403).send({ error: "blocked", message: msg.value });
-                    return;
-                }
-            }
-
-            // Check password (preparation)
-            const password_split: string = results[0].password.split(";");
-
-            const db_password_hash = password_split[1];
-            const db_password_salt = password_split[2];
-            const db_password_iterations = parseInt(password_split[3], 10);
-            const db_password_keylen = parseInt(password_split[4], 10);
-
-            pbkdf2(
-                body_password,
-                db_password_salt,
-                db_password_iterations,
-                db_password_keylen
-            )
-            .then(async (password_hash: Hash) => {
-                // Check if password is correct
-                if(db_password_hash !== password_hash.key) {
-                    const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
-
-                    res.status(403).send({ error: "invalid_credentials", message: msg.value });
-                    return;
-                }
-
-                // Check 2FA
-                const f2a_otp = req.body.f2a_otp || "";
-                const f2a_status = await F2A.check(results[0].id, f2a_otp);
-
-                if(f2a_status.enabled) {
-                    if(!f2a_otp) {
-                        // No code provided
-                        res.status(403).send({ error: "2fa_required" });
-                        return;
-                    }
-                    if(!f2a_status.otp_correct) {
-                        // Incorrect code provided
-                        // TODO Notify user if they used an already used backup code
-                        const msg = (await SystemMessage.get(["login-message-invalidf2aotp"]))["login-message-invalidf2aotp"];
-
-                        res.status(403).send({ error: "invalid_f2a_otp", message: msg.value });
-                        return;
-                    }
-                }
-
-                // Create a session
-                createSession(results[0].id, ip_address, req.headers["user-agent"])
-                .then((user_session: UserSession) => {
-                    // Return a new session
-                    res.header("x-csrf-token", user_session.csrf_token);
-
-                    // TODO ADD SECURE AND SAMESITE!!!!!!
-                    res.setCookie("sid", user_session.cookie_sid, {
-                        domain: registry_config_snapshot["instance.domain"].value as string,
-                        path: "/",
-                        httpOnly: true,
-                        sameSite: true,
-                        secure: false,
-                        encode: String
-                    });
-
-                    res.setCookie("st", `${ results[0].id }:${ user_session.session_token }`, {
-                        domain: registry_config_snapshot["instance.domain"].value as string,
-                        path: "/",
-                        httpOnly: false,
-                        sameSite: true,
-                        secure: false,
-                        encode: String
-                    });
-
-                    response_notes.push("session_created");
-                    res.send({ success: true, notes: response_notes });
-
-                    return;
-                })
-                .catch(() => {
-                    res.status(403).send({ error: "create_session_error" });
-                    return;
-                });
-            })
-            .catch(() => {
-                res.status(403).send({ error: "other" });
-                return;
+            }).catch((error: Error) => {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's password"));
+                Util.log(`Could not update a password for user id ${ user_id }: hashing error`, 3, error);
             });
         });
     });

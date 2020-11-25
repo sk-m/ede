@@ -32,7 +32,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Check if client can alter requeted group
         if(client) {
-            await User.getUserGroupRights(client.id)
+            await User.getRights(client.id)
             .then((client_rights: GroupsAndRightsObject) => {
                 if(client_rights.rights.modifyusergroups) client_can_alter = true;
             })

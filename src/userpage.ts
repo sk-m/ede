@@ -336,7 +336,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         if(!queried_user_error && queried_user) {
             // Get queried user's groups
             // TODO just get the groups, we don't need the rights
-            const queried_user_groups = await User.getUserGroupRights(queried_user.id);
+            const queried_user_groups = await User.getRights(queried_user.id);
 
             // Get blocked status
             const queried_user_blocked = queried_user.blocks.length !== 0;
@@ -345,7 +345,7 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
 
             // Get client's groups
             if(client) {
-                client_groups = await User.getUserGroupRights(client.id).catch(() => undefined);
+                client_groups = await User.getRights(client.id).catch(() => undefined);
             }
 
             // Create a list of groups, assigned to target user

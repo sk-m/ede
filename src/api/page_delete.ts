@@ -22,7 +22,7 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
     const address = pageTitleParser(req.body.title);
 
     // Check if client has the rights to delete pages
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_deletepage) {
             // Main right
@@ -63,7 +63,7 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
             return;
         } else {
             // Delete the page
-            Page.deletePage(results[0].id, client_user.id, req.body.summary, db_removal)
+            Page.deletePage(results[0].id, client_user.id, req.body.summary, /* db_removal */)
             .then(() => {
                 Log.createEntry("deletewikipage", client_user.id, `${ address.namespace }:${ address.name }`,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a>${ db_removal ? " completely removed" : " deleted" } wiki page <a href="/${ req.body.title }">${ req.body.title }</a> (<code>${ results[0].id }</code>)`, req.body.summary);

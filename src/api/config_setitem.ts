@@ -16,7 +16,7 @@ export async function configSetItemRoute(req: any, res: any, client_user?: User.
     let client_permits: any;
 
     // Check if client has the rights to modify user's group membership
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.modifyconfig) {
             client_permissions_error = false;

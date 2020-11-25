@@ -32,7 +32,7 @@ function loginPageScript() {
 
         const popup_el = ede.showPopup("login-f2acheck", "Two-factor authentication", popup_body_html, popup_buttons_html, {
             close: ede.closePopup,
-            login: () => {
+            login: e => {
                 // Validate the form
                 const validation_result = ede.form.validate("login-f2acheck");
                 if(validation_result.invalid) return;
@@ -40,7 +40,7 @@ function loginPageScript() {
                 // Get the code
                 login_f2a_otp = ede.form.list["login-f2acheck"].otp.value;
 
-                callback();
+                callback(e);
             }
         }, 460);
 

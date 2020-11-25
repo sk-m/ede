@@ -17,12 +17,13 @@ import * as Util from "./utils";
 import { registry_config, registry_skins, registry_namespaces, registry_hooks, registry_usergroups } from "./registry";
 import { directRoute } from "./routes";
 import * as Page from "./page";
-import { joinRoute, loginRoute } from "./user";
 import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
 import { userNamespaceHandler } from "./userpage";
 import { getEditorRoute } from "./editor";
+import { userJoinRoute } from "./api/user/user_join";
+import { userLoginRoute } from "./api/user/user_login";
 
 // Fastify apps
 const app: any = fastify();
@@ -138,10 +139,11 @@ async function serverInit(db_error: Error): Promise<void> {
     // Register routes
     app.get("/*", directRoute);
     app.get("/api*", Api.RootRoute);
-    app.post("/api*", Api.RootRoute);
-    app.post("/api/auth/join", joinRoute);
-    app.post("/api/auth/login", loginRoute);
     app.get("/api/get_editor_html", getEditorRoute);
+
+    app.post("/api*", Api.RootRoute);
+    app.post("/api/auth/join", userJoinRoute);
+    app.post("/api/auth/login", userLoginRoute);
 
     // Start the fastify server
     app.listen(server_port, "0.0.0.0", (fastify_error: Error, address: string) => {

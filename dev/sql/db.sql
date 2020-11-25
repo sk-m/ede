@@ -232,6 +232,33 @@ CREATE TABLE IF NOT EXISTS `users` (
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 
+DELIMITER //
+CREATE PROCEDURE `user_get_with_session`(
+	IN `p_user_id` INT,
+	IN `p_session_token` TINYTEXT
+)
+    NO SQL
+    COMMENT 'Get a user and their session'
+BEGIN
+	SELECT
+		`user_sessions`.`sid_hash` AS `session_sid_hash`,
+		`user_sessions`.`sid_salt` AS `session_sid_salt`,
+		`user_sessions`.`csrf_token` AS `session_csrf_token`,
+		`user_sessions`.`expires_on` AS `session_expires_on`,
+		`user_sessions`.`created_on` AS `session_created_on`,
+		
+		`users`.`username` AS `user_username`,
+		`users`.`email_address` AS `user_email_address`,
+		`users`.`email_verified` AS `user_email_verified`,
+		`users`.`password` AS `user_password`,
+		`users`.`stats` AS `user_stats`,
+		`users`.`blocks` AS `user_blocks`
+	FROM `user_sessions`
+	INNER JOIN `users` ON `users`.id = p_user_id
+	WHERE `user_sessions`.`user` = p_user_id AND `user_sessions`.`session_token` = p_session_token;
+END//
+DELIMITER ;
+
 CREATE TABLE IF NOT EXISTS `user_groups` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(128) NOT NULL DEFAULT '',
@@ -277,6 +304,7 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
 DELIMITER //
 CREATE EVENT `user_sessions_cleanup` ON SCHEDULE EVERY 1 DAY STARTS '2020-10-23 00:00:01' ON COMPLETION NOT PRESERVE ENABLE COMMENT 'Deletes invalidated and expired user sessions' DO BEGIN
 	DELETE FROM `user_sessions` WHERE `expires_on` < UNIX_TIMESTAMP();
+	DELETE FROM `elevated_user_sessions` WHERE `valid_until` < UNIX_TIMESTAMP();
 END//
 DELIMITER ;
 

@@ -9,16 +9,16 @@ export async function getRevisionRoute(req: any, res: any, client_user?: User.Us
         return;
     }
 
-    let no_client = true;
+    // let no_client = true;
     let client_can_see_deleted = false;
 
     // Get user's rights
     if(client_user) {
-        await User.getUserGroupRights(client_user.id)
+        await User.getRights(client_user.id)
         .then((grouprights: GroupsAndRightsObject) => {
             // Check if the client can see deleted revisions
             if(grouprights.rights.wiki_restorepage) {
-                no_client = false;
+                // no_client = false;
                 client_can_see_deleted = true;
             }
         })

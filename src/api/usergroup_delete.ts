@@ -14,7 +14,7 @@ export async function deleteUserGroupRoute(req: any, res: any, client_user?: Use
     let client_permissions_error = true;
 
     // Check if client has the rights to delete user groups
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((client_grouprights: GroupsAndRightsObject) => {
         if(client_grouprights.rights.modifyusergroups) client_permissions_error = false;
     })

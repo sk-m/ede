@@ -19,7 +19,7 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
     const old_address = pageTitleParser(req.body.title);
 
     // Check if client has the rights to move pages
-    await User.getUserGroupRights(client_user.id)
+    await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_movepage) client_permissions_error = false;
     })
