@@ -1,6 +1,7 @@
 import * as User from "../user";
 import * as Page from "../page";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
+import { Rejection } from "../utils";
 
 export async function getRevisionsDiffRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     const from_int = parseInt(req.query.revid_from, 10);
@@ -11,9 +12,9 @@ export async function getRevisionsDiffRoute(req: any, res: any, client_user?: Us
     // TODO client visibility is 0 for now
     Page.getRevisionsDiff(from_int, to_int, 0, as_html)
     .then((diff: any) => {
-        res.send(apiResponse(ApiResponseStatus.success, { diff }));
+        apiSendSuccess(res, "revision/diff", { diff });
     })
-    .catch((error: Error) => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error));
+    .catch((rejection: Rejection) => {
+        apiSendError(res, rejection);
     });
 }

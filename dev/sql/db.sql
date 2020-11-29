@@ -58,7 +58,7 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'1100'),
 	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'1100'),
 	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'1100'),
-	(12, 'security.protected_groups', NULL, 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
+	(12, 'security.protected_groups', 'sysadmin', 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
 	(13, 'mail.enabled', NULL, 'bool', NULL, 'false', NULL, NULL, 'Enable outbound email. Used for user notification and password restoration', 'ede', b'1000'),
 	(14, 'mail.host', NULL, 'string', NULL, NULL, NULL, NULL, 'Host for outbound email', 'ede', b'1010'),
 	(15, 'mail.port', NULL, 'int', NULL, '465', NULL, NULL, 'Oubound email SMTP server port', 'ede', b'1010'),
@@ -164,6 +164,31 @@ CREATE TABLE IF NOT EXISTS `revisions` (
 
 /*!40000 ALTER TABLE `revisions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `revisions` ENABLE KEYS */;
+
+DELIMITER //
+CREATE PROCEDURE `systemmessage_remove`(
+	IN `p_name` VARCHAR(256)
+)
+    NO SQL
+    COMMENT 'Delete a system message'
+BEGIN
+	DECLARE l_id INT;
+	DECLARE l_deletable BIT(1);
+
+	# Get the system message
+	SELECT id, `deletable` INTO l_id, l_deletable FROM `system_messages` WHERE `name` = p_name LIMIT 1;
+	
+	# Check if requested system message is deletable
+	IF l_deletable = b'1' THEN
+		# Delete system message
+		DELETE FROM `system_messages` WHERE id = l_id;
+		SELECT 1 AS status_success;
+	ELSE
+		# System message is non-deletable
+		SELECT 1 AS status_non_deletable;
+	END IF;
+END//
+DELIMITER ;
 
 CREATE TABLE IF NOT EXISTS `system_messages` (
   `id` mediumint unsigned NOT NULL AUTO_INCREMENT,
@@ -353,31 +378,40 @@ DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE `wiki_delete_page`(
-	IN `p_page_id` INT,
+	IN `p_namespace` TINYTEXT,
+	IN `p_name` VARCHAR(2048),
 	IN `p_deleted_by` INT,
 	IN `p_delete_summary` VARCHAR(1024)
 )
     NO SQL
     COMMENT 'Delete (move to archive) a wiki page'
-BEGIN
-	DECLARE l_page_namespace VARCHAR(64);
-	DECLARE l_page_name VARCHAR(2048);
+this_proc: BEGIN
+	DECLARE l_page_id INT;
 	DECLARE l_page_info JSON;
 	DECLARE l_page_action_restrictions JSON;
 	
 	# Get the page
-	SELECT `namespace`, `name`, `page_info`, `action_restrictions` INTO l_page_namespace, l_page_name, l_page_info, l_page_action_restrictions
-	FROM `wiki_pages` WHERE id = p_page_id;
+	SELECT id, `page_info`, `action_restrictions` INTO l_page_id, l_page_info, l_page_action_restrictions
+	FROM `wiki_pages` WHERE `namespace` = p_namespace AND `name` = p_name;
+	
+	# Check if page was found
+	IF l_page_id IS NULL THEN
+		SELECT 1 AS `status_not_found`;
+		LEAVE this_proc;
+	END IF;
 	
 	# Create an archive entry
 	INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, `deleted_by`, `deleted_on`, `delete_summary`)
-	VALUES (p_page_id, l_page_namespace, l_page_name, l_page_info, l_page_action_restrictions, p_deleted_by, UNIX_TIMESTAMP(), p_delete_summary);
+	VALUES (l_page_id, p_namespace, p_name, l_page_info, l_page_action_restrictions, p_deleted_by, UNIX_TIMESTAMP(), p_delete_summary);
 	
 	# Delete the page from the wiki_pages
-	DELETE FROM `wiki_pages` WHERE id = p_page_id;
+	DELETE FROM `wiki_pages` WHERE id = l_page_id;
 	
 	# Hide (delete) all related revisions
-	UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = p_page_id;
+	UPDATE `revisions` SET `is_deleted` = b'1' WHERE `page` = l_page_id;
+	
+	# Return page id
+	SELECT l_page_id AS page_id;
 END//
 DELIMITER ;
 
@@ -423,6 +457,42 @@ BEGIN
 	ELSE
 		#Get normal page
 		SELECT l_is_deleted AS is_deleted, l_pageid AS pageid, l_content AS content, `revision` AS current_revid, l_visibility AS visibility, `name`, `namespace` FROM `wiki_pages` WHERE id = l_pageid LIMIT 1;
+	END IF;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `wiki_move_page`(
+	IN `p_old_namespace` TINYTEXT,
+	IN `p_old_name` VARCHAR(2048),
+	IN `p_new_namespace` TINYTEXT,
+	IN `p_new_name` VARCHAR(2048)
+)
+    NO SQL
+    COMMENT 'Move (rename) a wiki page'
+this_proc: BEGIN
+	DECLARE l_old_page_id INT;
+	DECLARE l_new_page_id INT;
+	
+	# Get the current page
+	SELECT id INTO l_old_page_id FROM `wiki_pages` WHERE `namespace` = p_old_namespace AND `name` = p_old_name;
+	
+	# Check if such page exists
+	IF l_old_page_id IS NULL THEN
+		SELECT 1 AS status_not_found;
+		LEAVE this_proc;
+	END IF;
+	
+	# Get the target page
+	SELECT id INTO l_new_page_id FROM `wiki_pages` WHERE `namespace` = p_new_namespace AND `name` = p_new_name;
+	
+	# Check if the page with a new title already exists
+	IF l_new_page_id IS NULL THEN
+		# New title is not already taken, move the page
+		UPDATE `wiki_pages` SET `namespace` = p_new_namespace, `name` = p_new_name WHERE id = l_old_page_id;
+		SELECT l_old_page_id AS page_id;
+	ELSE
+		SELECT 1 AS status_already_exists;
 	END IF;
 END//
 DELIMITER ;

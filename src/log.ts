@@ -73,7 +73,7 @@ export function constructLogEntriesHTML(entries: LogEntry[]): string {
 export async function createEntry(
     type: string,
     executor: number | string,
-    target: string,
+    target: number | string,
     action_text: string,
     summary_text: string,
     visibility_level: number = 0

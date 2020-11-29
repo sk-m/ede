@@ -169,6 +169,12 @@ export async function saveUserGroup(user_group: Group): Promise<void> {
  */
 export async function createUserGroup(name: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
+        // Check if the name is correct
+        if(!name.match(/^[a-z_-]{1,127}$/)) {
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Group name is invalid"));
+            return;
+        }
+
         sql.execute("INSERT INTO `user_groups` (`name`,`added_rights`,`right_arguments`) VALUES (?, '', '{}')",
         [name],
         (error: any, results: any) => {

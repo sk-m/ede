@@ -1,19 +1,16 @@
 import * as User from "../user";
 import * as Util from "../utils";
-import { apiError, apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { registry_config } from "../registry";
 
 export async function logoutUserRoute(_: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user || !client_user.current_session) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You are not logged in"));
+        apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "You are not logged in"));
         return;
     }
 
-    console.log(client_user);
-    
-
-    // TODO @cleanup User::id should be an int, not a string
+    // Invalidate current user's session
     User.invalidateUserSession(client_user.id, client_user.current_session.session_token)
     .then(() => {
         const registry_config_snapshot = registry_config.get();
@@ -23,14 +20,11 @@ export async function logoutUserRoute(_: any, res: any, client_user?: User.User)
         res.clearCookie("sid", { path: "/", domain: registry_config_snapshot["instance.domain"].value as string });
         res.clearCookie("esid", { path: "/", domain: registry_config_snapshot["instance.domain"].value as string });
 
-        res.send(apiResponse(ApiResponseStatus.success));
+        apiSendSuccess(res);
     })
     .catch((rejection: Util.Rejection) => {
-        console.log(rejection);
-        
-
-        res.status(403).send(apiError(rejection));
         // TODO log this incident to file
         // TODO also might be nice to have a systempage with such incidents
+        apiSendError(res, rejection);
     });
 }

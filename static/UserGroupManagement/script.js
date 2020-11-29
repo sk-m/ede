@@ -61,7 +61,7 @@ function userGroupManagementPageScript() {
                     ede.showNotification("usergroupmanagement-create-success", "Success", "Group successfully created.");
                 })
                 .catch(response => {
-                    ede.showNotification("usergroupmanagement-create-error", "Error", `Failed to create a new group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+                    ede.showAPIErrorNotification("usergroupmanagement-create", response);
                 });
             }
         }
@@ -89,7 +89,7 @@ function userGroupManagementPageScript() {
                 .catch(response => {
                     ede.closePopup();
 
-                    ede.showNotification("usergroupmanagement-delete-error", "Error", `Failed to delete the group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+                    ede.showAPIErrorNotification("usergroupmanagement-delete", response);
                 });
             };
 
@@ -179,7 +179,7 @@ function userGroupManagementPageScript() {
             .catch(response => {
                 ede.closePopup();
 
-                ede.showNotification("usergroupmanagement-update-error", "Error", `Failed to save the group (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+                ede.showAPIErrorNotification("usergroupmanagement-update", response);
 
                 // Enable the button
                 popup_submit_event.target.classList.remove("loading");

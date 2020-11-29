@@ -36,7 +36,7 @@ function wikipageRestorePageScript() {
             ede.showNotification("restorewikipage-success", "Success", "Page restored successfully.");
         })
         .catch(response => {
-            ede.showNotification("restorewikipage-error", "Error", `Failed to restore the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("restorewikipage", response);
 
             // Enable the button
             e.target.classList.remove("disabled");

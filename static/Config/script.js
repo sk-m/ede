@@ -78,7 +78,10 @@ function configPageScript() {
             const params = ede.form.getParams(config_key);
 
             // Call the API
-            ede.apiCall("config/setitem", params, true)
+            ede.apiCall("config/setitem", {
+                key: config_key,
+                value: params[config_key]
+            }, true, true)
             .then(() => {
                 status_el.innerHTML = "<i class=\"fas fa-check\"></i> Saved successfully!";
                 status_el.className = "status green";
@@ -87,7 +90,7 @@ function configPageScript() {
                 e.target.classList.add("disabled");
             })
             .catch(response => {
-                status_el.innerHTML = `<i class="fas fa-times"></i> Save error: <code>${ response.error || "unknown error" }</code>`;
+                status_el.innerHTML = `<i class="fas fa-times"></i> Save error: <code>${ response.message || "unknown error" }</code>`;
                 status_el.className = "status red";
 
                 e.target.classList.add("disabled");
@@ -103,16 +106,16 @@ function configPageScript() {
                     status_el.className = "status green";
 
                     if(is_checkbox) {
-                        input_el.dataset.checked = response.new_value;
+                        input_el.dataset.checked = response["config/resetitem"].new_value;
                     } else {
-                        input_el.value = response.new_value;
+                        input_el.value = response["config/resetitem"].new_value;
                     }
 
                     config_option_el.classList.remove("dirty");
                     e.target.classList.add("disabled");
                 })
                 .catch(response => {
-                    status_el.innerHTML = `<i class="fas fa-times"></i> Reset error: <code>${ response.error || "unknown error" }</code>`;
+                    status_el.innerHTML = `<i class="fas fa-times"></i> Reset error: <code>${ response.message || "unknown error" }</code>`;
                     status_el.className = "status red";
 
                     e.target.classList.add("disabled");

@@ -37,7 +37,7 @@ function wikipageMovePageScript() {
             ede.showNotification("movewikipage-success", "Success", "Page moved successfully.");
         })
         .catch(response => {
-            ede.showNotification("movewikipage-error", "Error", `Failed to move the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("movewikipage", response);
 
             // Enable the button
             e.target.classList.remove("loading");

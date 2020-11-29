@@ -67,7 +67,10 @@ function deletedWikiPagesPageScript() {
             get_raw: !retrieve_rendered_revisions
         })
         .then(revision_response => {
-            if(!revision_response.parsed_content && !revision_response.raw_content) {
+            const raw_content = revision_response["page/get"].page.raw_content;
+            const parsed_content = revision_response["page/get"].page.parsed_content;
+
+            if(!parsed_content && !raw_content) {
                 // Could not get content
                 selected_revision_content.classList.remove("monospace");
                 selected_revision_content.innerHTML = "<i>Could not get get the contents of the selected revision. \
@@ -78,14 +81,14 @@ Is it hidden?</i>";
 
             if(retrieve_rendered_revisions) {
                 selected_revision_content.classList.remove("monospace");
-                selected_revision_content.innerHTML = revision_response.parsed_content;
+                selected_revision_content.innerHTML = parsed_content;
             } else {
                 selected_revision_content.classList.add("monospace");
-                selected_revision_content.innerHTML = revision_response.raw_content;
+                selected_revision_content.innerHTML = raw_content;
             }
         })
-        .catch(error => {
-            ede.showNotification("deletedwikipages-error", "Error", `Unknown error occured (${ error.error })`, "error");
+        .catch(response => {
+            ede.showAPIErrorNotification("deletedwikipages", response);
         });
     }
 
@@ -103,7 +106,7 @@ Is it hidden?</i>";
         ede.apiCall("revision/get", { pageid, include_deleted: true })
         .then(response => {
             // TODO maybe we should have a function that returns an HTML node with revisions instead?
-            const revisions_fragment = ede.tools.constructRevisionsHTML(response.revisions, true);
+            const revisions_fragment = ede.tools.constructRevisionsHTML(response["revision/get"].revisions, true);
 
             revisions_container.innerHTML = "";
             revisions_container.appendChild(revisions_fragment);
@@ -126,8 +129,8 @@ Is it hidden?</i>";
                 });
             }
         })
-        .catch(error => {
-            ede.showNotification("deletedwikipages-error", "Error", `Unknown error occured (${ error.error })`, "error");
+        .catch(response => {
+            ede.showAPIErrorNotification("deletedwikipages", response);
         });
     }
 
@@ -169,12 +172,12 @@ Is it hidden?</i>";
         // Restore the page
         ede.apiCall("page/restore", final_params, true)
         .then(response => {
-            ede.navigate(`/System:WikiPageManagement/info?title=${ response.new_title }`);
+            ede.navigate(`/System:WikiPageManagement/info?title=${ response["page/restore"].new_title }`);
 
             ede.showNotification("wikipagerestore-success", "Page restored", "Page successfully restored.");
         })
         .catch(response => {
-            ede.showNotification("wikipagerestore-error", "Error", `Failed to restore the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("wikipagerestore", response);
 
             // Enable the button
             e.target.classList.remove("loading");

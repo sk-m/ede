@@ -156,9 +156,15 @@ export async function pbkdf2(input_string: string, salt: string, iterations: num
 }
 
 export enum RejectionType {
+    GENERAL_OTHER,
     GENERAL_UNKNOWN,
     GENERAL_INVALID_DATA,
     GENERAL_ACCESS_DENIED,
+
+    API_INVALID_REQUEST_METHOD,
+    API_INVALID_ROUTE,
+
+    CONFIG_ITEM_NOT_FOUND,
 
     USER_NOT_FOUND,
     USER_SESSION_INVALID,

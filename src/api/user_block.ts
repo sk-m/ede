@@ -1,13 +1,14 @@
 import * as User from "../user";
 import * as Log from "../log";
 import { GroupsAndRightsObject } from "../right";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { sql } from "../server";
+import { Rejection, RejectionType } from "../utils";
 
 export async function blockUserRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
@@ -27,11 +28,11 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Only users with 'blockuser' right can block users"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Only users with 'blockuser' right can block users"));
         return;
     }
 
-    // Final restrictions array
+    // Create a final restrictions array
     // TODO Add "Disallow creating new accounts" and "Also block ip-address"
     let final_restrictions: string[] = [];
 
@@ -41,7 +42,7 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
 
     // Check if client has a right to lock users out
     if(final_restrictions.includes("lockout") && !client_allow_lockout) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You are not allowed to lock users out"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You are not allowed to lock users out"));
         return;
     }
 
@@ -49,8 +50,10 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
     if(final_restrictions[final_restrictions.length - 1] === "") final_restrictions.pop();
 
     // Get the target user
+    // TODO @performance This is bad
     User.getFromUsername(req.body.username)
     .then(async (target_user: User.User) => {
+        // Get target user's groups
         User.getRights(target_user.id)
         .then(async (target_user_groups: GroupsAndRightsObject) => {
             let error_group: string | false = false;
@@ -64,64 +67,68 @@ export async function blockUserRoute(req: any, res: any, client_user?: User.User
             }
 
             if(error_group) {
-                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `You are not allowed to block members of ${ error_group } group`));
+                apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, `You are not allowed to block members of ${ error_group } group`));
+                return;
             } else {
-                const user_id = Number.parseInt(target_user.id, 10);
                 const destroy_sessions = final_restrictions.includes("lockout");
                 const restrict_new_accounts_ip = final_restrictions.includes("account_creation");
 
-                // Destroy sessions, if locked from logging in
+                // Destroy sessions, if "lockout" block option is enabled
                 // We don't have to await here
-                if(destroy_sessions) User.destroyUserSessions(user_id);
+                if(destroy_sessions) User.destroyUserSessions(target_user.id);
 
-                // Block ip from creating new accounts
+                // Block ip from creating new accounts, if "account_creation" block option is enabled
+                // TODO idk if this is a good idea, maybe we turn off ip blocking for now?
                 if(restrict_new_accounts_ip) {
                     let ip_block_error = false;
+                    let last_target_ip;
 
                     // Get target user's last IP address
-                    const last_target_ip: number = await new Promise((resolve: any) => {
-                        sql.execute("SELECT `ip_address` FROM `user_tracking` WHERE `user` = ? ORDER BY id DESC LIMIT 1",
-                        [user_id],
-                        (error: any, results: any) => {
-                            if(error || results.length !== 1) {
-                                resolve(null);
-                            } else {
-                                resolve(results[0].ip_address);
-                            }
-                        });
+                    last_target_ip = await sql.promise().execute("SELECT `ip_address` FROM `user_tracking` WHERE `user` = ? ORDER BY id DESC LIMIT 1",
+                    [target_user.id])
+                    .catch(() => {
+                        ip_block_error = true;
                     });
+
+                    if(!last_target_ip) {
+                        // Could not get the address
+
+                        apiSendError(res, new Rejection(RejectionType.GENERAL_UNKNOWN, "Could not get user's ip address"));
+                        return;
+                    }
 
                     // We have the last ip of the target user, block it from creating new accounts
                     await User.blockAddress(last_target_ip.toString(), ["account_creation"]).catch(() => { ip_block_error = true });
 
                     // Check if we blocked successfully
                     if(ip_block_error) {
-                        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking user's ip address"));
+                        apiSendError(res, new Rejection(RejectionType.GENERAL_UNKNOWN, "Unknown error occured when blocking user's ip address"));
                         return;
                     }
                 }
 
-                User.updateUserBlocks(user_id, final_restrictions)
+                // Update user's blocks
+                User.updateUserBlocks(target_user.id, final_restrictions)
                 .then(() => {
                     // TODO more detailed log message
                     Log.createEntry("blockuser", client_user.id, target_user.id,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> changed block settings for <a href="/User:${ req.body.username }">${ req.body.username }</a>\
 ${ destroy_sessions ? " and invalidated their sessions" : "" }`, req.body.summary);
 
-                    res.send(apiResponse(ApiResponseStatus.success));
+                    apiSendSuccess(res);
                 })
-                .catch(() => {
-                    res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
+                .catch((rejection: Rejection) => {
                     // TODO log this incident to file
                     // TODO also might be nice to have a systempage with such incidents
+                    apiSendError(res, rejection);
                 });
             }
         })
-        .catch(() => {
-            res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when blocking a user"));
+        .catch((rejection: Rejection) => {
+            apiSendError(res, rejection);
         });
     })
-    .catch(() => {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Target user does not exist."));
+    .catch((rejection: Rejection) => {
+        apiSendError(res, rejection);
     });
 }

@@ -3,9 +3,10 @@
 /build
 /docs
 
-# For now
-/extensions
-
 /secrets.json
 *.todo
 /report.*
+/yarn-error.log
+
+# For now
+/extensions

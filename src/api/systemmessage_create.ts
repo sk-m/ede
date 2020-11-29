@@ -2,12 +2,13 @@ import * as User from "../user";
 import * as Log from "../log";
 import * as SystemMessage from "../system_message";
 import { GroupsAndRightsObject } from "../right";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
+import { Rejection, RejectionType } from "../utils";
 
 export async function systemmessageCreateRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
@@ -20,27 +21,21 @@ export async function systemmessageCreateRoute(req: any, res: any, client_user?:
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Only users with 'editsystemmessages' right can create system messages"));
-        return;
-    }
-
-    // Check if the name is correct
-    if(!req.body.name.match(/^[a-z_-]{1,256}$/)) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "System message name is invalid"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Only users with 'editsystemmessages' right can create system messages"));
         return;
     }
 
     // TODO deny, if value contains '<script>'
-    // TODO check if system message with such name already exists
+        // Or, even better, just sanitize the input with the Page.sanitizeWikitext function
     SystemMessage.create(req.body.name, req.body.value)
     .then(() => {
         // TODO add summary
         Log.createEntry("updatesystemmessage", client_user.id, req.body.name,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> created <a href="/System:SystemMessages/${ req.body.name }">${ req.body.name }</a> system message with the value of "<code>${ req.body.value }</code>"`, "");
 
-        res.send(apiResponse(ApiResponseStatus.success));
+        apiSendSuccess(res);
     })
-    .catch(() => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when creating a system message"));
+    .catch((rejection: Rejection) => {
+        apiSendError(res, rejection);
     });
 }

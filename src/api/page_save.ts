@@ -1,25 +1,27 @@
 import * as User from "../user";
 import * as Page from "../page";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
 import { registry_namespaces } from "../registry";
 import { pageTitleParser } from "../routes";
+import { Rejection, RejectionType } from "../utils";
 
 export async function pageSaveRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     // TODO allow admins to permit anons
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
-    // Check if namespace exists
+    // Get the address of the page
     const page_address = pageTitleParser(req.body.page_title);
 
     const registry_namespaces_snapshot = registry_namespaces.get();
 
+    // Check if namespace exists
     if(!registry_namespaces_snapshot[page_address.namespace]) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Namespace '${ page_address.namespace }' does not exist`));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, `Namespace '${ page_address.namespace }' does not exist`));
         return;
     }
 
@@ -29,12 +31,12 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     // Check if client has the rights to update this page's content
     await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
-        // Page editing
+        // Page editing allowed?
         if(grouprights.rights.wiki_edit && grouprights.rights.wiki_edit.namespaces.includes(page_address.namespace)) {
             client_permissions_error = false;
         }
 
-        // Page creation
+        // Page creation allowed?
         if(grouprights.rights.wiki_createpage && grouprights.rights.wiki_createpage.namespaces.includes(page_address.namespace)) {
             client_can_create_pages = true;
         }
@@ -42,24 +44,17 @@ export async function pageSaveRoute(req: any, res: any, client_user?: User.User)
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to save pages in this namespace"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to save pages in this namespace"));
         return;
     }
 
-    // TODO use new Rejection()
+    // Create a new revision
     Page.createRevision(page_address, req.body.page_content, client_user, req.body.summary || "", undefined, client_can_create_pages)
     .then(() => {
-        res.send(apiResponse(ApiResponseStatus.success));
+        apiSendSuccess(res);
     })
-    .catch((error: any) => {
-        if(typeof error === "string") {
-            if(error === "page_not_found") {
-                res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to create new pages in this namespace"));
-                return;
-            }
-        }
-
+    .catch((rejection: Rejection) => {
         // TODO save error to a log
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
+        apiSendError(res, rejection);
     })
 }

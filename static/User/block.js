@@ -80,7 +80,7 @@ function userBlockingPageScript() {
             ede.showNotification("userblock-success", "Success", "User blocked successfully.");
         })
         .catch(response => {
-            ede.showNotification("userblock-error", "Error", `Failed to block the user (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("userblock", response);
 
             // Enable the button
             e.target.classList.remove("loading");

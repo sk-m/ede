@@ -416,19 +416,32 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 /**
  * Delete the page
  *
- * @param page_id target page id
+ * @param page_namespace target page namespace
+ * @param page_name target page name
+ * @param deleted_user_id id of a user that deleted a page
+ * @param summary deletion summary
+ *
+ * @returns Deleted page id
  */
-export async function deletePage(page_id: number, deleted_user_id: string, summary?: string): Promise<void> {
+export async function deletePage(page_namespace: string, page_name: string, deleted_user_id: number, summary?: string): Promise<number> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("CALL wiki_delete_page(?, ?, ?)",
-        [page_id, deleted_user_id, summary],
+        sql.execute("CALL wiki_delete_page(?, ?, ?, ?)",
+        [page_namespace, page_name, deleted_user_id, summary],
         (error: any, results: any) => {
             if(error || results.length < 1) {
-                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not delete a wiki page. It might not exist."));
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not delete a wiki page"));
+                Util.log(`Could not delete a wiki page (title: '${ page_namespace }:${ page_name }')`, 3, error);
+
                 return;
             }
 
-            resolve();
+            // Check if page was not found
+            if(results[0].status_not_found === 1) {
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Target page was not found"));
+                return;
+            }
+
+            resolve(results[0].page_id);
         });
     });
 }
@@ -516,11 +529,14 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
 /**
  * Move (rename) the page
  *
- * @param page_id target page id
+ * @param old_namespace target page namespace
+ * @param old_name target page name
  * @param new_namespace name of the namespace to move the page into
  * @param new_name new name for the page
+ *
+ * @returns [new_address, page_id]
  */
-export async function movePage(page_id: number, new_namespace: string, new_name: string): Promise<void> {
+export async function movePage(old_namespace: string, old_name: string, new_namespace: string, new_name: string): Promise<[PageAddress, number]> {
     return new Promise(async (resolve: any, reject: any) => {
         // Get the new namespace
         const new_namespace_obj = registry_namespaces.get()[new_namespace];
@@ -540,29 +556,36 @@ export async function movePage(page_id: number, new_namespace: string, new_name:
         // TODO @cleanup this feels wrong
         // We have to make sure the title is encoded, but if the client sends an already encoded title, we would encode it twice, which
         // we don't want. Thats why we decode it first just to make sure
-        const raw_title = `${ encodeURIComponent(decodeURIComponent(new_namespace)) }:${ encodeURIComponent(decodeURIComponent(new_name)) }`;
-        const address = pageTitleParser(raw_title);
+        const new_raw_title = `${ encodeURIComponent(decodeURIComponent(new_namespace)) }:${ encodeURIComponent(decodeURIComponent(new_name)) }`;
+        const new_address = pageTitleParser(new_raw_title);
 
-        // Check if the page with target title already exists
-        const current_page_query = await getPageInfo(address);
-
-        if(current_page_query[1].length !== 0) {
-            reject(new Util.Rejection(Util.RejectionType.PAGE_NAME_TAKEN, "A page with such title already exists"));
-            return;
-        }
-
-        // Move the page
-        sql.execute("UPDATE `wiki_pages` SET `namespace` = ?, `name` = ? WHERE id = ?",
-        [new_namespace, new_name, page_id],
+        // Try to move the page
+        sql.execute("CALL wiki_move_page(?, ?, ?, ?)",
+        [old_namespace, old_name, new_address.namespace, new_address.name],
         (error: any, results: any) => {
-            if(error || results.affectedRows < 1) {
+            if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not move a page"));
                 Util.log(`Could not move a page (${ new_namespace }:${ new_name })`, 3, error);
 
                 return;
             }
 
-            resolve();
+            const db_results = results[0][0];
+
+            // Check if target page exists
+            if(db_results.status_not_found === 1) {
+                reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Target page does not exist"));
+                return;
+            }
+
+            // Check if a page with such title already exists
+            if(db_results.status_already_exists === 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "A page with such title already exists"));
+                return;
+            }
+
+            // Everything is ok, page was moved
+            resolve([new_address, db_results.page_id]);
         });
     });
 }

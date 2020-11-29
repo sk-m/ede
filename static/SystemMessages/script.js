@@ -55,8 +55,7 @@ function SystemMessagesPageScript() {
         })
         .catch(response => {
             e.target.classList.remove("loading");
-
-            ede.showNotification("systemmessages-create-error", "Error", `Failed to create a new system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("systemmessages-create", response);
         });
     }
 
@@ -75,7 +74,7 @@ function SystemMessagesPageScript() {
         .catch(response => {
             e.target.classList.remove("loading");
 
-            ede.showNotification("systemmessages-delete-error", "Error", `Failed to delete a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("systemmessages-delete", response);
         });
     };
 
@@ -131,7 +130,7 @@ function SystemMessagesPageScript() {
                     ede.showNotification("systemmessages-set-success", "Success", "Successfully updated a system message.");
                 })
                 .catch(response => {
-                    ede.showNotification("systemmessages-set-error", "Error", `Failed to update a system message (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+                    ede.showAPIErrorNotification("systemmessages-create", response);
                 });
             }
 

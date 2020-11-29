@@ -1,15 +1,15 @@
 import * as User from "../user";
 import * as Page from "../page";
 import * as Log from "../log";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
-import { sql } from "../server";
 import { pageTitleParser } from "../routes";
+import { Rejection, RejectionType } from "../utils";
 
 export async function pageDeleteRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
@@ -25,13 +25,13 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
     await User.getRights(client_user.id)
     .then((grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_deletepage) {
-            // Main right
+            // Check the main right
             client_permissions_error = false;
 
-            // Allow complete erase
+            // Check if user is allowed to completely delete the page from the database
             if(grouprights.rights.wiki_deletepage.allow_complete_erase) client_can_remove_from_db = true;
 
-            // Disallowed namespaces
+            // Check if the client can delete a page in that namespace
             if(grouprights.rights.wiki_deletepage.disallowed_namespaces
                && grouprights.rights.wiki_deletepage.disallowed_namespaces.includes(address.namespace)) {
                 client_namespace_restricted = true;
@@ -41,39 +41,28 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to delete pages"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to delete pages"));
         return;
     }
 
     // Client is disallowed to delete pages from this particular namespace
     if(client_namespace_restricted) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to delete pages in this namespace"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to delete pages in this namespace"));
         return;
     }
 
+    // Can we completely delete the page from the database?
     const db_removal = req.body.db_removal === "true" && client_can_remove_from_db;
 
-    // Get the page
-    // TODO @performance we query the database for the page twice - here and in deletePage()
-    sql.execute("SELECT * FROM `wiki_pages` WHERE `namespace` = ? AND `name` = ?",
-    [address.namespace, address.name],
-    (error: any, results: any) => {
-        if(error || results.length < 1) {
-            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Requested page was not found"));
-            return;
-        } else {
-            // Delete the page
-            Page.deletePage(results[0].id, client_user.id, req.body.summary, /* db_removal */)
-            .then(() => {
-                Log.createEntry("deletewikipage", client_user.id, `${ address.namespace }:${ address.name }`,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a>${ db_removal ? " completely removed" : " deleted" } wiki page <a href="/${ req.body.title }">${ req.body.title }</a> (<code>${ results[0].id }</code>)`, req.body.summary);
+    // Delete the page
+    Page.deletePage(address.namespace, address.name, client_user.id, req.body.summary, /* db_removal */)
+    .then((deleted_page_id: number) => {
+        Log.createEntry("deletewikipage", client_user.id, `${ address.namespace }:${ address.name }`,
+    `<a href="/User:${ client_user.username }">${ client_user.username }</a>${ db_removal ? " completely removed" : " deleted" } wiki page <a href="/${ req.body.title }">${ req.body.title }</a> (<code>${ deleted_page_id }</code>)`, req.body.summary);
 
-                res.send(apiResponse(ApiResponseStatus.success));
-            })
-            .catch((error: any) => {
-                // TODO save error to a log
-                res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured"));
-            })
-        }
+        apiSendSuccess(res);
+    })
+    .catch((rejection: Rejection) => {
+        apiSendError(res, rejection);
     });
 }

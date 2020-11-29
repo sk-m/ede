@@ -44,16 +44,6 @@ export interface DatabaseConfigItem {
     write_access: ConfigItemAccessLevel;
 };
 
-/**
- * Parses allowed_values string to an array of strings
- *
- * @param allowed_values ';'-separated string of allowed values
- */
-function parseAllowedValues(allowed_values: string): string[] {
-    const split_string: string[] = allowed_values.replace(/ /g, "").split(";");
-    return split_string;
-}
-
 // Cast a value to the provided type
 /**
  * Cast a string value to the appropriate type
@@ -79,7 +69,7 @@ function castValue(raw_value: string, type: ConfigItemValueTypeName): ConfigItem
             return JSON.parse(raw_value);
         }
         case "array": {
-            return raw_value.split(",");
+            return raw_value.split("|");
         }
 
         default:
@@ -98,18 +88,18 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT * FROM `config`", (error: Error, results: any) => {
             if(error) {
-                Util.log(`Failed to get configuration from the database!`, 3, error);
+                Util.log(`Failed to get configuration from the database!`, 4, error);
 
-                reject(error);
-                return;
+                process.exit(1);
             }
 
             const result: ConfigItemsObject = {};
-            let parsed_allowed_values: string[] | undefined = [];
+            let parsed_allowed_values: string[] | undefined;
 
             for(const item of results) {
+                // Get the allowed values
                 if(item.allowed_values) {
-                    parsed_allowed_values = parseAllowedValues(item.allowed_values);
+                    parsed_allowed_values = item.allowed_values.split("|");
                 } else {
                     parsed_allowed_values = undefined;
                 }
@@ -152,7 +142,7 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
 }
 
 /**
- * Update config's value
+ * Update config item's value
  *
  * @param key key
  * @param value value
@@ -164,35 +154,35 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
 
         // Check if config item with requested key exists
         if(!config_item) {
-            reject(new Error("Invalid config item key"));
+            reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Requested config item does not exist"));
+            Util.log(`Config item does not exist (${ key })`, 3);
+
             return;
         }
 
-        // Construct a query
-        let sql_query = "";
+        let final_value;
 
+        // Check the value
         switch(config_item.value_type) {
             case "int": {
                 if(!parseInt(value, 10)) {
-                    reject(new Error("Invalid value. Expected an integer"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Expected an integer"));
                     return;
                 }
-
-                sql_query = `UPDATE \`config\` SET \`value\` = ${ value } WHERE \`key\` = '${ key }'`;
             } break;
 
             case "json": {
                 if(!(value instanceof Object)) {
-                    reject(new Error("Invalid value. Expected an object"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Expected an object"));
                     return;
                 }
 
-                sql_query = `UPDATE \`config\` SET \`value\` = '${ JSON.stringify(value) }' WHERE \`key\` = '${ key }'`;
+                final_value = JSON.stringify(value);
             } break;
 
             case "array": {
                 if(!(value instanceof Array)) {
-                    reject(new Error("Invalid value. Expected an array"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Expected an array"));
                     return;
                 }
 
@@ -203,16 +193,14 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
                     }
                 }
 
-                sql_query = `UPDATE \`config\` SET \`value\` = '${ value.join(",") }' WHERE \`key\` = '${ key }'`;
+                final_value = value.join(",");
             } break;
 
             case "allowed_values": {
                 if(config_item.allowed_values && !config_item.allowed_values.includes(value)) {
-                    reject(new Error("Invalid value. Value is not one of allowed values"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Value is not one of allowed values"));
                     return;
                 }
-
-                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
             } break;
 
             case "bool": {
@@ -221,8 +209,6 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
                     reject(new Error("Invalid value. Expected a boolean"));
                     return;
                 }
-
-                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
             } break;
 
             default: {
@@ -234,15 +220,17 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
                     }
                 }
 
-                if(sanitize) value = Util.sanitize(value);
-
-                sql_query = `UPDATE \`config\` SET \`value\` = '${ value }' WHERE \`key\` = '${ key }'`;
+                if(sanitize) final_value = Util.sanitize(value);
             }
         }
 
-        sql.query(sql_query, (error: any) => {
-            if(error) reject(error);
-            else resolve();
+        sql.execute("UPDATE `config` SET `value` = ? WHERE `key` = ?",
+        [final_value || value, key],
+        (error: any) => {
+            if(error) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update config item"));
+                Util.log(`Could not update config item (key: '${ key }', raw value: '${ value }')`, 3, error);
+            } else resolve();
         });
     });
 }
@@ -254,25 +242,32 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
  */
 export async function resetItem(key: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
+        // Get the config item
         const config_item = registry_config.get()[key];
 
         // Check if such key exists
         if(!config_item) {
-            reject(new Error("Invalid config item key"));
+            reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Requested config item does not exist"));
+            Util.log(`Config item does not exist (${ key })`, 3);
+
             return;
         }
 
         // Check if we can reset
         if(!config_item.default_value) {
-            reject(new Error("Can't reset config item because there is no default value to reset to"));
+            reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Can't reset config item because there is no default value to reset to"));
+            Util.log(`Can't reset config item because there is no default value to reset to (${ key })`, 3);
+
             return;
         }
 
         sql.execute("UPDATE `config` SET `value` = ? WHERE `key` = ?",
         [config_item.default_value, config_item.key],
         (error: any) => {
-            if(error) reject(error);
-            else resolve();
+            if(error) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not reset config item"));
+                Util.log(`Could not reset config item (key: '${ key }')`, 3, error);
+            } else resolve();
         });
     });
 }

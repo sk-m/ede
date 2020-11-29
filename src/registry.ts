@@ -930,9 +930,25 @@ not it is assigned to the user",
 
         description: "Set a config item",
 
-        required_arguments: ["csrf_token"],
+        required_arguments: ["csrf_token", "key", "value"],
         required_rights: ["modifyconfig"],
 
+        arguments: {
+            key: {
+                name: "key",
+                display_name: "Key",
+                description: "Config key to change",
+
+                type: "string"
+            },
+            value: {
+                name: "value",
+                display_name: "Value",
+                description: "New value",
+
+                type: "string"
+            },
+        },
 
         handler: configSetItemRoute
     },

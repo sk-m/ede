@@ -1,6 +1,6 @@
 import * as Page from "./page";
 
-import { apiError } from "./api";
+import { apiSendError, apiSendSuccess } from "./api";
 import { Rejection, RejectionType } from "./utils";
 import { pageTitleParser } from "./routes";
 
@@ -39,7 +39,7 @@ function create_html(page_content: string, nonexitent: boolean = false): string 
 
 export async function getEditorRoute(req: any, res: any): Promise<void> {
     if(!req.query.page_title) {
-        res.status(403).send(apiError(new Rejection(RejectionType.GENERAL_INVALID_DATA, "No `page_title` provided")));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, "No `page_title` provided"));
         return;
     }
 
@@ -48,14 +48,8 @@ export async function getEditorRoute(req: any, res: any): Promise<void> {
 
     Page.getPageByAddress(page_address)
     .then((page: Page.ResponsePage) => {
-        res.send({
-            status: "success",
-            html: create_html(page.raw_content || "")
-        });
+        apiSendSuccess(res, "get_editor_html", { html: create_html(page.raw_content || "") });
     }).catch(() => {
-        res.send({
-            status: "success",
-            html: create_html("", true)
-        });
+        apiSendSuccess(res, "get_editor_html", { html: create_html("", true) });
     });
 }

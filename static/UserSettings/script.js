@@ -16,7 +16,7 @@ function userSettingsPageScript() {
                     ede.refresh();
                 })
                 .catch(error => {
-                    ede.showNotification("user-disablef2a-error", "Error", error.error || "Could not turn off two-factor authentication.", "error");
+                    ede.showAPIErrorNotification("user-disablef2a", error);
                 });
             };
 
@@ -61,7 +61,7 @@ function userSettingsPageScript() {
                         // Display the qr code
                         current_step = show_next_step();
 
-                        document.getElementById("2fasetup-qrcode").src = response.qr_code;
+                        document.getElementById("2fasetup-qrcode").src = response["user/start_f2a_setup"].qr_code;
 
                         e.target.classList.remove("loading");
 
@@ -71,7 +71,7 @@ function userSettingsPageScript() {
                     .catch(error => {
                         e.target.classList.remove("loading");
 
-                        ede.showNotification("user-f2asetup-error", "Error", error.error || "Could not start the 2FA setup.", "error");
+                        ede.showAPIErrorNotification("user-f2asetup", error);
                     });
                 } else if(current_step === 2) {
                     // Step 1 -> 2. Finish the setup, get the backup codes
@@ -91,7 +91,7 @@ function userSettingsPageScript() {
 
                         e.target.classList.remove("loading");
 
-                        for(const code in response.backup_codes) {
+                        for(const code in response["user/finish_f2a_setup"].backup_codes) {
                             codes_container_el.innerHTML += `<div>${ code }</div>`;
                         }
 
@@ -101,7 +101,7 @@ function userSettingsPageScript() {
                     .catch(error => {
                         e.target.classList.remove("loading");
 
-                        ede.showNotification("user-f2asetup-error", "Error", error.error || "Could not finish the 2FA setup.", "error");
+                        ede.showAPIErrorNotification("user-f2asetup", error);
                     });
                 } else if(current_step === 3) {
                     // Step 2 -> 3. Everything is done, just close the popup and refresh the settings page
@@ -190,7 +190,7 @@ function userSettingsPageScript() {
                 .catch(error => {
                     e.target.classList.remove("loading");
 
-                    ede.showNotification("user-updatepassword-error", "Error", error.error || "Could not change the password.", "error");
+                    ede.showAPIErrorNotification("user-updatepassword", error);
                 })
             };
 
@@ -251,7 +251,7 @@ function userSettingsPageScript() {
                 .catch(error => {
                     e.target.classList.remove("loading");
 
-                    ede.showNotification("user-changeemailrequest-error", "Error", error.error || "Could not change the email address.", "error");
+                    ede.showAPIErrorNotification("user-changeemailrequest", error);
                 })
             };
 

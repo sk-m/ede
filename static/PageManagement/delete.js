@@ -52,7 +52,7 @@ function wikipageDeletePageScript() {
             ede.showNotification("deletewikipage-success", "Success", "Page deleted successfully.");
         })
         .catch(response => {
-            ede.showNotification("deletewikipage-error", "Error", `Failed to delete the page (${ response.error || `<code>${ response.status }</code>` }).`, "error");
+            ede.showAPIErrorNotification("deletewikipage", response);
 
             // Enable the button
             e.target.classList.remove("loading");

@@ -21,7 +21,7 @@ interface CheckResult {
 export async function check(user_id: number, otp?: string): Promise<CheckResult> {
     // TODO @cleanup
     return new Promise((resolve: any) => {
-        // Get all the info about user's f2a we need
+        // Get all the info about user's f2a setup we need
         sql.execute("SELECT `setup_mode`, `secret_key`, `backup_codes` FROM `2fa_data` WHERE `user` = ?",
         [user_id],
         (query_error: any, results: any) => {
@@ -38,17 +38,17 @@ export async function check(user_id: number, otp?: string): Promise<CheckResult>
 
             // f2a is enabled
             if(otp) {
-                // check if otp is valid
+                // Check if one time password is valid
                 const is_correct = tfa.verifyTOTP(results[0].secret_key, otp, {});
 
                 if(!is_correct) {
+                    // Provided one time password is invalid, check if it is a backup code
                     const backup_codes = results[0].backup_codes;
 
-                    // Check backup codes
                     if(Object.keys(backup_codes).includes(otp)) {
                         // User used a valid backup code, check if it is unused
                         if(backup_codes[otp].used) {
-                            // The code was used
+                            // The code was correct, but it was already used
                             resolve({
                                 enabled: true,
                                 otp_correct: false,
@@ -68,6 +68,7 @@ export async function check(user_id: number, otp?: string): Promise<CheckResult>
                             // Set the code to used
                             backup_codes[otp].used = true;
 
+                            // Update user's f2a info
                             sql.execute("UPDATE `2fa_data` SET `backup_codes` = ? WHERE `user` = ?",
                             [JSON.stringify(backup_codes), user_id],
                             (save_error: any, save_results: any) => {
@@ -109,15 +110,16 @@ export async function check(user_id: number, otp?: string): Promise<CheckResult>
  *
  * @param user_id User's id
  */
-export async function disable(user_id: number): Promise<true> {
+export async function disable(user_id: number): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("DELETE FROM `2fa_data` WHERE `user` = ?",
         [user_id],
         (error: any, results: any) => {
             if(error || results.affectedRows < 1) {
-                reject(new Error("User does not have 2FA enabled"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "User does not have 2FA enabled"));
+                Util.log(`User does not have 2FA enabled (user id ${ user_id })`, 3, error);
             } else {
-                resolve(true);
+                resolve();
             }
         });
     });
@@ -132,28 +134,28 @@ export async function disable(user_id: number): Promise<true> {
  */
 export async function startSetup(user_id: number): Promise<string> {
     return new Promise(async (resolve: any, reject: any) => {
-        // Check if 2fa is already enabled
+        // Check if 2fa is already enabled for the user
         const current_f2a_status = await check(user_id);
 
         if(current_f2a_status.enabled) {
-            reject(new Error("2FA is already enabled on this account"));
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "2FA is already enabled on this account"));
             return;
         }
 
         // Generate a secret key
         tfa.generateKey(64, (key_error: any, secret_key: string) => {
             if(key_error) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
                 Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
-                reject(new Error("Could not start 2FA setup"));
 
                 return;
             }
 
             // We have a new secret key, generate backup codes
-            tfa.generateBackupCodes(8, 'xxxx-xxxx-xxxx', (backup_codes_error: any, backup_codes_arr: string[]) => {
+            tfa.generateBackupCodes(8, "xxxx-xxxx-xxxx", (backup_codes_error: any, backup_codes_arr: string[]) => {
                 if(backup_codes_error) {
-                    Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, backup_codes_error);
-                    reject(new Error("Could not start 2FA setup"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
+                    Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
 
                     return;
                 }
@@ -173,8 +175,8 @@ export async function startSetup(user_id: number): Promise<string> {
                 [user_id, secret_key, JSON.stringify(backup_codes_obj)],
                 (error: any, results: any) => {
                     if(error || results.affectedRows < 1) {
-                        Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, backup_codes_error);
-                        reject(new Error("Could not start 2FA setup"));
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
+                        Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
                     } else {
                         resolve(secret_key);
                     }
@@ -199,31 +201,32 @@ export async function finishSetup(user_id: number, otp: number): Promise<any> {
         [user_id],
         (query_error: any, results: any) => {
             if(query_error || results.length !== 1) {
-                Util.log(`Could not finish the 2FA setup for user id ${ user_id }`, 3, query_error);
-                reject(new Error("Could not finish user's 2FA setup"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not finish 2FA setup"));
+                Util.log(`Could not finish 2FA setup for user id ${ user_id }`, 3, query_error);
 
                 return;
             }
 
+            // Check if f2a is already enabled for the user
             if(results[0].setup_mode.readInt8(0) === 0) {
-                reject(new Error("User's 2FA is already enabled"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, "F2A is already enabled for this user"));
 
                 return;
             }
 
-            // Check otp
+            // Check if one time password is correct
             const is_correct = tfa.verifyTOTP(results[0].secret_key, otp, {});
 
             if(!is_correct) {
-                reject(new Error("Incorrect one-time password"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Incorrect one-time password"));
             } else {
                 // Everything is correct, enable f2a
                 sql.execute("UPDATE `2fa_data` SET `enabled_on` = UNIX_TIMESTAMP(), `setup_mode` = b'0' WHERE `user` = ?",
                 [user_id],
                 (enable_error: any, enable_results: any) => {
                     if(enable_error || enable_results.affectedRows < 1) {
-                        Util.log(`Could not enable 2FA for user id ${ user_id }`, 3, query_error);
-                        reject(new Error("Could not enable 2FA"));
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not finish 2FA setup"));
+                        Util.log(`Could not finish 2FA setup for user id ${ user_id }`, 3, query_error);
                     } else {
                         resolve(results[0].backup_codes);
                     }

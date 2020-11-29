@@ -46,44 +46,40 @@ export enum ApiResponseStatus {
 };
 
 /**
- * Construct final API's response
+ * Construct a successfull API response (and send)
  *
- * @param status status type
- * @param additional_data string for errors, object for success (will be assigned to the final response object)
+ * @param res HTTP response object
+ * @param api_route API route
+ * @param data response data
  */
-export function apiResponse(status: ApiResponseStatus, additional_data?: any): any {
-    let response: any = {
-        status: ApiResponseStatus[status],
-    }
+export function apiSendSuccess(res: any, api_route?: string, data?: any): any {
+    const response: any = {
+        status: "success"
+    };
 
-    if(additional_data) {
-        if(status === ApiResponseStatus.success) {
-            response = Object.assign(response, additional_data);
-        } else {
-            if(additional_data instanceof Error) {
-                response.error = additional_data && additional_data.message || "Unknown error occured";
-            } else {
-                response.error = additional_data;
-            }
-        }
-    }
+    if(api_route && data) response[api_route] = data;
 
-    return response;
+    res.send(response);
 }
 
-// TODO @name
-export function apiError(rejection: Rejection): any {
-    return {
+/**
+ * Construct an erroneous API response (and send)
+ *
+ * @param res HTTP response object
+ * @param rejection rejection
+ */
+export function apiSendError(res: any, rejection: Rejection): void {
+    res.status(403).send({
         status: "error",
         error_type: RejectionType[rejection.type],
         message: rejection.client_message
-    }
+    });
 }
 
-// TODO @draft @move move this somewhere else
+// TODO @draft @cleanup @move move this somewhere else
 export async function getPageRoute(req: any, res: any, client_user?: User.User, add_div_tag: boolean = true): Promise<void> {
     if(req.query.title) {
-        // Get by title
+        // Get a page by title
         const parsed_title = pageTitleParser(req.query.title);
 
         const page = await Page.get({
@@ -93,9 +89,9 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         }, client_user as User.User);
 
         // TODO get_raw does nothing here, Page.get renders it anyway
-        res.send(page);
+        apiSendSuccess(res, "page/get", { page });
     } else if(req.query.revid) {
-        // Get by revid
+        // Get a page by revid
         let get_deleted = false;
 
         if(req.query.allow_deleted) {
@@ -130,66 +126,77 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         });
 
         if(sql_error || !page) {
-            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, (sql_error as Rejection).client_message));
+            apiSendError(res, sql_error as Rejection);
             return;
         }
 
         // Do we have to render?
-        if(req.query.get_raw === "false" && page.raw_content) {
+        if((!req.query.get_raw || req.query.get_raw === "false") && page.raw_content) {
             page.parsed_content = (await renderWikitext(page.raw_content, {}, add_div_tag)).content;
         }
 
-        res.send(page);
+        apiSendSuccess(res, "page/get", { page });
     } else {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Please provide a title or a revid"));
+        // Neither a title nor a revid were provided
+        apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, "Please provide a title or a revid"));
     }
 }
 
+/**
+ * Root API route. (almost) All api routes get called from here
+ *
+ * For a POST call, this function checks if all the required arguments were sent and makes sure that the user is not blocked from editing
+ */
 export async function RootRoute(req: any, res: any): Promise<void> {
     let client_user;
 
     // Check if user wants to execute something anonymously
     if(!req.query || req.query.g_anonymous !== "true") {
-        client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
+        client_user = await User.getFromSession(req).catch(() => undefined);
     }
 
-    // TODO catch may be a bug here
-    // TODO we dont't allways need to get the user. This is inefficient
-
+    // Get an api routes snapshot from the registry
     const registry_apiRoutes_snapshot = registry_apiRoutes.get();
     const route_name = req.params["*"].substring(1);
 
+    // Get the api route
     const api_route_object = registry_apiRoutes_snapshot[route_name];
 
-    if(api_route_object) {
-        if(api_route_object.method === req.raw.method) {
-            if(api_route_object.method === "POST") {
-                // Check if client is blocked from editing
-                if(client_user && client_user.blocks.includes("edit")) {
-                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You are blocked from editing"));
-                    return;
-                }
-
-                // Check if a body was provided
-                if(!req.body) {
-                    res.status(403).send(apiResponse(ApiResponseStatus.nopostbody, "No POST body provided"));
-                    return;
-                }
-
-                // Check for required arguments
-                for(const required_arg of api_route_object.required_arguments) {
-                    if(!req.body.hasOwnProperty(required_arg)) {
-                        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, `Parameter '${ required_arg }' is required`));
-                        return;
-                    }
-                }
-            }
-
-            api_route_object.handler(req, res, client_user);
-        } else {
-            res.status(403).send(apiResponse(ApiResponseStatus.invalidrequestmethod, "Invalid request method (did you make a GET request, instead of POST?)"));
-        }
-    } else {
-        res.status(403).send(apiResponse(ApiResponseStatus.invalidroute, "Requested API route does not exist"));
+    // Check if requested route exists
+    if(!api_route_object) {
+        apiSendError(res, new Rejection(RejectionType.API_INVALID_ROUTE, "Requested API route does not exist"));
+        return;
     }
+
+    // Check if the request method is correct
+    if(api_route_object.method !== req.raw.method) {
+        apiSendError(res, new Rejection(RejectionType.API_INVALID_REQUEST_METHOD, "Invalid request method (did you make a GET request, instead of POST?)"));
+        return;
+    }
+
+    // If this is a post request, make some checks
+    if(api_route_object.method === "POST") {
+        // Check if client is blocked from editing
+        if(client_user && client_user.blocks.includes("edit")) {
+            apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You are blocked from editing"));
+            return;
+        }
+
+        // Check if a body was provided
+        if(!req.body) {
+            apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, "No POST body provided"));
+            return;
+        }
+
+        // Check for required arguments
+        for(const required_arg of api_route_object.required_arguments) {
+            if(!req.body.hasOwnProperty(required_arg)) {
+                apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, `Parameter '${ required_arg }' is required`));
+                return;
+            }
+        }
+    }
+
+    // Call the api route handler
+    api_route_object.handler(req, res, client_user);
 }

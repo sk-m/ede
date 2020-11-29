@@ -1,13 +1,14 @@
 import * as User from "../user";
 import * as Page from "../page";
 import * as Log from "../log";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
+import { Rejection, RejectionType } from "../utils";
 
 export async function pageRestoreRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
@@ -21,7 +22,7 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "You do not have permission to restore pages"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to restore pages"));
         return;
     }
 
@@ -42,10 +43,10 @@ ${ is_new_name ? `to <i><a href="/${ new_page_data[1].title }">${ new_page_data[
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <i><a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a></i> \
 ${ is_new_name ? `to <a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
 
-        res.send(apiResponse(ApiResponseStatus.success, { new_title: new_page_data[1].title }));
+        apiSendSuccess(res, "page/restore", { new_title: new_page_data[1].title });
     })
-    .catch((error: any) => {
+    .catch((rejection: Rejection) => {
         // TODO save error to a log
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error && error.message || "Unknown error occured"));
+        apiSendError(res, rejection);
     })
 }

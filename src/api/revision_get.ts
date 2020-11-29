@@ -1,11 +1,12 @@
 import * as User from "../user";
 import * as Page from "../page";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
+import { Rejection, RejectionType } from "../utils";
 
 export async function getRevisionRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     if(!req.query.pageid && !req.query.userid) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Please provide a pageid and/or a userid"));
+        apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, "Please provide a pageid and/or a userid"));
         return;
     }
 
@@ -32,9 +33,9 @@ export async function getRevisionRoute(req: any, res: any, client_user?: User.Us
     // TODO client visibility is 0 for now
     Page.getPageRevisions(req.query.pageid, req.query.userid, query_deleted, true, 0)
     .then((revisions: { [revid: number]: Page.Revision }) => {
-        res.send(apiResponse(ApiResponseStatus.success, { revisions }));
+        apiSendSuccess(res, "revision/get", { revisions })
     })
-    .catch((error: Error) => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, error));
+    .catch((rejection: Rejection) => {
+        apiSendError(res, rejection);
     });
 }

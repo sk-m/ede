@@ -1,6 +1,7 @@
 import { sql } from "./server";
 import * as Util from "./utils";
 import he from "he";
+import { sanitizeWikitext } from "./page";
 
 export type SystemMessagesObject = { [name: string]: SystemMessage };
 export interface SystemMessage {
@@ -17,7 +18,7 @@ export interface SystemMessage {
 }
 
 /**
- * Get all existing system messages
+ * Get all existing system messages that start with
  *
  * @param from offset, 0 if not provided
  * @param n number of records to return, 100 if not provided
@@ -25,18 +26,20 @@ export interface SystemMessage {
  */
 export async function get_all(from: number = 0, n: number = 100, startswith?: string): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
-        let query = `SELECT * FROM \`system_messages\` WHERE id >= ${ from }`;
+        // Construct a query
+        let query = 'SELECT * FROM `system_messages` WHERE id >= ?'; // ? -> from
 
         if(startswith) {
-            query += ` AND \`name\` LIKE '${ Util.sanitize(startswith) }%'`;
+            query += ` AND \`name\` LIKE '${ startswith.replace(/\'/g, "") }%'`;
         }
 
-        query += ` LIMIT ${ n }`
+        query += ` LIMIT ?` // ? -> n
 
-        sql.query(query, (error: Error, results: any) => {
+        // Get the system pages
+        sql.execute(query, [from, n], (error: Error, results: any) => {
             if(error || results.length === 0) {
+                // Some error occured or no system messages were found
                 resolve({});
-
                 return;
             }
 
@@ -64,17 +67,23 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
  * @param name name of the system message
  * @param value value for the system message
  */
-export async function set(name: string, value: string): Promise<boolean> {
+export async function set(name: string, value: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
+        // Sanitize the value
+        const clean_value = sanitizeWikitext(value);
+
+        // Update the system message
         sql.execute("UPDATE `system_messages` SET `value` = ? WHERE `name` = ?",
-        [value, name],
+        [clean_value, name],
         (error: Error) => {
             if(error) {
-                reject(error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not set a new value for a system message"));
+                Util.log(`Could not set a new value for a system message (name: '${ name }', value: '${ value }')`, 3, error);
+
                 return;
             }
 
-            resolve(true);
+            resolve();
         });
     });
 }
@@ -85,17 +94,29 @@ export async function set(name: string, value: string): Promise<boolean> {
  * @param name name of the new system message
  * @param value value for the new system message
  */
-export async function create(name: string, value: string): Promise<boolean> {
+export async function create(name: string, value: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
+        // Check if the name is correct
+        if(!name.match(/^[a-z_-]{1,256}$/)) {
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "System message name is invalid"));
+            return;
+        }
+
+        // Sanitize the value
+        const clean_value = sanitizeWikitext(value);
+
+        // Create a system message
         sql.execute("INSERT INTO `system_messages` (`name`, `value`, `rev_history`, `deletable`) VALUES (?, ?, '{}', b'1')",
-        [name, value],
+        [name, clean_value],
         (error: Error) => {
             if(error) {
-                reject(error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new system message"));
+                Util.log(`Could not create a new system message (name: '${ name }', value: '${ value }')`, 3, error);
+
                 return;
             }
 
-            resolve(true);
+            resolve();
         });
     });
 }
@@ -105,17 +126,26 @@ export async function create(name: string, value: string): Promise<boolean> {
  *
  * @param name name of the system message to be deleted
  */
-export async function remove(name: string): Promise<boolean> {
+export async function remove(name: string): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("DELETE FROM `system_messages` WHERE `name` = ?",
+        sql.execute("CALL systemmessage_remove(?)",
         [name],
-        (error: Error) => {
+        (error: Error, results: any) => {
             if(error) {
-                reject(error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not remove a system message"));
+                Util.log(`Could not remove a system message (name: '${ name }')`, 3, error);
+
                 return;
             }
 
-            resolve(true);
+            // Check if system message can be deleted
+            if(results[0][0].status_non_deletable === 1) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "Requested system message is non-deletable or non-exitent"));
+                return;
+            }
+
+            // System message was deleted successfully
+            resolve();
         });
     });
 }
@@ -127,18 +157,22 @@ export async function remove(name: string): Promise<boolean> {
  */
 export async function get(query: string[] | string[][]): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
+        // Create a valid names query
         const query_names: string[] = [];
         const normalized_query: string[][] = [];
 
+        // Each element in the query parameter can either be a system message name or an array like [msg_name, arg1, arg2, ...]
+        // We do not allow names with a ' in them to avoid SQL injection attacks
+        // TODO in future, we should disable multiple exressions in one SQL query to be even safer
         for(const el of query) {
             if(Array.isArray(el)) {
-                // With parameters. el is an array, where first item is a name
+                // Element is an array, where first item is a name
                 if(!el[0].includes("'")) {
                     query_names.push(el[0]);
                     normalized_query.push(el);
                 }
             } else {
-                // Without parameters. el is a name
+                // Element is just a sysmsg name, so no parameters are included
                 if(!el.includes("'")) {
                     query_names.push(el);
                     normalized_query.push([el]);
@@ -146,33 +180,42 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
             }
         }
 
-        // TODO @cleanup @security
+        // TODO @cleanup with the results_obj
+        // Get the system messages
         sql.query(`SELECT * FROM \`system_messages\` WHERE \`name\` IN ('${ query_names.join("','") }')`,
         (error: Error, results: any) => {
             if(error) {
                 resolve({});
-                Util.log(`Could not load '${ query }' system messages`, 2);
+                Util.log(`Could not load '${ query }' system messages`, 2, error);
 
                 return;
             }
 
             const final_results: SystemMessagesObject = {};
 
+            // Create a results object
             const results_obj: any = {};
 
             for(const result of results) {
                 results_obj[result.name] = result;
             }
 
+            // Work with each system message
             for(const el of normalized_query) {
                 const name = el[0];
                 const sysmsg = results_obj[name];
 
+                // Check if that system message was found
                 if(sysmsg) {
-                    let final_value = he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value);
+                    // Found
 
-                    // Do we have to put in arguments?
-                    if(el.length > 1) {
+                    // let final_value = he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value);
+                    // TODO check if actually we need he.decode here
+                    let final_value = sysmsg.value !== null ? sysmsg.value : sysmsg.default_value;
+
+                    // Put in arguments, if rerquested to do so
+                    // Here, el is query element. If it is an array, some arguments were provided
+                    if(Array.isArray(el)) {
                         for(let i = 1; i < el.length; i++) {
                             final_value = final_value.replace(`$${ i }`, el[i]);
                         }
@@ -187,6 +230,8 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
                         does_exist: true,
                     };
                 } else {
+                    // System message was not found
+
                     final_results[name] = {
                         name,
 
@@ -201,6 +246,7 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
                 }
             }
 
+            // Return the result
             resolve(final_results);
         });
     });

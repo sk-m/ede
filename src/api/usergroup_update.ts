@@ -3,7 +3,7 @@ import * as Log from "../log";
 import * as Util from "../utils";
 import { registry_config, registry_usergroups } from "../registry";
 import { Group, GroupsAndRightsObject } from "../right";
-import { apiResponse, ApiResponseStatus } from "../api";
+import { apiSendError, apiSendSuccess } from "../api";
 
 /**
  * Modify the user group ("usergroup/update")
@@ -11,7 +11,7 @@ import { apiResponse, ApiResponseStatus } from "../api";
 export async function updateUserGroupRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
     if(!client_user) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Anonymous users can't perform this action"));
+        apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "Anonymous users can't perform this action"));
         return;
     }
 
@@ -25,19 +25,13 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     .catch(() => undefined);
 
     if(client_permissions_error) {
-        res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, "Only users with 'modifyusergroups' right can modify user groups"));
-        return;
-    }
-
-    // Check if the name is correct
-    if(!req.body.group_name.match(/^[a-z_-]{1,127}$/)) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Group name is invalid"));
+        apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, "Only users with 'modifyusergroups' right can modify user groups"));
         return;
     }
 
     // Check if the group exsists
     if(!registry_usergroups.get()[req.body.group_name]) {
-        res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Specified group doesn't exists"));
+        apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Specified group doesn't exists"));
         return;
     }
 
@@ -52,74 +46,90 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
 
     const registry_config_snapshot = registry_config.get();
 
-    // Check if the right is restricted
+    // Function to check if the right is restricted and can not be added or removed from the group
     function check_restricted(right_name: string): boolean {
         return registry_config_snapshot["security.restricted_rights"].value instanceof Array
             && registry_config_snapshot["security.restricted_rights"].value.includes(right_name);
     }
 
-    // Rights
+    // Deal with rights
     if(req.body.rights) {
         let rights_obj;
 
+        // Check if rights object was provided correctly
         try {
             rights_obj = JSON.parse(req.body.rights);
         } catch(e) {
-            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Error parsing rights object JSON"));
+            apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Error parsing rights object JSON"));
             return;
         }
 
+        // Deal with every right
+
         // tslint:disable-next-line: forin
         for(const right_name in rights_obj) {
-            // Right removed from group, so we don't have to push it to the new group object
             if(rights_obj[right_name] === false && current_usergroup.added_rights.includes(right_name)) {
+                // Right is being removed from the group, so we don't have to push it to the new group object
+
                 if(check_restricted(right_name)) {
-                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
+                    // Tried to remove a restricted right from the group
+
+                    apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, `Right '${ right_name }' is restricted and can not be altered.`));
                     return;
                 }
             }
-
-            // Right added to group, push it to the new object
             else if(rights_obj[right_name] === true && !current_usergroup.added_rights.includes(right_name)) {
+                // Right is being added to the group, push it to the new object
+
                 if(check_restricted(right_name)) {
-                    res.status(403).send(apiResponse(ApiResponseStatus.permissiondenied, `Right '${ right_name }' is restricted and can not be altered.`));
+                    // Tried to add a restricted right to the group
+
+                    apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, `Right '${ right_name }' is restricted and can not be altered.`));
                     return;
                 }
 
+                // Push the right to the new group
                 new_usergroup.added_rights.push(right_name);
             }
-
-            // Right was already assigned. We don't have to check if it is restricted, because it already was there
             else if(rights_obj[right_name] === true) {
+                // Right was already assigned -> push to the new group object.
+                // We don't have to check if it is restricted, because it already was there
+
                 new_usergroup.added_rights.push(right_name);
             }
         }
     }
 
-    // Right arguments
+    // Right with right arguments
     if(req.body.right_arguments) {
         let arguments_obj;
 
+        // Check if right arguments object was provided correctly
         try {
             arguments_obj = JSON.parse(req.body.right_arguments);
         } catch(e) {
-            res.status(403).send(apiResponse(ApiResponseStatus.invaliddata, "Error parsing right_arguments object JSON"));
+            apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Error parsing right_arguments object JSON"));
             return;
         }
 
+        // Deal with every right argument
+
         for(const right_name in arguments_obj) {
             if(arguments_obj[right_name]) {
-                // Change arguments only if the right is assigned to the group
+                // Change arguments only if the right is assigned to the group. If it is not, the arguments mean nothing
+
                 if(new_usergroup.added_rights.includes(right_name)) {
                     if(check_restricted(right_name)) {
                         // If the right is restricted, set args to current (not new), or to {}, if undefined
+
                         if(current_usergroup.right_arguments[right_name] === undefined) {
                             new_usergroup.right_arguments[right_name] = {};
                         } else {
                             new_usergroup.right_arguments[right_name] = current_usergroup.right_arguments[right_name];
                         }
                     } else if(arguments_obj[right_name] !== undefined) {
-                        // If it is not, set the args to user-specified
+                        // If it is not restricted, set the args to user-specified
+
                         new_usergroup.right_arguments[right_name] = arguments_obj[right_name];
                     }
                 }
@@ -138,11 +148,11 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         Log.createEntry("groupupdate", client_user.id, req.body.group_name,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`, Util.sanitize(req.body.summary || ""));
 
-        res.send(apiResponse(ApiResponseStatus.success));
+        apiSendSuccess(res);
     })
-    .catch(() => {
-        res.status(403).send(apiResponse(ApiResponseStatus.unknownerror, "Unknown error occured when saving the group"));
+    .catch((rejection: Util.Rejection) => {
         // TODO log this incident to file
         // TODO also might be nice to have a systempage with such incidents
+        apiSendError(res, rejection);
     });
 }
