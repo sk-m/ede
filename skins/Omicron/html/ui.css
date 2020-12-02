@@ -995,6 +995,10 @@ a.ui-text[href]:focus:not(:hover),
     font-size: 12px;
 }
 
+.ui-input1.big {
+    padding: 11px 16px;
+}
+
 .ui-input1.monospace {
     font-family: monospace;
 }
@@ -1163,6 +1167,47 @@ a.ui-text[href]:focus:not(:hover),
     color: hsl(0, 0%, 50%) !important;
     background-color: transparent !important;
     box-shadow: none !important;
+}
+
+/* TODO cleanup */
+.ui-button1.t-big {
+    display: block;
+    
+    width: 100%;
+    padding: 15px;
+
+    color: white;
+    font-family: "Roboto Mono";
+    font-weight: 400;
+    font-size: 14px;
+
+    box-shadow: none;
+    background-color: var(--color-blue3);
+}
+
+.ui-button1.t-big.loading {
+    background-color: var(--color-gray15);
+}
+
+.ui-button1.t-big:hover {
+    background-color: hsl(232, 100%, 40%);
+}
+
+.ui-button1.t-big:active {
+    background-color: var(--color-blue3);
+}
+
+.ui-button1.t-big.secondary {
+    color: var(--color-blue3);
+    background-color: transparent;
+}
+
+.ui-button1.t-big.secondary:hover {
+    background-color: var(--color-blue2-transparent-1);
+}
+
+.ui-button1.t-big.secondary:active {
+    background-color: var(--color-blue2-transparent-2);
 }
 
 /* Additional styles */

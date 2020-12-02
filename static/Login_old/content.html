@@ -1,0 +1,71 @@
+<div class="page-system-login">
+    <div class="login-conainer">
+        <div class="main-title">Log in or Join</div>
+        <div class="main-title-sub-container">
+            <div class="line"></div>
+            <div class="main-title-sub">Lorem Ipsum Dolor Sit Amet</div>
+            <div class="line"></div>
+        </div>
+
+        <div class="middle-container">
+            <div class="info-container">
+                <h1>Join INSTANCENAME</h1>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas orci libero, tempus quis euismod venenatis, vulputate ut quam. Pellentesque semper scelerisque dolor, non sagittis justo viverra sed. Nam volutpat, quam ac rutrum commodo, nunc nisl hendrerit massa, eu dictum elit urna eget massa. Cras faucibus sapien eget odio egestas vestibulum.</p><p><i>Ut non lacinia eros, ac mollis ligula. Maecenas at libero vehicula, tincidunt augue in, porta elit. Integer condimentum sem ultrices, vestibulum augue quis, laoreet augue. Sed convallis urna justo, et placerat arcu mattis in. Sed vel pharetra massa. Duis scelerisque purus sed neque semper faucibus.</i></p>
+            </div>
+            <div class="info-container">
+                <h1>Log in to INSTANCENAME</h1>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas orci libero, tempus quis euismod venenatis, vulputate ut quam. Pellentesque semper scelerisque dolor, non sagittis justo viverra sed. Nam volutpat, quam ac rutrum commodo, nunc nisl hendrerit massa, eu dictum elit urna eget massa. Cras faucibus sapien eget odio egestas vestibulum.</p>
+            </div>
+            <div id="form-login-maincontainer" class="form-container">
+                <form id="form-login-container-login" name="login">
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Username</div>
+                        <input type="text" name="username" data-handler="username" class="ui-input1">
+                    </div>
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Password</div>
+                        <input type="password" name="password" data-handler="password" class="ui-input1">
+                    </div>
+                    <div class="ui-form-container between" style="flex-direction: row-reverse;">
+                        <button name="submit" class="ui-button1">Log in</button>
+                        <button name="switch" class="ui-button1 c-blue t-frameless">Join</button>
+                    </div>
+                </form>
+                <form id="form-login-container-join" name="join" class="hidden">
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Username</div>
+                        <input type="text" name="username" data-handler="username" class="ui-input1">
+                    </div>
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Email address</div>
+                        <input type="email" name="email" data-handler="email" class="ui-input1">
+                    </div>
+                    <div class="ui-form-spacer"></div>
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Password</div>
+                        <input type="password" name="password" data-handler="password" class="ui-input1">
+                    </div>
+                    <div class="ui-input-box">
+                        <div class="popup"></div>
+                        <div class="ui-input-name1">Repeat password</div>
+                        <input type="password" name="password_repeat" data-handler="password" class="ui-input1">
+                    </div>
+                    <div class="ui-form-container between" style="flex-direction: row-reverse;">
+                        <button name="submit" class="ui-button1">Create account</button>
+                        <button name="switch" class="ui-button1 c-blue t-frameless">Log in</button>
+                    </div>
+                </form>
+                <div id="systempage-login-apiresponse"></div>
+            </div>
+        </div>
+    </div>
+    <div class="ui-text bottom-text">
+        <span class="ui-text small gray">By creating an account, you agree to</span><br>
+        <a class="a" href="/Project:License agreement">License agreement</a> · <a class="a" href="/Project:Terms and conditions">Terms and conditions</a>
+    </div>
+</div>

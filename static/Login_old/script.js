@@ -2,13 +2,7 @@
 
 function loginPageScript() {
     // Main container element
-    const login_form_maincontainer_el = document.getElementById("form-login-maincontainer");
-
-    // Page elements
-    const page_login_el = login_form_maincontainer_el.querySelector(".page.login");
-    const page_join_el = login_form_maincontainer_el.querySelector(".page.join");
-
-    const apiresponse_login_el = document.getElementById("systempage-login-apiresponse-login");
+    const login_form_maincontainer = document.getElementById("form-login-maincontainer");
 
     let login_form_state_is_login = true;
 
@@ -32,7 +26,7 @@ function loginPageScript() {
     <div class="ui-input-box">
         <div class="popup"></div>
         <div class="ui-input-name1">6-digit code or backup code</div>
-        <input type="text" name="otp" data-handler="" class="ui-input1 roboto-mono" autocomplete="off">
+        <input type="text" name="otp" data-handler="" class="ui-input1 roboto-mono">
     </div>
 </form>`;
 
@@ -55,7 +49,7 @@ function loginPageScript() {
 
     // On form submit
     const login_form_submit = e => {
-        apiresponse_login_el.innerText = "";
+        document.getElementById("systempage-login-apiresponse").innerText = "";
 
         if(login_form_state_is_login) {
             // Login
@@ -75,7 +69,7 @@ function loginPageScript() {
                 .then(response => {
                     if(response.success) {
                         // TODO should redirect to `?redir_to=` or just show a "login" success message
-                        window.location = "/User:" + ede.form.list.login.username.value;
+                        window.location = "/User:" + ede.form.list.login.username.value
                     }
                 })
                 .catch(error => {
@@ -93,10 +87,8 @@ function loginPageScript() {
                     } else if(error.error === "blocked") {
                         // User is blocked
                         ede.showPopup("login-blocked", "Account is blocked", error.message);
-                    } else if(error.error === "invalid_credentials") {
-                        apiresponse_login_el.innerText = "Invalid username and/or password.";
                     } else {
-                        apiresponse_login_el.innerText = `Unknown error occured: ${ error.error }.`;
+                        document.getElementById("systempage-login-apiresponse").innerText = `Unknown error occured: ${ error.error }`;
                     }
                 });
             }
@@ -154,8 +146,10 @@ function loginPageScript() {
     function login_form_switch() {
         if(login_form_state_is_login) {
             // Switch to join
-            page_login_el.classList.add("hidden");
-            page_join_el.classList.remove("hidden");
+            ede.form.list.login._form.classList.add("hidden");
+            ede.form.list.join._form.classList.remove("hidden");
+
+            login_form_maincontainer.classList.add("right");
 
             const login_username = ede.form.list.login.username.value;
             const login_password = ede.form.list.login.password.value;
@@ -172,10 +166,10 @@ function loginPageScript() {
             login_form_state_is_login = false;
         } else {
             // Switch to login
-            page_login_el.classList.remove("hidden");
-            page_join_el.classList.add("hidden");
+            ede.form.list.login._form.classList.remove("hidden");
+            ede.form.list.join._form.classList.add("hidden");
 
-            login_form_maincontainer_el.classList.remove("right");
+            login_form_maincontainer.classList.remove("right");
 
             login_form_state_is_login = true;
         }
