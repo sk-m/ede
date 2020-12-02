@@ -141,10 +141,13 @@ export function userLoginRoute(req: any, res: any): void {
                 });
             })
             .catch(async (error: any) => {
-                const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
-
-                res.status(403).send({ error: "invalid_credentials", message: msg.value });
+                res.status(403).send({ error: "unknown" });
             });
+        })
+        .catch(async (error: any) => {
+            const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
+
+            res.status(403).send({ error: "invalid_credentials", message: msg.value });
         });
     });
 }
