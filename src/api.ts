@@ -16,6 +16,7 @@ export interface ApiRoute {
     required_arguments: string[];
     required_rights: string[];
     required_elevated_session?: true;
+    anonymous_call_allowed?: boolean;
 
     arguments?: { [argument_name: string]: ApiArgument };
 
@@ -52,9 +53,10 @@ export enum ApiResponseStatus {
  * @param api_route API route
  * @param data response data
  */
-export function apiSendSuccess(res: any, api_route?: string, data?: any): any {
+export function apiSendSuccess(res: any, api_route?: string, data?: any, warnings?: string[]): any {
     const response: any = {
-        status: "success"
+        status: "success",
+        warnings: warnings || []
     };
 
     if(api_route && data) response[api_route] = data;

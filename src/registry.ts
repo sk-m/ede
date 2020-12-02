@@ -40,6 +40,7 @@ import { userStart2FASetupRoute } from "./api/user_start_f2a_setup";
 import { userFinish2FASetupRoute } from "./api/user_finish_f2a_setup";
 import { userDisable2FARoute } from "./api/user_disable_f2a";
 import { requestUserEmailChangeRoute } from "./api/user_request_email_change";
+import { systemmessageGetRoute } from "./api/systemmessage_get";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -459,6 +460,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: [],
         required_rights: [],
+        anonymous_call_allowed: true,
 
         arguments: {
             title: {
@@ -498,6 +500,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: [],
         required_rights: [],
+        anonymous_call_allowed: true,
 
         arguments: {
             pageid: {
@@ -531,6 +534,7 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         required_arguments: ["revid_from", "revid_to"],
         required_rights: [],
+        anonymous_call_allowed: true,
 
         arguments: {
             revid_from: {
@@ -972,6 +976,49 @@ not it is assigned to the user",
         },
 
         handler: configResetItemRoute
+    },
+    "systemmessage/get": {
+        name: "systemmessage/get",
+        method: "GET",
+
+        description: "Get system messages",
+
+        required_arguments: ["name"],
+        required_rights: [],
+        anonymous_call_allowed: true,
+
+        arguments: {
+            name: {
+                name: "name",
+                display_name: "System message name",
+                description: "This can be a name or a few first characters of a name, if you want to get multiple records",
+
+                type: "string"
+            },
+            from: {
+                name: "From",
+                display_name: "Start index",
+                description: "Start index for the system messages",
+
+                type: "number"
+            },
+            to: {
+                name: "To",
+                display_name: "End index",
+                description: "End index for the system messages. end index - start index = number of records that will be retrieved. Maximum number of records that can be retrieved from one API call - 100",
+
+                type: "number"
+            },
+            encode_values: {
+                name: "encode_values",
+                display_name: "Encode values",
+                description: "Make system message values html entity encoded",
+
+                type: "boolean"
+            },
+        },
+
+        handler: systemmessageGetRoute
     },
     "systemmessage/set": {
         name: "systemmessage/set",

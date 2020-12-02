@@ -78,6 +78,7 @@ export interface ResponsePage {
 
     additional_css: string[];
     additional_js: string[];
+    additional_info?: any;
 
     access_time_ms?: number;
     parse_time_ms?: number;

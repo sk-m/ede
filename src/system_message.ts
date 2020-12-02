@@ -24,7 +24,7 @@ export interface SystemMessage {
  * @param n number of records to return, 100 if not provided
  * @param startswith only return records, whose name start with a specific string
  */
-export async function get_all(from: number = 0, n: number = 100, startswith?: string): Promise<SystemMessagesObject> {
+export async function get_all(from: number = 0, n: number = 100, startswith?: string, encode_values: boolean = false): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
         // Construct a query
         let query = 'SELECT * FROM `system_messages` WHERE id >= ?'; // ? -> from
@@ -46,10 +46,14 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
             const final_results: SystemMessagesObject = {};
 
             for(const sysmsg of results) {
+                // Make sure the value is decoded
+                // TODO no need to decode default values as they are always non-encoded
+                const value = he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value);
+
                 final_results[sysmsg.name] = {
                     ...sysmsg,
 
-                    value: he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value),
+                    value: encode_values ? he.encode(value) : value,
                     is_default: !sysmsg.value,
                     is_deletable: sysmsg.deletable.readInt8(0) === 1,
                     does_exist: true

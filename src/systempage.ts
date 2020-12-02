@@ -50,9 +50,9 @@ export function systempageBuilder(config: Page.SystempageConfig): Page.ResponseP
 <div class="ui-systempage-header-box">
     <div class="title-container">
         <div class="icon"><i class="${ config.header_config.icon }"></i></div>
-        <div class="title">${ config.header_config.title }</div>
+        <div id="systempage-header-title" class="title">${ config.header_config.title }</div>
     </div>
-    ${ config.header_config.description ? `<div class="text">${ config.header_config.description }</div>` : "" }
+    ${ config.header_config.description ? `<div id="systempage-header-description" class="text">${ config.header_config.description }</div>` : "" }
     ${ config.header_config.body || "" }
 </div>`;
     }
@@ -60,20 +60,20 @@ export function systempageBuilder(config: Page.SystempageConfig): Page.ResponseP
     // Construct breadcrumbs
     if(config.breadcrumbs_data) {
         let items_html = "";
-        let is_first = true;
+        let i = 1;
 
         for(const item of config.breadcrumbs_data) {
-            // Add a separator
-            if(!is_first) items_html += `<div class="separator"><i class="fas fa-chevron-right"></i></div>`;
+            // Add a separator, if this is not the first element
+            if(i !== 1) items_html += `<div class="separator"><i class="fas fa-chevron-right"></i></div>`;
 
-            items_html += `<a ${ item[2] ? `href="${ item[2] }" title="Go to ${ item[2] }"` : "" }class="item">\
+            items_html += `<a ${ item[2] ? `href="${ item[2] }" title="Go to ${ item[2] }"` : "" }class="item" id="systempage-breadcrumbs-${ i }">\
 ${ item[1] ? `<i class="${ item[1] }"></i>` : "" }\
 ${ item[0] }</a>`;
 
-            is_first = false;
+            i++;
         }
 
-        breadcrumbs_html = `<div class="ui-systempage-breadcrumbs">${ items_html }</div>`;
+        breadcrumbs_html = `<div id="systempage-breadcrumbs-container" class="ui-systempage-breadcrumbs">${ items_html }</div>`;
     }
 
     // Construct sidebar

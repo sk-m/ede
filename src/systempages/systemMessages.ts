@@ -5,7 +5,6 @@ import * as Page from "../page";
 import * as UI from "../ui";
 import * as SystemMessage from "../system_message";
 import { GroupsAndRightsObject } from "../right";
-import he from "he";
 
 export async function systemMessages(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
     return new Promise(async (resolve: any) => {
@@ -26,6 +25,22 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
 
         // Get the queried system message name
         const queried_message = page.address.url_params[1];
+
+        // Get client's rights
+        let client_can_modify = false;
+
+        if(client) {
+            await User.getRights(client.id)
+            .then((client_grouprights: GroupsAndRightsObject) => {
+                if(client_grouprights.rights.editsystemmessages) client_can_modify = true;
+            })
+            .catch(() => undefined);
+        }
+
+        // Save whether or not the client can modify the system messages to the additional_info page object
+        page_config.page.additional_info = {
+            client_can_modify_sysmsgs: client_can_modify
+        };
 
         // Some strings
         const query_form_html = `\
@@ -68,36 +83,29 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
             page_config.header_config = {
                 icon: "fas fa-list",
                 title: "System Messages",
-                description: "Please, select a message"
+                description: "Please, enter a query"
             };
 
             page_config.body_html = `\
 ${ query_form_html }
 <div id="systempage-systemmessages-root" class="hidden">
     ${ create_form_html }
+    <div id="systempage-systemmessages-list"></div>
 </div>`;
 
             resolve(page_config);
         } else {
             // Query provided
-            const messages = await SystemMessage.get_all(undefined, undefined, queried_message);
-            let client_can_modify = false;
+            const messages = await SystemMessage.get_all(undefined, undefined, queried_message, true);
             let sysmsgs_html = "";
-
-            // Get client's rights
-            if(client) {
-                await User.getRights(client.id)
-                .then((client_grouprights: GroupsAndRightsObject) => {
-                    if(client_grouprights.rights.editsystemmessages) client_can_modify = true;
-                })
-                .catch(() => undefined);
-            }
+            let sysmsgs_returned = false;
 
             for(const msg_name in messages) {
                 if(messages[msg_name]) {
+                    sysmsgs_returned = true;
+
                     const msg = messages[msg_name];
 
-                    // TODO @performance we he.decode in SystemMessage.get(..) and then encode again here. We should have a flag to tell
                     // the getter to not decode instead
                     sysmsgs_html += `\
 <div class="systemmessage" data-systemmessage-name="${ msg.name }">
@@ -111,7 +119,7 @@ ${ query_form_html }
     </div>
     <div class="middle">
         <div class="current-value-container${ !client_can_modify ? " disabled" : "" }" title="Click to edit">
-            <div class="text">${ he.encode(msg.value) }</div>
+            <div class="text">${ msg.value }</div>
         </div>
         <div class="edit-form hidden">
             <textarea class="ui-input1 monospace">${ msg.value }</textarea>
@@ -125,9 +133,13 @@ ${ query_form_html }
                 }
             }
 
+            if(!sysmsgs_returned) {
+                sysmsgs_html = `<div class="no-sysmsgs-notice">No system messages found</div>`;
+            }
+
             page_config.header_config = {
                 icon: "fas fa-list",
-                title: `${ queried_message }&hellip;`,
+                title: "System Messages",
                 description: `Displaying messages starting with '${ queried_message }'`
             };
 
@@ -142,7 +154,7 @@ ${ query_form_html }
     </div>
 </div>`;
 
-        resolve(page_config);
+            resolve(page_config);
         }
     });
 }
