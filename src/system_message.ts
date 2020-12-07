@@ -1,7 +1,6 @@
 import { sql } from "./server";
 import * as Util from "./utils";
 import he from "he";
-import { sanitizeWikitext } from "./page";
 
 export type SystemMessagesObject = { [name: string]: SystemMessage };
 export interface SystemMessage {
@@ -18,13 +17,13 @@ export interface SystemMessage {
 }
 
 /**
- * Get all existing system messages that start with
+ * Get all existing system messages that start with a substring (Not encoded by default!)
  *
  * @param from offset, 0 if not provided
  * @param n number of records to return, 100 if not provided
  * @param startswith only return records, whose name start with a specific string
  */
-export async function get_all(from: number = 0, n: number = 100, startswith?: string, encode_values: boolean = false): Promise<SystemMessagesObject> {
+export async function get_all(from: number = 0, n: number = 100, startswith?: string, encode: boolean = false): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
         // Construct a query
         let query = 'SELECT * FROM `system_messages` WHERE id >= ?'; // ? -> from
@@ -53,7 +52,7 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
                 final_results[sysmsg.name] = {
                     ...sysmsg,
 
-                    value: encode_values ? he.encode(value) : value,
+                    value: encode ? he.encode(value) : value,
                     is_default: !sysmsg.value,
                     is_deletable: sysmsg.deletable.readInt8(0) === 1,
                     does_exist: true
@@ -72,13 +71,11 @@ export async function get_all(from: number = 0, n: number = 100, startswith?: st
  * @param value value for the system message
  */
 export async function set(name: string, value: string): Promise<void> {
+    // TODO We currently allow ALL inputs. Including thouse, that include stuff like <script>... Maybe we should be more careful here?
     return new Promise((resolve: any, reject: any) => {
-        // Sanitize the value
-        const clean_value = sanitizeWikitext(value);
-
         // Update the system message
         sql.execute("UPDATE `system_messages` SET `value` = ? WHERE `name` = ?",
-        [clean_value, name],
+        [value, name],
         (error: Error) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not set a new value for a system message"));
@@ -99,6 +96,7 @@ export async function set(name: string, value: string): Promise<void> {
  * @param value value for the new system message
  */
 export async function create(name: string, value: string): Promise<void> {
+    // TODO We currently allow ALL inputs. Including thouse, that include stuff like <script>... Maybe we should be more careful here?
     return new Promise((resolve: any, reject: any) => {
         // Check if the name is correct
         if(!name.match(/^[a-z_-]{1,256}$/)) {
@@ -106,12 +104,9 @@ export async function create(name: string, value: string): Promise<void> {
             return;
         }
 
-        // Sanitize the value
-        const clean_value = sanitizeWikitext(value);
-
         // Create a system message
         sql.execute("INSERT INTO `system_messages` (`name`, `value`, `rev_history`, `deletable`) VALUES (?, ?, '{}', b'1')",
-        [name, clean_value],
+        [name, value],
         (error: Error) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new system message"));
@@ -155,11 +150,11 @@ export async function remove(name: string): Promise<void> {
 }
 
 /**
- * Get system message
+ * Get system message (Not encoded by default!)
  *
  * @param name Name(s) of the system messsage(s)
  */
-export async function get(query: string[] | string[][]): Promise<SystemMessagesObject> {
+export async function get(query: string[] | string[][], encode: boolean = false): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
         // Create a valid names query
         const query_names: string[] = [];
@@ -213,8 +208,6 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
                 if(sysmsg) {
                     // Found
 
-                    // let final_value = he.decode(sysmsg.value !== null ? sysmsg.value : sysmsg.default_value);
-                    // TODO check if actually we need he.decode here
                     let final_value = sysmsg.value !== null ? sysmsg.value : sysmsg.default_value;
 
                     // Put in arguments, if rerquested to do so
@@ -224,6 +217,8 @@ export async function get(query: string[] | string[][]): Promise<SystemMessagesO
                             final_value = final_value.replace(`$${ i }`, el[i]);
                         }
                     }
+
+                    if(encode) final_value = he.encode(final_value);
 
                     final_results[sysmsg.name] = {
                         ...sysmsg,

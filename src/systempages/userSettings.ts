@@ -14,7 +14,7 @@ ${ client.email_address }
 </div></div>`;
 
     // check if user has f2a enabled
-    const is_f2a_enabled = (await F2A.check(parseInt(client.id, 10))).enabled;
+    const is_f2a_enabled = (await F2A.check(client.id)).enabled;
     let f2a_text;
 
     if(is_f2a_enabled) {
@@ -176,7 +176,7 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
         if(page.address.query.email_token_action && page.address.query.email_token) {
             // User wants to change their email address
             if(page.address.query.email_token_action === "change_email") {
-                const verification_result = await User.checkEmailToken(parseInt(client.id, 10), page.address.query.email_token, "email_change");
+                const verification_result = await User.checkEmailToken(client.id, page.address.query.email_token, "email_change");
 
                 // TODO @hack @cleanup page.additional_js.push
                 if(verification_result[0]) {
@@ -185,7 +185,7 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
                     [verification_result[1], client.id]);
 
                     // Get the new user
-                    client = await User.getById(parseInt(client.id, 10));
+                    client = await User.getById(client.id);
 
                     page.additional_js.push(`ede_onready.push(() => { \
 ede.showNotification("useremailchange-success", "New email verified", "Your email address was successfully changed.");
@@ -198,7 +198,7 @@ ede.clearURLParams();\
 
             // User wants to verify email address
             else if(page.address.query.email_token_action === "verify_email") {
-                const verification_result = await User.checkEmailToken(parseInt(client.id, 10), page.address.query.email_token, "email_verification");
+                const verification_result = await User.checkEmailToken(client.id, page.address.query.email_token, "email_verification");
 
                 // TODO @hack @cleanup page.additional_js.push
                 if(verification_result[0]) {
@@ -211,7 +211,7 @@ ede.clearURLParams();\
                         [client.id]);
 
                         // Get the new user
-                        client = await User.getById(parseInt(client.id, 10));
+                        client = await User.getById(client.id);
 
                         page.additional_js.push(`ede_onready.push(() => { \
     ede.showNotification("useremailverification-success", "Email verified", "Your email address was successfully verified.");

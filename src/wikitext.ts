@@ -522,6 +522,7 @@ export async function renderWikitext(input: string, template_params: any, add_ta
                         const address = pageTitleParser(template_params_obj[0], "Template");
                         // TODO @placeholder client is always {}
                         // TODO @cleanup it might be a good idea to .catch() here
+                        // @ts-ignore
                         const page = await Page.get(address, {}, template_params_obj, false);
 
                         // Check if template exists

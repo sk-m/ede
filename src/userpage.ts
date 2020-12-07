@@ -456,7 +456,7 @@ title="This user is a member of the ${ group_name } group. Click to see the grou
             page_config.header_config = {
                 icon: "fas fa-user",
                 title: username,
-                description: queried_user_error || "Some error occured"
+                description: "Some error occured"
             };
         }
 

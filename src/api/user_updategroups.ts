@@ -172,7 +172,7 @@ AND \`group\` IN ('${ removed_groups.join("','") }')`,
     // Add log entry
     Log.createEntry("usergroupsupdate", client_user.id, target_user.id,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> updated groups for <a href="/User:${ target_user.username }">\
-${ target_user.username }</a>: ${ log_str }`, Util.sanitize(req.body.summary));
+${ target_user.username }</a>: ${ log_str }`, req.body.summary);
 
     apiSendSuccess(res);
 }

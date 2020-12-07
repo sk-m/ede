@@ -58,7 +58,7 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
     Page.deletePage(address.namespace, address.name, client_user.id, req.body.summary, /* db_removal */)
     .then((deleted_page_id: number) => {
         Log.createEntry("deletewikipage", client_user.id, `${ address.namespace }:${ address.name }`,
-    `<a href="/User:${ client_user.username }">${ client_user.username }</a>${ db_removal ? " completely removed" : " deleted" } wiki page <a href="/${ req.body.title }">${ req.body.title }</a> (<code>${ deleted_page_id }</code>)`, req.body.summary);
+    `<a href="/User:${ client_user.username }">${ client_user.username }</a>${ db_removal ? " completely removed" : " deleted" } wiki page <a href="/${ address.title }">${ address.display_title }</a> (<code>${ deleted_page_id }</code>)`, req.body.summary);
 
         apiSendSuccess(res);
     })

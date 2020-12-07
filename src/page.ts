@@ -13,6 +13,7 @@ import sanitizeHtml from "sanitize-html";
 import bitwise from "bitwise";
 import { UInt8 } from "bitwise/types";
 import { pageTitleParser } from "./routes";
+import he from "he";
 
 export type SystemPageDescriptorsObject = { [name: string]: SystemPageDescriptor };
 
@@ -150,8 +151,12 @@ export interface PageInfo {
     action_restrictions: any;
 
     is_deleted: boolean;
-    deleted_by?: number;
-    deleted_on?: number;
+}
+
+export interface DeletedPageInfo extends PageInfo {
+    deleted_by: number;
+    deleted_on: number;
+    delete_summary: string;
 }
 
 export type PageInfoTypes = { [internal_name: string]: PageInfoType };
@@ -303,7 +308,7 @@ export function sanitizeWikitext(input: string): string {
  * Create a new revision (edit)
  *
  * @param page_address page address object. *Must* be sanitized! Use pageTitleParser() to get one
- * @param new_raw_content new raw content
+ * @param new_raw_content new raw content (will be html-escaped)
  * @param user user that created a revision
  * @param summary a short summary
  * @param tags tags for the revision (WIP)
@@ -312,7 +317,11 @@ export function sanitizeWikitext(input: string): string {
 export async function createRevision(page_address: PageAddress, new_raw_content: string, user: User.User, summary?: string,
     tags?: string[], allow_page_creation: boolean = false): Promise<void> {
     return new Promise(async (resolve: any, reject: any) => {
-        // Sanitize the raw content (we do not render here, just sanitize)
+        // TODO do we encode at the time of saving, or at the time of fetching the page?
+        // Having a purest form of data in the database is great, but if we do that, we'll have to encode the whole page *on each page fetch*
+        // I think we will have it like that for the time being
+
+        // Sanitize the raw content (we do not render here, just sanitize) and the summary
         const clean_content = sanitizeWikitext(new_raw_content);
 
         // Get the size of the raw content
@@ -354,20 +363,22 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
                 return;
             }
 
-            // TODO @placeholder
-            // Check and sanitize the title
-            if(!page_address.name.match(/^[^|#<>{}\[\]]+$/) ||
-                page_address.name.length < 1 ||
-                page_address.name.length > 255 ||
-                page_address.name[0] === ":" ||
-                page_address.name[0] === " " ||
-                page_address.name.endsWith(" ") ||
-                page_address.name[0] === "." ||
-                page_address.name[0] === "/" ||
-                page_address.name.includes("  ") ||
-                page_address.name.includes("./") ||
-                page_address.name.includes("/.")) {
-                reject("invalid_title");
+            // Check the title
+
+            const raw_name = decodeURIComponent(page_address.name);
+
+            if(!raw_name.match(/^[^+%|#<>{}]+$/) ||
+                raw_name.length < 1 ||
+                raw_name.length > 255 ||
+                raw_name[0] === ":" ||
+                raw_name[0] === " " ||
+                raw_name.endsWith(" ") ||
+                raw_name[0] === "." ||
+                raw_name[0] === "/" ||
+                raw_name.includes("  ") ||
+                raw_name.includes("./") ||
+                raw_name.includes("/.")) {
+                reject(new Util.Rejection(Util.RejectionType.PAGE_TITLE_INVALID, "Invalid page title"));
                 return;
             }
 
@@ -393,8 +404,8 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
 
             // Log page creation
             Log.createEntry("createwikipage", user.id, page_address.title,
-            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ page_address.title }">${ page_address.title }</a> \
-(<code>${ target_page_id }</code>)`, "");
+            `<a href="/User:${ user.username }">${ user.username }</a> created a wiki page <a href="/${ page_address.title }">${ page_address.display_title }</a> \
+(<code>${ target_page_id }</code>)`, summary);
         }
 
         // We now have a page (we either created it, or found it)
@@ -437,12 +448,12 @@ export async function deletePage(page_namespace: string, page_name: string, dele
             }
 
             // Check if page was not found
-            if(results[0].status_not_found === 1) {
+            if(results[0][0].status_not_found === 1) {
                 reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Target page was not found"));
                 return;
             }
 
-            resolve(results[0].page_id);
+            resolve(results[0][0].page_id);
         });
     });
 }
@@ -459,8 +470,8 @@ export async function deletePage(page_namespace: string, page_name: string, dele
 export async function restorePage(page_id: number, new_namespace?: string, new_name?: string): Promise<[number, PageAddress, PageAddress]> {
     return new Promise((resolve: any, reject: any) => {
         // Get the deleted page and the last revision
-        sql.query("SELECT id FROM `revisions` WHERE `page` = ? ORDER BY id DESC LIMIT 1; \
-SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
+        sql.query("SELECT `revisions`.`id` AS `revision_id`, `deleted_wiki_pages`.* FROM `deleted_wiki_pages` \
+INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHERE `deleted_wiki_pages`.`pageid` = 28 ORDER BY id DESC LIMIT 1;",
         [page_id, page_id],
         async (get_error: any, results: any) => {
             if(get_error || results[0].length < 1) {
@@ -469,8 +480,8 @@ SELECT * FROM `deleted_wiki_pages` WHERE `pageid` = ?",
                 return;
             }
 
-            const deleted_page = results[1][0];
-            const revid = results[0][0].id;
+            const deleted_page = results[0];
+            const revid = results[0].revision_id;
 
             // New new namespace and/or a new name provided, use old ones
             if(!new_namespace) new_namespace = deleted_page.namespace;
@@ -596,7 +607,7 @@ export async function movePage(old_namespace: string, old_name: string, new_name
  *
  * @param address target page's address
  */
-export async function getDeletedPageInfo(address: PageAddress): Promise<PageInfo[]> {
+export async function getDeletedPageInfo(address: PageAddress, encode: boolean = true): Promise<DeletedPageInfo[]> {
     return new Promise((resolve: any) => {
         sql.execute("SELECT * FROM `deleted_wiki_pages` WHERE `namespace` = ? AND `name` = ?",
         [address.namespace, address.name],
@@ -612,11 +623,18 @@ export async function getDeletedPageInfo(address: PageAddress): Promise<PageInfo
             const final_results: PageInfo[] = [];
 
             for(const page of deleted_results) {
+                // TODO @cleanup
+                const delete_summary = encode
+                ? he.encode((page.delete_summary as Buffer).toString("utf8"))
+                : (page.delete_summary as Buffer).toString("utf8");
+
                 final_results.push({
                     ...page,
 
                     id: page.pageid,
-                    is_deleted: true
+                    is_deleted: true,
+
+                    delete_summary
                 })
             }
 
@@ -705,7 +723,7 @@ function parseRevisionVisibility(raw_bytes: UInt8): RevisionVisibility {
  * @param filter_client_visibility client's visibility level (used only with apply_filter)
  */
 export async function getPageRevisions(page_id?: string, user_id?: string, get_deleted: boolean = false, apply_filter: boolean = true,
-filter_client_visibility: number = 0): Promise<{ [revid: number]: Revision }> {
+filter_client_visibility: number = 0, encode: boolean = true): Promise<{ [revid: number]: Revision }> {
     return new Promise((resolve: any) => {
         // Construct a query
         let query = "\
@@ -759,11 +777,13 @@ FROM `revisions` WHERE `page` = ?";
             for(const result of results) {
                 // Parse the visibility
                 const visibility = parseRevisionVisibility(result.visibility.readInt8(0));
+                const summary = (result.summary as Buffer).toString("utf8");
 
                 // Completely hidden, and filter is enabled, don't even add to the results object
                 if(apply_filter && visibility.overall_visibility > 1 && filter_client_visibility < visibility.overall_visibility)
                     continue;
 
+                // TODO @cleanup ...result
                 const revision = {
                     ...result,
 
@@ -771,6 +791,7 @@ FROM `revisions` WHERE `page` = ?";
 
                     tags: result.tags ? result.tags.split(",") : [],
                     visibility: null,
+                    summary: encode ? he.encode(summary) : result.summary,
 
                     overall_visibility: visibility.overall_visibility,
                     user_hidden: visibility.user_hidden,
@@ -859,9 +880,13 @@ export async function getRevisionsDiff(rev_from: number, rev_to: number, client_
                 }
             }
 
+            // Get the content
+            const content_from = (results[0].content as Buffer).toString("utf8");
+            const content_to = (results[1].content as Buffer).toString("utf8");
+
             // TODO @performance @placeholder Use normal diff, not the js implementation. It consumes a lot of memory
             // and hangs when working on large revisions
-            const diff = JsDiff.diffLines(results[0].content, results[1].content);
+            const diff = JsDiff.diffLines(content_from, content_to);
 
             if(get_html) {
                 resolve(JsDiff.convertChangesToXML(diff).replace(/\n/g, "<br>"));
@@ -1006,7 +1031,9 @@ export async function getPageByAddress(page_address: PageAddress, get_deleted: b
                 } else {
                     // Everything is ok, return the page
 
-                    page.raw_content = db_results.content;
+                    // Convert the raw buffer to the utf8 content string
+                    page.raw_content = (db_results.content as Buffer).toString("utf8");
+
                     resolve(page);
                 }
             }

@@ -82,13 +82,13 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
         const page_address = pageTitleParser(queried_page_fullname);
 
         const existent_page_query: any = await Page.getPageInfo(page_address);
-        const deleted_page_query: any = await Page.getDeletedPageInfo(page_address);
+        const deleted_page_query = await Page.getDeletedPageInfo(page_address);
 
         // Page with such name currenly exists
         const page_with_such_name_exists = existent_page_query[1].length !== 0;
 
         // No pages in archive found
-        if(deleted_page_query.length === 0) {
+        if(!deleted_page_query || deleted_page_query.length === 0) {
             page_config.header_config = {
                 icon: "fas fa-archive",
                 title: `${ page_address.display_title } — Archive`,
@@ -120,7 +120,7 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
 
         // Get users
         const users: any = {};
-        const userids: string[] = [];
+        const userids: number[] = [];
 
         // TODO figure out what i was trying to do here :P
         // let user_query_error = false;
@@ -230,7 +230,7 @@ The selected revision will not affect anything, it is there just for previewing 
                 </div>
             </div>
 
-            <input type="text" name="new_name" value="${ page_address.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+            <input type="text" name="new_name" value="${ decodeURIComponent(page_address.name) }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
         </div>
     </div>
 

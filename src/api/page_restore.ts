@@ -38,10 +38,14 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a> \
 ${ is_new_name ? `to <i><a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a></i> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
 
-        // Log for old page
-        Log.createEntry("restorewikipage", client_user.id, new_page_data[2].title,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <i><a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a></i> \
-${ is_new_name ? `to <a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
+
+        // Don't create two log entries for the old title and the new title if they are the same
+        if(new_page_data[1].title !== new_page_data[2].title) {
+            // Log for old page
+            Log.createEntry("restorewikipage", client_user.id, new_page_data[2].title,
+    `<a href="/User:${ client_user.username }">${ client_user.username }</a> restored wiki page <i><a href="/${ new_page_data[2].title }">${ new_page_data[2].display_title }</a></i> \
+    ${ is_new_name ? `to <a href="/${ new_page_data[1].title }">${ new_page_data[1].display_title }</a> ` : " " }(<code>${ req.body.pageid } -> ${ new_page_data[0] }</code>)`, req.body.summary);
+        }
 
         apiSendSuccess(res, "page/restore", { new_title: new_page_data[1].title });
     })

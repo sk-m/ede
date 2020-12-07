@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS `2fa_data` (
   `enabled_on` int unsigned DEFAULT NULL,
   `setup_mode` bit(1) NOT NULL,
   PRIMARY KEY (`user`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `2fa_data` DISABLE KEYS */;
 /*!40000 ALTER TABLE `2fa_data` ENABLE KEYS */;
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `blocked_addresses` (
   `address` varchar(64) NOT NULL,
   `restrictions` varchar(512) NOT NULL,
   PRIMARY KEY (`address`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `blocked_addresses` DISABLE KEYS */;
 /*!40000 ALTER TABLE `blocked_addresses` ENABLE KEYS */;
@@ -72,12 +72,12 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `pageid` int unsigned NOT NULL,
   `namespace` varchar(64) NOT NULL,
-  `name` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
+  `name` varchar(2048) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,
   `deleted_by` int unsigned NOT NULL,
   `deleted_on` int unsigned NOT NULL,
-  `delete_summary` varchar(1024) DEFAULT NULL,
+  `delete_summary` varbinary(4096) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `pageid` (`pageid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS `elevated_user_sessions` (
   `esid` tinytext NOT NULL,
   `valid_until` int unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `elevated_user_sessions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `elevated_user_sessions` ENABLE KEYS */;
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `email_tokens` (
   `sent_to` varchar(512) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `valid_until` int unsigned NOT NULL,
   PRIMARY KEY (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `email_tokens` DISABLE KEYS */;
 /*!40000 ALTER TABLE `email_tokens` ENABLE KEYS */;
@@ -112,9 +112,9 @@ CREATE TABLE IF NOT EXISTS `logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
   `executor` int unsigned NOT NULL,
-  `target` varchar(256) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
-  `action_text` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL DEFAULT '',
-  `summary_text` varchar(1024) NOT NULL DEFAULT '',
+  `target` varchar(256) NOT NULL,
+  `action_text` varbinary(4096) NOT NULL,
+  `summary_text` varbinary(4096) DEFAULT NULL,
   `created_on` int unsigned NOT NULL,
   `visibility_level` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
@@ -148,9 +148,9 @@ CREATE TABLE IF NOT EXISTS `revisions` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `page` int unsigned DEFAULT NULL,
   `user` int unsigned DEFAULT NULL,
-  `content` mediumtext CHARACTER SET utf16 COLLATE utf16_unicode_520_ci NOT NULL,
+  `content` mediumblob NOT NULL,
   `content_hash` varchar(50) NOT NULL,
-  `summary` varchar(1024) DEFAULT NULL,
+  `summary` varbinary(4096) DEFAULT NULL,
   `visibility` bit(5) NOT NULL DEFAULT b'0',
   `tags` varchar(512) NOT NULL DEFAULT '',
   `timestamp` int unsigned NOT NULL,
@@ -193,7 +193,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS `system_messages` (
   `id` mediumint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(256) NOT NULL,
-  `value` text CHARACTER SET utf16 COLLATE utf16_unicode_ci,
+  `value` text CHARACTER SET utf8 COLLATE utf8_general_ci,
   `default_value` text,
   `rev_history` json NOT NULL,
   `deletable` bit(1) NOT NULL DEFAULT b'0',
@@ -245,8 +245,9 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 
 CREATE TABLE IF NOT EXISTS `users` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `username` varchar(256) NOT NULL,
+  `username` varchar(256) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `email_address` varchar(256) NOT NULL,
+  `email_verified` bit(1) NOT NULL DEFAULT b'0',
   `password` varchar(2048) NOT NULL DEFAULT '',
   `stats` json NOT NULL,
   `blocks` varchar(256) DEFAULT NULL,
@@ -340,7 +341,7 @@ CREATE TABLE IF NOT EXISTS `user_tracking` (
   `user_agent` varchar(1024) DEFAULT NULL,
   `timestamp` int unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `user_tracking` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_tracking` ENABLE KEYS */;
@@ -349,9 +350,9 @@ DELIMITER //
 CREATE PROCEDURE `wiki_create_revision`(
 	IN `p_page_id` INT,
 	IN `p_user_id` INT,
-	IN `p_content` MEDIUMTEXT,
+	IN `p_content` MEDIUMBLOB,
 	IN `p_content_hash` VARCHAR(50),
-	IN `p_summary` VARCHAR(1024),
+	IN `p_summary` VARBINARY(4096),
 	IN `p_bytes_size` INT
 )
     NO SQL
@@ -381,7 +382,7 @@ CREATE PROCEDURE `wiki_delete_page`(
 	IN `p_namespace` TINYTEXT,
 	IN `p_name` VARCHAR(2048),
 	IN `p_deleted_by` INT,
-	IN `p_delete_summary` VARCHAR(1024)
+	IN `p_delete_summary` VARBINARY(4096)
 )
     NO SQL
     COMMENT 'Delete (move to archive) a wiki page'
@@ -500,7 +501,7 @@ DELIMITER ;
 CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `namespace` varchar(64) DEFAULT NULL,
-  `name` varchar(2048) CHARACTER SET utf32 COLLATE utf32_unicode_ci NOT NULL,
+  `name` varchar(2048) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `revision` bigint unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
   `action_restrictions` json NOT NULL,

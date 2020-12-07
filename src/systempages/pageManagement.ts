@@ -69,7 +69,7 @@ async function info_page(queried_page: any, queried_page_title: string, client?:
 </div>`;
 }
 
-async function move_page(queried_page: any, queried_page_title: string, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+async function move_page(queried_page: Page.PageInfo, queried_page_title: string, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
     return new Promise(async (resolve: any) => {
         if(!client_rights || !client_rights.rights.wiki_movepage) {
             resolve("You don't have permission to move wiki pages.");
@@ -113,7 +113,7 @@ async function move_page(queried_page: any, queried_page_title: string, client?:
                 </div>
             </div>
 
-            <input type="text" name="new_name" value="${ queried_page.name }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
+            <input type="text" name="new_name" value="${ decodeURIComponent(queried_page.name) }" data-handler="page_names" class="ui-input1" style="margin-left: 3px">
         </div>
     </div>
 
@@ -241,7 +241,7 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
         // Get the page
         const page_address = pageTitleParser(queried_page_fullname);
 
-        const page_query: any = await Page.getPageInfo(page_address, true);
+        const page_query = await Page.getPageInfo(page_address, true);
 
         if(page_query[0] === true) {
             // Title was provided, but such page does not exist

@@ -1,3 +1,4 @@
+import he from "he";
 import { sql } from "./server";
 
 import * as Util from "./utils";
@@ -75,7 +76,7 @@ export async function createEntry(
     executor: number | string,
     target: number | string,
     action_text: string,
-    summary_text: string,
+    summary_text?: string,
     visibility_level: number = 0
 ): Promise<number> {
     return new Promise((resolve: any, reject: any) => {
@@ -96,7 +97,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?)",
  * @param executor executor (user id)
  * @param target target
  */
-export async function getEntries(type: string | string[], executor?: string, target?: string): Promise<LogEntry[]> {
+export async function getEntries(type: string | string[], executor?: number, target?: string | number, encode: boolean = true): Promise<LogEntry[]> {
     return new Promise((resolve: any, reject: any) => {
         let sql_query;
 
@@ -121,7 +122,21 @@ export async function getEntries(type: string | string[], executor?: string, tar
             if(error) {
                 reject(error);
             } else {
-                resolve(results);
+                const final_results: LogEntry[] = [];
+
+                for(const entry of results) {
+                    const action_text = (entry.action_text as Buffer).toString("utf8");
+                    const summary_text = (entry.summary_text as Buffer).toString("utf8");
+
+                    final_results.push({
+                        ...entry,
+
+                        action_text,
+                        summary_text: encode ? he.encode(summary_text) : ""
+                    })
+                }
+
+                resolve(final_results);
             }
         })
     });

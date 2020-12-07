@@ -150,7 +150,7 @@ export async function directRoute(req: any, res: any): Promise<void> {
         return;
     }
 
-    const client_user = await User.getFromSession(req, "invalid").catch(() => undefined);
+    const client_user = await User.getFromSession(req).catch(() => undefined);
 
     // Substring is to delete the first slash from the url
     const address = pageTitleParser(req.raw.originalUrl.substring(1));

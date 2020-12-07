@@ -45,7 +45,7 @@ const server_port: number =
 // Connect to the database
 export const sql: any = mysql.createConnection({
     trace: false,
-    multipleStatements: true,
+    multipleStatements: false,
     // debug: true,
 
     host: SECRETS["database.host"],

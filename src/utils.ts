@@ -173,6 +173,7 @@ export enum RejectionType {
     PAGE_DELETED,
     PAGE_REVISION_HIDDEN,
     PAGE_NAME_TAKEN,
+    PAGE_TITLE_INVALID,
 
     NAMESPACE_ERROR,
 
