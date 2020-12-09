@@ -20,6 +20,14 @@ export async function updateUserPasswordRoute(req: any, res: any, client_user?: 
     // Update user's password
     User.updateUserPassword(client_user.id, req.body.new_password)
     .then(() => {
+        // Send a password change notification
+        User.sendNotificaion(
+            client_user.id,
+            "accountpasswordchange",
+            "Your password has been changed.",
+            `Session token: ${ client_user.current_session?.session_token }`
+        );
+
         apiSendSuccess(res);
     })
     .catch((rejection: Rejection) => {

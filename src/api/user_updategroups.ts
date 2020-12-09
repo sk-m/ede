@@ -3,6 +3,7 @@ import * as Log from "../log";
 import { GroupsAndRightsObject } from "../right";
 import { sql } from "../server";
 import * as Util from "../utils"
+import * as NotificationTemplates from "../notification_templates";
 
 import { apiSendError, apiSendSuccess } from "../api";
 
@@ -38,6 +39,7 @@ export async function updateUserGroupMembershipRoute(req: any, res: any, client_
     }
 
     // Get the target user
+    // TODO @performance don't get target user if targeting self (target_user === client_user)?
     const target_user = await User.getFromUsername(req.body.username)
     .catch(() => {
         target_user_error = true;
@@ -173,6 +175,18 @@ AND \`group\` IN ('${ removed_groups.join("','") }')`,
     Log.createEntry("usergroupsupdate", client_user.id, target_user.id,
 `<a href="/User:${ client_user.username }">${ client_user.username }</a> updated groups for <a href="/User:${ target_user.username }">\
 ${ target_user.username }</a>: ${ log_str }`, req.body.summary);
+
+    // Send a notification
+    // Don't send for self
+    if(target_user.id !== client_user.id) {
+        User.sendNotificaion(
+            target_user.id,
+            "usergroupmembershipupdate",
+            NotificationTemplates.usergroupmembershipupdate(client_user.username, added_groups.join(", "), removed_groups.join(", ")),
+            req.body.summary,
+            { user_groups_page_href: `/User:${ target_user.username }/groups` }
+        );
+    }
 
     apiSendSuccess(res);
 }

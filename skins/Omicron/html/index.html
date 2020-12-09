@@ -56,8 +56,24 @@
         </div>
         <div class="right">
             {{if(options.ede_user_username)}}
-            <div class="button inactive rotate"><i class="material-icons">notifications</i></div>
-            <div class="button inactive"><i class="material-icons">view_list</i></div>
+            <div id="ede-usernotifications-root">
+                <div class="notifications-box">
+                    <div class="status-bar">
+                        <div class="header">User notifications</div>
+                        <div class="right-container">
+                            <a title="Notification settings" href="/System:UserSettings/notifications" class="settings-link"><i class="fas fa-cog"></i></a>
+                            <div class="unread-bubble"><span>13</span></div>
+                        </div>
+                    </div>
+                    <div class="notifications-list">
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <div id="ede-usernotifications-button" class="button inactive rotate" onclick="ede.user_notifications.toggle()"><i class="material-icons">notifications</i></div>
+            </div>
+            <!-- <div class="button inactive"><i class="material-icons">view_list</i></div> -->
 
             <div class="user-button ui-contextmenu-container">
                 <i class="fas fa-user"></i>

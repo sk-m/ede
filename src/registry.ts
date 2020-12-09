@@ -41,6 +41,9 @@ import { userFinish2FASetupRoute } from "./api/user_finish_f2a_setup";
 import { userDisable2FARoute } from "./api/user_disable_f2a";
 import { requestUserEmailChangeRoute } from "./api/user_request_email_change";
 import { systemmessageGetRoute } from "./api/systemmessage_get";
+import { getUserNotificationsRoute } from "./api/user_get_notifications";
+import { markUserNotificationReadRoute } from "./api/user_notification_mark_read";
+import { userGetNotificationsStatusRoute } from "./api/user_get_notifications_status";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -169,6 +172,82 @@ export const registry_hook_subscribers = new RegistryContainer<HookSubscribersOb
 export const registry_hooks = new RegistryContainer<HooksObject>("ede", undefined, {});
 
 export const registry_usergroups = new RegistryContainer<GroupsObject>("ede", User.getAllUserGroups, {});
+export const registry_usernotification_types = new RegistryContainer<User.UserNotificationTypesObject>("ede", undefined, {
+    usergroupmembershipupdate: {
+        type_name: "usergroupmembershipupdate",
+        hidden: false,
+
+        display_type_name: "Own user group membership update",
+        display_type_description: "Sent when you have been assigned or removed from some user group(s).",
+        display_type_example_text: "ExampleUser has changed your user group membership. Added to group1; removed from group2.",
+
+        icon_class: "fas fa-users-cog",
+        title: "Your user group membership was updated",
+
+        actions: [
+            { type: "main", text: "See my groups", dynamic_href_key: "user_groups_page_href" }
+        ]
+    },
+    accountcreated: {
+        type_name: "accountcreated",
+        hidden: true,
+
+        display_type_name: "",
+        display_type_description: "",
+        display_type_example_text: "",
+
+        icon_class: "far fa-user-circle",
+        title: "Accout created",
+
+        actions: []
+    },
+    accountlogin: {
+        type_name: "accountlogin",
+        hidden: false,
+
+        display_type_name: "New account login",
+        display_type_description: "Sent when there has been a new login into your account",
+        display_type_example_text: "Someone has logged into your account.",
+
+        icon_class: "fas fa-sign-in-alt",
+        title: "New account login",
+
+        actions: [
+            { type: "main", text: "Security settings", href: "/System:UserSettings/account" }
+        ]
+    },
+    accountpasswordchange: {
+        type_name: "accountpasswordchange",
+        hidden: false,
+
+        display_type_name: "Password changed",
+        display_type_description: "Sent when user's password has been changed",
+        display_type_example_text: "Your password has been changed.",
+
+        icon_class: "fas fa-key",
+        title: "Password changed",
+
+        actions: [
+            { type: "main", text: "Security settings", href: "/System:UserSettings/account" }
+        ]
+    },
+    accountloginattempt: {
+        type_name: "accountloginattempt",
+        hidden: false,
+
+        display_type_name: "New account login attempt",
+        display_type_description: "Sent when there has been an attempt to login into your account, but it was not necessarily successfull.",
+        display_type_example_text: "New login attempt was made. Correct password provided.",
+
+        icon_class: "fas fa-key",
+        title: "New login attempt",
+
+        actions: [
+            { type: "main", text: "Security settings", href: "/System:UserSettings/account" }
+        ]
+    }
+});
+
 export const registry_rights = new RegistryContainer<{ [right_name: string]: Right }>("ede", undefined, {
     wiki_edit: {
         name: "wiki_edit",
@@ -683,6 +762,67 @@ export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", 
 
         handler: userDisable2FARoute
     },
+    "user/get_notifications": {
+        name: "user/get_notifications",
+        method: "GET",
+
+        description: "Get current user's notifications",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {
+            from: {
+                name: "from",
+                display_name: "Start id",
+                description: "Start id of the notification",
+
+                type: "number"
+            },
+            records_number: {
+                name: "records_number",
+                display_name: "Number of records",
+                description: "Number of notifications to recieve. Max 100",
+
+                type: "number"
+            }
+        },
+
+        handler: getUserNotificationsRoute
+    },
+    "user/get_notifications_status": {
+        name: "user/get_notifications_status",
+        method: "GET",
+
+        description: "Get current user's notifications status",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {},
+
+        handler: userGetNotificationsStatusRoute
+    },
+    "user/notification_mark_read": {
+        name: "user/notification_mark_read",
+        method: "POST",
+
+        description: "Mark user's notification as read",
+
+        required_arguments: [],
+        required_rights: [],
+
+        arguments: {
+            notification_id: {
+                name: "notification_id",
+                display_name: "Notification id",
+
+                type: "number"
+            }
+        },
+
+        handler: markUserNotificationReadRoute
+    },
     "page/save": {
         name: "page/save",
         method: "POST",
@@ -996,14 +1136,14 @@ not it is assigned to the user",
                 type: "string"
             },
             from: {
-                name: "From",
+                name: "from",
                 display_name: "Start index",
                 description: "Start index for the system messages",
 
                 type: "number"
             },
             to: {
-                name: "To",
+                name: "to",
                 display_name: "End index",
                 description: "End index for the system messages. end index - start index = number of records that will be retrieved. Maximum number of records that can be retrieved from one API call - 100",
 

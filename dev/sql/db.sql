@@ -310,6 +310,21 @@ CREATE TABLE IF NOT EXISTS `user_group_membership` (
 /*!40000 ALTER TABLE `user_group_membership` DISABLE KEYS */;
 /*!40000 ALTER TABLE `user_group_membership` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `user_notifications` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `user` int unsigned NOT NULL,
+  `type` varchar(64) NOT NULL,
+  `text` varchar(4096) NOT NULL,
+  `additional_text` varchar(4096) DEFAULT NULL,
+  `additional_info` json NOT NULL,
+  `timestamp` int unsigned NOT NULL,
+  `is_read` bit(1) NOT NULL DEFAULT b'0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `user_notifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user_notifications` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `user_sessions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user` int unsigned NOT NULL,

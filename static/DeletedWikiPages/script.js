@@ -103,7 +103,10 @@ Is it hidden?</i>";
         restore_form.submit.classList.remove("disabled");
 
         // Get revisions for selected page
-        ede.apiCall("revision/get", { pageid, include_deleted: true })
+        ede.apiCall("revision/get", {
+            pageid,
+            include_deleted: true
+        })
         .then(response => {
             // TODO maybe we should have a function that returns an HTML node with revisions instead?
             const revisions_fragment = ede.tools.constructRevisionsHTML(response["revision/get"].revisions, true);

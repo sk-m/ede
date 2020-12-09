@@ -5,10 +5,10 @@ import cookie from "cookie";
 import { sql } from "./server";
 import * as Util from "./utils";
 
-
-import { registry_config } from "./registry";
+import { registry_config, registry_usernotification_types } from "./registry";
 import { SECURITY_COOKIE_SID_SIZE, SECURITY_COOKIE_SALT_SIZE, SECURITY_CSRF_TOKEN_SIZE, SECURITY_SID_HASHING_ITERATIONS, SECURITY_SID_HASHING_KEYLEN } from "./constants";
 import { GroupsObject, Group, GroupsAndRightsObject } from "./right";
+import he from "he";
 
 export interface User {
     id: number;
@@ -49,6 +49,48 @@ export interface UserSession {
 export interface UserStats {
     created_on: number;
 }
+
+export interface UserNotificationAction {
+    text: string;
+    type: string;
+
+    href?: string;
+    dynamic_href_key?: string;
+}
+
+export type UserNotificationTypesObject = { [type_name: string]: UserNotificationType };
+export interface UserNotificationType {
+    type_name: string;
+    hidden?: boolean;
+
+    // Included in the notification
+    icon_class: string;
+    title: string;
+    actions: UserNotificationAction[];
+
+    // For user settings page
+    display_type_name: string;
+    display_type_description: string;
+    display_type_example_text: string;
+}
+
+export interface UserNotification {
+    user_id: number;
+
+    type: string;
+    icon_class: string;
+    title: string;
+    actions: UserNotificationAction[];
+
+    text: string;
+    additional_text?: string;
+
+    additional_info: any;
+
+    timestamp: number;
+    is_read: boolean;
+}
+
 export enum UsernameAvailability {
     Available,
     Taken,
@@ -100,6 +142,126 @@ export async function checkUsername(username: string): Promise<UsernameAvailabil
         (error: any, results: any) => {
             if(error || results.length !== 0) resolve(UsernameAvailability.Taken);
             else resolve(UsernameAvailability.Available);
+        });
+    });
+}
+
+/**
+ * Get user's notifications
+ *
+ * @param user_id user's id
+ * @param records_number number of records to recieve
+ * @param from starting id
+ * @param encode encode the additional_text?
+ */
+export async function getNotifications(user_id: number, records_number: number = 100, from?: number, encode: boolean = true): Promise<UserNotification[]> {
+    return new Promise((resolve: any) => {
+        let sql_query = "SELECT * FROM `user_notifications` WHERE `user` = ? ORDER BY id DESC LIMIT ?";
+        let sql_args: any[] = [user_id, records_number];
+
+        // Starting id provided
+        if(from) {
+            sql_query += ", ?";
+            sql_args = [user_id, from, records_number];
+        }
+
+        // Get the notifications
+        sql.execute(sql_query, sql_args, (error: any, results: any) => {
+            if(error) {
+                Util.log(`Could not get notifications for a userid ${ user_id }`, 3, error);
+
+                resolve([]);
+            } else {
+                const registry_snapshot = registry_usernotification_types.get();
+                const final_results: UserNotification[] = [];
+
+                for(const notification of results) {
+                    final_results.push({
+                        ...notification,
+
+                        // Inherit from notification type
+                        title: registry_snapshot[notification.type].title,
+                        icon_class: registry_snapshot[notification.type].icon_class,
+                        type_name: registry_snapshot[notification.type].type_name,
+                        actions: registry_snapshot[notification.type].actions,
+
+                        additional_text: (notification.additional_text && encode) ? he.encode(notification.additional_text) : notification.additional_text,
+
+                        is_read: notification.is_read.readInt8(0) === 1
+                    });
+                }
+
+                resolve(final_results);
+            }
+        });
+    });
+}
+
+/**
+ * Send a notification to a user
+ *
+ * @param user_id user's id
+ * @param type type of notification (from registry)
+ * @param text full text of the notification
+ * @param additional_text additional text for the notification (like a user-provided summary)
+ * @param additional_info additional info for the notification (can contain dynamic hrefs)
+ */
+export async function sendNotificaion(user_id: number, type: string, text: string, additional_text?: string, additional_info?: any): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        if(additional_info) additional_info = JSON.stringify(additional_info);
+        else additional_info = "{}";
+
+        sql.execute("INSERT INTO `user_notifications` (user, type, text, additional_text, additional_info, timestamp) \
+VALUES (?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
+        [user_id, type, text, additional_text || null, additional_info],
+        (error: any) => {
+            if(error) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not send a user notification"));
+                Util.log(`Could not create a new user notification in the database (user_id = ${ user_id })`, 3, error);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+/**
+ * Mark user's notification as read
+ *
+ * @param user_id user's id
+ * @param notification_id notification's id
+ */
+export async function markNotificationRead(user_id: number, notification_id: number): Promise<void> {
+    return new Promise((resolve: any, reject: any) => {
+        sql.execute("UPDATE `user_notifications` SET `is_read` = b'1' WHERE id = ? AND `user` = ?",
+        [notification_id, user_id],
+        (error: any) => {
+            if(error) {
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not mark notification as read"));
+                Util.log(`Could not mark notification as read (user_id = ${ user_id }, notification_id = ${ notification_id })`, 3, error);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+/**
+ * Check if user has unread notifications
+ *
+ * @param user_id user's id
+ */
+export async function hasUnreadNotifications(user_id: number): Promise<boolean> {
+    return new Promise((resolve: any) => {
+        sql.execute("SELECT id from `user_notifications` WHERE `user` = ? AND `is_read` = b'0' ORDER BY id DESC LIMIT 1",
+        [user_id],
+        (error: any, results: any) => {
+            if(error) {
+                Util.log(`Could not check if user has unread notifications (user_id = ${ user_id })`, 3, error);
+                resolve(false)
+            } else {
+                resolve(results.length !== 0);
+            }
         });
     });
 }
@@ -438,7 +600,7 @@ export async function getById(user_id: number): Promise<User> {
  * @param http_request http request object
  */
 export async function getFromSession(http_request: any): Promise<User> {
-    return new Promise(async (resolve: any, reject: any) => {   
+    return new Promise(async (resolve: any, reject: any) => {
         // Check if headers were provided
         if(!http_request.headers) {
             reject(new Util.Rejection(Util.RejectionType.USER_SESSION_INVALID, "Could not read user's session data"));
@@ -613,7 +775,7 @@ ${ password_hash_keylen }`;
                     }
                 });
             })
-            .catch((error: Error) => { 
+            .catch((error: Error) => {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user"));
                 Util.log(`Could not create a new user: hashing failed`, 3, error);
             });
@@ -697,7 +859,7 @@ export async function createSession(user_id: number, ip_address: string, user_ag
 `expires_on`, `created_on`) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 [user_id, session_token, sidHash.key, sidHash.salt, csrf_token, expires_on, now],
                 (error: any) => {
-                    if(error) { 
+                    if(error) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user session"));
                         Util.log(`Could not create a new user session`, 3, error);
                     }

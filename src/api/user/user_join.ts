@@ -3,6 +3,7 @@ import * as SystemMessage from "../../system_message";
 import * as Mail from "../../mail";
 import * as MailTemplates from "../../mail_templates";
 import { registry_config } from "../../registry";
+import * as NotificationTemplates from "../../notification_templates";
 import * as SECRETS from "../../../secrets.json";
 
 import request from "request";
@@ -118,6 +119,13 @@ export async function userJoinRoute(req: any, res: any): Promise<void> {
                 MailTemplates.email_verification(email_verification_token),
                 true)
             .catch(() => undefined);
+
+            // Send a notification
+            User.sendNotificaion(
+                new_user.id,
+                "accountcreated",
+                NotificationTemplates.accountcreated()
+            );
 
             // Create a new session
             await User.createSession(new_user.id, ip_address, req.headers["user-agent"])

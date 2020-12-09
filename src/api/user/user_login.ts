@@ -92,6 +92,16 @@ export function userLoginRoute(req: any, res: any): void {
                 if(f2a_status.enabled) {
                     // 2FA is enabled for this user
 
+                    // // Send a login attempt notification
+                    // if(!f2a_status.otp_correct) {
+                    //     User.sendNotificaion(
+                    //         user.id,
+                    //         "accountloginattempt",
+                    //         "New login attempt was made. Correct password provided, one-time password requested.",
+                    //         `IP address: ${ ip_address }`
+                    //     );
+                    // }
+
                     if(!f2a_otp) {
                         // No code provided
 
@@ -132,6 +142,14 @@ export function userLoginRoute(req: any, res: any): void {
                         secure: false,
                         encode: String
                     });
+
+                    // Send a login notification
+                    User.sendNotificaion(
+                        user.id,
+                        "accountlogin",
+                        "Someone has logged into your account",
+                        `IP address: ${ ip_address }`
+                    );
 
                     response_notes.push("session_created");
                     res.send({ success: true, notes: response_notes });
