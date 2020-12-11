@@ -21,7 +21,7 @@ ${ client.email_address }
         f2a_text = `\
         <div><div class="status-text c-green">
         <i class="fas fa-check"></i>Enabled</div></div>
-        <button class="ui-button1" data-action="disable_f2a">Disable 2FA</button>`;
+        <button class="ui-button1 c-red" data-action="disable_f2a">Disable 2FA</button>`;
     } else {
         f2a_text = `\
         <div><div class="status-text c-orange">

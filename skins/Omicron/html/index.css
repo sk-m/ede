@@ -945,6 +945,8 @@
     color: hsl(0, 0%, 55%);
     font-size: 12px;
     font-weight: 400;
+
+    transition: 0.25s ease-in-out;
 }
 
 #ede-usernotifications-root > .notifications-box > .notifications-list > .notification > .right > .title > .time > span {
@@ -960,12 +962,11 @@
     height: 9px;
 
     opacity: 0;
-    margin-right: -12px;
 
     border-radius: 50%;
     background-color: var(--color-orange);
 
-    transition: 0.2s ease-out;
+    transition: 0.25s ease-in-out;
 }
 
 #ede-usernotifications-root > .notifications-box > .notifications-list > .notification[unread] > .right > .title > .time > .unread-circle {
@@ -975,6 +976,10 @@
     opacity: 1;
 
     box-shadow: 0 0 5px 0 rgba(255, 163, 0, 0.66);
+}
+
+#ede-usernotifications-root > .notifications-box > .notifications-list > .notification[read] > .right > .title > .time {
+    transform: translateX(12px);
 }
 
 #ede-usernotifications-root > .notifications-box > .notifications-list > .notification > .right > .full-text {

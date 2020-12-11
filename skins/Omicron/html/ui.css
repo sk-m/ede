@@ -10,7 +10,7 @@ div.margin-top:empty {
     margin-block-end: 0.9em;
 
     padding: 12px 14px;
-    
+
     color: var(--color-blue2);
     background-color: var(--color-blue2-transparent-05);
 
@@ -105,9 +105,9 @@ div.margin-top:empty {
 /* Form containers */
 .ui-form-spacer-thin {
     height: 1px;
-    
+
     margin: 15px 25px;
-    
+
     background-color: var(--color-gray3)
 }
 
@@ -158,7 +158,7 @@ div.margin-top:empty {
 
 .ui-form-box.hidden {
     height: 0;
-    
+
     margin: 0;
     padding: 0;
 
@@ -173,7 +173,7 @@ div.margin-top:empty {
 .ui-form-box > .form-top {
     padding: 8px 9px 8px 15px;
     margin-bottom: 15px;
-    
+
     background-color: hsl(0, 0%, 98%);
 }
 
@@ -245,7 +245,7 @@ div.margin-top:empty {
     padding: 0 3px 0 4px;
 
     content: '//';
-    
+
     color: hsl(0, 0%, 80%);
     font-weight: 700;
 
@@ -277,7 +277,7 @@ div.margin-top:empty {
 
 .ui-form-box > .form-top > .title > .right-side > .button.collapse i {
     transform: rotate(0deg);
-    
+
     transition: transform 0.15s;
 }
 
@@ -345,7 +345,7 @@ div.margin-top:empty {
 }
 
 .ui-form-container ul {
-    margin: 8px 0 0 0;   
+    margin: 8px 0 0 0;
 }
 
 .ui-logs-container > .info-message > i {
@@ -410,7 +410,7 @@ div.margin-top:empty {
 .ui-text {
     color: hsl(0, 0%, 10%);
     font-family: "Open sans", sans-serif;
-    font-size: 14px;    
+    font-size: 14px;
 }
 
 .ui-text.roboto {
@@ -505,7 +505,7 @@ a.ui-text[href]:focus:not(:hover),
 .ui-code {
     margin: 0 3px;
     padding: 1px 3px;
-    
+
     border-radius: 2px;
     background-color: hsl(0, 0%, 95%);
 }
@@ -537,7 +537,7 @@ a.ui-text[href]:focus:not(:hover),
     /* Hidden state */
     pointer-events: none;
     opacity: 0;
-    
+
     transform: translateY(5px);
 }
 
@@ -561,7 +561,7 @@ a.ui-text[href]:focus:not(:hover),
 .ui-input-box > .popup.shown {
     pointer-events: all;
     opacity: 1;
-    
+
     transform: translateY(0);
 }
 
@@ -586,10 +586,10 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-checkbox-1 > .checkbox {
     margin: 4px 8px 4px 0;
-    
+
     width: 20px;
     height: 20px;
-    
+
     border: 1px solid rgb(200, 200, 200);
     border-radius: 3px;
 
@@ -792,7 +792,7 @@ a.ui-text[href]:focus:not(:hover),
 
     box-shadow: inset 0 0 0 1px var(--color-gray4);
     border-radius: 3px;
- 
+
     transition: 0.15s;
 }
 
@@ -859,19 +859,19 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-input-dropdown1 > input {
     box-sizing: border-box;
-    
+
     height: 32px;
     width: 100%;
-    
+
     padding: 7px 11px;
-    
+
     outline: none;
     cursor: pointer;
-    
+
     color: black;
     font-family: "Open Sans";
     font-size: 13px;
-    
+
     border: 0;
     background-color: transparent;
 }
@@ -1039,27 +1039,25 @@ a.ui-text[href]:focus:not(:hover),
 .ui-button1 {
     position: relative;
 
-    padding: 8px 13px;
+    padding: 8px 14px;
 
     border: 0;
     border-radius: 3px;
 
-    background-color: white;
-    /* box-shadow: 0 0 4px 0 rgb(215, 215, 215); */
-    /* box-shadow: 0 1px 3px 0 rgb(210 210 210); */
-    box-shadow: 0 0 3px 0 rgb(210 210 210);
+    box-shadow: 0 0 0 1px rgb(230, 230, 230), 0 2px 2px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(0deg, rgba(0,0,0,0.015) 0%, rgba(255,255,255,1) 100%);
 
     outline: none;
 
     user-select: none;
     cursor: pointer;
 
-    color: hsl(0, 0%, 20%);
+    color: hsl(0, 0%, 10%);
     font-family: "Roboto", sans-serif;
     font-weight: 600;
     font-size: 13px;
 
-    transition: 0.1s;
+    transition: 0.15s;
 }
 
 .ui-button1 > i.far,
@@ -1088,14 +1086,15 @@ a.ui-text[href]:focus:not(:hover),
 .ui-button1:hover {
     color: hsl(0, 0%, 5%);
 
-    background-color: rgb(242, 242, 242);
-    box-shadow: 0 0 0px 0 rgb(220, 220, 220);
+    box-shadow: 0 0 0 1px rgb(218, 218, 218), 0 2px 2px rgba(0, 0, 0, 0.075);
+    background: linear-gradient(0deg, rgba(0,0,0,0.022) 0%, rgba(255,255,255,1) 100%);
 }
 
 .ui-button1:active {
     transition: 0s;
 
-    background-color: rgb(220, 220, 220);
+    box-shadow: 0 0 0 1px rgb(210, 210, 210);
+    background: linear-gradient(0deg, rgba(0,0,0,0.033) 100%, rgba(255,255,255,1) 100%);
 }
 
 .ui-button1.loading {
@@ -1104,7 +1103,7 @@ a.ui-text[href]:focus:not(:hover),
     pointer-events: none;
 
     box-shadow: none;
-    background-color: var(--color-gray15);
+    background: var(--color-gray15);
 }
 
 .ui-button1.loading::after {
@@ -1128,10 +1127,10 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-button1.disabled {
     pointer-events: none;
-    
+
     color: hsl(0, 0%, 50%) !important;
 
-    background-color: rgb(250, 250, 250);
+    background: rgb(250, 250, 250);
     box-shadow: none;
 }
 
@@ -1139,40 +1138,40 @@ a.ui-text[href]:focus:not(:hover),
     color: rgba(255, 255, 255, 0.975);
 
     box-shadow: 0 0 0 1px var(--color-blue2);
-    background-color: var(--color-blue2);
+    background: var(--color-blue2);
 }
 
 .ui-button1.toggled:hover {
     box-shadow: 0 0 0 1px hsl(228, 100%, 55%);
-    background-color: hsl(228, 100%, 55%);
+    background: hsl(228, 100%, 55%);
 }
 
 /* Types */
 .ui-button1.t-frameless {
     box-shadow: none;
-    background-color: transparent;
+    background: transparent;
 }
 
 .ui-button1.t-frameless:hover {
     box-shadow: 0 0 0 1px rgb(245, 245, 245);
-    background-color: rgb(245, 245, 245);
+    background: rgb(245, 245, 245);
 }
 
 .ui-button1.t-frameless:active {
     box-shadow: 0 0 0 1px rgb(235, 235, 235);
-    background-color: rgb(235, 235, 235);
+    background: rgb(235, 235, 235);
 }
 
 .ui-button1.t-frameless.disabled {
     color: hsl(0, 0%, 50%) !important;
-    background-color: transparent !important;
+    background: transparent !important;
     box-shadow: none !important;
 }
 
 /* TODO cleanup */
 .ui-button1.t-big {
     display: block;
-    
+
     width: 100%;
     padding: 15px;
 
@@ -1182,32 +1181,32 @@ a.ui-text[href]:focus:not(:hover),
     font-size: 14px;
 
     box-shadow: none;
-    background-color: var(--color-blue3);
+    background: var(--color-blue3);
 }
 
 .ui-button1.t-big.loading {
-    background-color: var(--color-gray15);
+    background: var(--color-gray15);
 }
 
 .ui-button1.t-big:hover {
-    background-color: hsl(232, 100%, 40%);
+    background: hsl(232, 100%, 40%);
 }
 
 .ui-button1.t-big:active {
-    background-color: var(--color-blue3);
+    background: var(--color-blue3);
 }
 
 .ui-button1.t-big.secondary {
     color: var(--color-blue3);
-    background-color: transparent;
+    background: transparent;
 }
 
 .ui-button1.t-big.secondary:hover {
-    background-color: var(--color-blue2-transparent-1);
+    background: var(--color-blue2-transparent-1);
 }
 
 .ui-button1.t-big.secondary:active {
-    background-color: var(--color-blue2-transparent-2);
+    background: var(--color-blue2-transparent-2);
 }
 
 /* Additional styles */
@@ -1217,31 +1216,40 @@ a.ui-text[href]:focus:not(:hover),
 
 .ui-button1.c-blue.t-frameless:hover {
     box-shadow: 0 0 0 1px var(--color-blue2-transparent-1);
-    background-color: var(--color-blue2-transparent-1);
+    background: var(--color-blue2-transparent-1);
 }
 
 .ui-button1.c-blue.t-frameless:active {
     box-shadow: 0 0 0 1px var(--color-blue2-transparent-2);
-    background-color: var(--color-blue2-transparent-2);
+    background: var(--color-blue2-transparent-2);
 }
 
 .ui-button1.c-red.t-frameless:hover {
+    color: var(--color-red);
     box-shadow: 0 0 0 1px var(--color-red-transparent-1);
-    background-color: var(--color-red-transparent-1);
+    background: var(--color-red-transparent-1);
 }
 
 .ui-button1.c-red.t-frameless:active {
+    color: var(--color-red);
     box-shadow: 0 0 0 1px var(--color-red-transparent-2);
-    background-color: var(--color-red-transparent-2);
+    background: var(--color-red-transparent-2);
 }
 
 .ui-button1.c-red {
     color: var(--color-red);
+    background: white;
+}
+
+.ui-button1.c-red:hover {
+    color: white;
+    background: hsl(8, 100%, 43%);
+    box-shadow: 0 0 0 1px hsl(8, 100%, 39%);
 }
 
 .ui-button1.low-emp {
     color: var(--color-blue2);
-    background-color: var(--color-blue2-transparent-1);
+    background: var(--color-blue2-transparent-1);
 }
 
 /* Log item */
@@ -1286,7 +1294,7 @@ a.ui-text[href]:focus:not(:hover),
     align-items: center;
 
     padding: 4px 9px;
-    
+
     cursor: help;
 
     color: hsl(0, 0%, 35%);
@@ -1363,7 +1371,7 @@ a.ui-text[href]:focus:not(:hover),
     height: 25px;
 
     margin-right: 2px;
-    
+
     cursor: pointer;
 
     color: hsl(0, 0%, 25%);
@@ -1391,10 +1399,14 @@ a.ui-text[href]:focus:not(:hover),
 .ui-revision-item > .ui-checkbox-1 {
     display: inline-flex;
     margin: 4px 0;
+
+    flex-shrink: 0;
 }
 
 .ui-revision-item > .ui-checkbox-1 > .checkbox {
     margin: 0 8px 0 0;
+
+    flex-shrink: 0;
 }
 
 .ui-revision-item > .links {
@@ -1415,7 +1427,7 @@ a.ui-text[href]:focus:not(:hover),
     align-items: center;
 
     padding: 4px 9px;
-    
+
     color: hsl(0, 0%, 35%);
     font-size: 12px;
 
@@ -1516,12 +1528,80 @@ table.ui-table td {
     flex-shrink: 0;
 }
 
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar {
-    box-sizing: border-box;
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .shrink-button {
+    display: flex;
     
+    box-sizing: border-box;
     width: 100%;
 
-    padding: 12px;
+    cursor: pointer;
+
+    margin-top: 15px;
+    padding: 14px;
+
+    opacity: 0.25;
+    background-color: transparent;
+
+    border-radius: 3px;
+
+    transition: 0.2s;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right:hover > .shrink-button {
+    opacity: 1;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .shrink-button:hover {
+    background-color: var(--color-gray15);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .shrink-button > .icon {
+    margin: 0 auto;
+
+    font-size: 12px;
+    color: hsl(0, 0%, 25%);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .shrink-button > .icon {
+    transform: rotate(180deg);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] {
+    width: auto;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .sidebar {
+    padding: 14px;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .sidebar > .links > .heading {
+    margin: 6px 0;
+    height: 1px;
+
+    font-size: 0;
+
+    background: var(--color-gray3);
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .sidebar > .links > .heading:first-child {
+    display: none;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .sidebar > .links > .link > .text {
+    display: none;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right[shrunk] > .sidebar > .links > .link > .icon {
+    margin-right: 0;
+    border-radius: 4px;
+}
+
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar {
+    box-sizing: border-box;
+
+    width: 100%;
+
+    padding: 14px 16px;
 
     font-family: "Roboto", sans-serif;
 
@@ -1530,7 +1610,7 @@ table.ui-table td {
 }
 
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar .heading {
-    margin: 18px 0 6px 2px;
+    margin: 18px 0 8px 2px;
 
     color: hsl(0, 0%, 40%);
     font-weight: 600;
@@ -1557,9 +1637,9 @@ table.ui-table td {
 }
 
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link {
-    display: block;
-    
-    padding: 6px 10px 6px 6px;
+    display: flex;
+    align-items: center;
+
     margin-top: 2px;
 
     user-select: none;
@@ -1571,7 +1651,7 @@ table.ui-table td {
 
     text-decoration: none;
 
-    border-radius: 3px;
+    border-radius: 4px;
 
     transition: 0.1s;
 }
@@ -1582,11 +1662,12 @@ table.ui-table td {
     color: hsl(0, 0%, 50%);
 }
 
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled > i,
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover > i {
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled > .icon,
+.u.icon-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover > .icon {
     color: hsl(0, 0%, 50%) !important;
 }
 
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover > .icon,
 .ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.disabled:hover {
     color: hsl(0, 0%, 50%) !important;
     background-color: rgba(0, 0, 0, 0.033) !important;
@@ -1606,22 +1687,30 @@ table.ui-table td {
     background-color: var(--color-red-transparent-05);
 }
 
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link > i {
-    text-align: center;
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link > .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    width: 24px;
-    
-    margin-right: 2px;
+    width: 28px;
+    height: 28px;
+
+    margin-right: 7px;
 
     color: hsl(0, 0%, 22%);
+    font-size: 13px;
+
+    border-radius: 4px 0 0 4px;
 }
 
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:hover > i {
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link:hover > .icon {
     color: var(--color-blue3);
+    background-color: var(--color-blue2-transparent-1);
 }
 
-.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.red:hover > i {
+.ui-systempage-content-container > .ui-systempage-sidebar-right > .sidebar > .links > .link.red:hover > .icon {
     color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
 }
 
 /* Systempage header box */
@@ -1666,7 +1755,7 @@ table.ui-table td {
 
 .ui-systempage-header-box > .tags {
     display: flex;
-    
+
     margin-top: 10px;
 }
 
@@ -1679,7 +1768,7 @@ table.ui-table td {
     font-size: 12px;
     font-weight: 600;
     text-decoration: none;
-    
+
     background-color: var(--color-blue2-transparent-1);
 
     border-radius: 3px;
@@ -1786,7 +1875,7 @@ table.ui-table td {
     visibility: visible;
     opacity: 1;
     pointer-events: all;
-    
+
     transform: translateY(0px);
 }
 

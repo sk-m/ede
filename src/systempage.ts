@@ -91,8 +91,8 @@ ${ item[0] }</a>`;
                             // Element types
                             if(el.type === "heading") links_html += `<div class="heading">${ el.text }</div>`
                             else if(el.type === "spacer") links_html += `<div class="spacer${ el.invisible ? " invisible" : "" }"></div>`
-                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } ${ el.title ? `title="${ el.title }"` : "" } \
-                            ${ (!el.disabled && el.href) ? `href="${ el.href }"` : "" } class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><i class="${ el.icon }"></i> ${ el.text }</a>`
+                            else if(el.type === "link") links_html += `<a ${ el.id ? `id="sidelink-${ el.id }"` : "" } title="${ el.title || el.text }" \
+                            ${ (!el.disabled && el.href) ? `href="${ el.href }"` : "" } class="link${ el.disabled ? " disabled" : "" } ${ el.additional_classes || "" }"><div class="icon"><i class="${ el.icon }"></i></div><div class="text">${ el.text }</div></a>`
                         }
 
                         sidebar_html += `<div class="links">${ links_html }</div>`;
@@ -119,6 +119,9 @@ ${ header_html }
     <div class="ui-systempage-sidebar-right">
         <div class="sidebar">
             ${ sidebar_html }
+        </div>
+        <div class="shrink-button" title="Toggle the side menu" onclick="ede.toggleSystempageSidemenuState()">
+            <div class="icon"><i class="fas fa-chevron-right"></i></div>
         </div>
     </div>` : "" }
 </div>`;
