@@ -62,6 +62,39 @@
     margin: 15px 0;
 }
 
+#popupid-login-f2acheck .login-button {
+    margin-bottom: 14px;
+    margin-top: 20px
+}
+
+#popupid-login-f2acheck .otp-input {
+    display: block;
+    
+    width: 75%;
+    margin: 22px auto;
+    padding: 12px 16px;
+
+    color: var(--color-blue3);
+    text-align: center;
+    font-weight: 600;
+    font-size: 24px;
+
+    background-color: var(--color-blue2-transparent-05);
+    box-shadow: 0 2px 10px 0 rgba(23, 68, 255, 0.07);
+    border: 1px solid rgba(23, 68, 255, 0.08);
+}
+
+#popupid-login-f2acheck .otp-input:focus {
+    background-color: var(--color-blue2-transparent-1);
+    box-shadow: 0 2px 5px 0 rgba(23, 68, 255, 0.1);
+    border: 1px solid rgba(23, 68, 255, 0.12);
+}
+
+#popupid-login-f2acheck .otp-input::placeholder {
+    font-size: 18px;
+    color: rgba(23, 68, 255, 0.4);
+}
+
 .page-system-login > .bottom-text {
     text-align: center;
 

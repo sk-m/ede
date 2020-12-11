@@ -1647,6 +1647,11 @@ named-placeholders@^1.1.2:
   dependencies:
     lru-cache "^4.1.3"
 
+nan@latest:
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
+  integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
+
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
@@ -1956,6 +1961,13 @@ redeyed@~2.1.0:
   integrity sha1-iYS1gV2ZyyIEacme7v/jiRPmzAs=
   dependencies:
     esprima "~4.0.0"
+
+redis-fast-driver@^2.1.5:
+  version "2.1.5"
+  resolved "https://registry.yarnpkg.com/redis-fast-driver/-/redis-fast-driver-2.1.5.tgz#b3828a7032f451a15cba94695cefbf20c751389d"
+  integrity sha512-o9lios/vSbulC2E9Fwyg8PCzSt4ZkvjLuIV5VlK7yNEgWGUwS638H48oofZ62hU9eMRdmXAyZQu9VhXr+ezb6g==
+  dependencies:
+    nan latest
 
 regexpp@^2.0.1:
   version "2.0.1"

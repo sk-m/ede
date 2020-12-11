@@ -29,6 +29,7 @@
     "he": "^1.2.0",
     "mysql2": "^2.1.0",
     "nodemailer": "^6.4.14",
+    "redis-fast-driver": "^2.1.5",
     "request": "^2.88.2",
     "sanitize-html": "^1.27.4",
     "squirrelly": "^7.9.0",
@@ -44,7 +45,8 @@
   },
   "scripts": {
     "tsc": "tsc",
-    "dev": "set EDE_DEV=1&&ts-node-dev --respawn --transpileOnly ./src/server.ts",
+    "dev": "export EDE_DEV=1&&ts-node-dev --respawn --transpileOnly ./src/server.ts",
+    "dev-win": "set EDE_DEV=1&&ts-node-dev --respawn --transpileOnly ./src/server.ts",
     "start": "node ./build/src/server.js",
     "lint": "tslint --project .",
     "precommit": "yarn lint && yarn build-src && echo \"Everything looks good. Ready to commit!\"",

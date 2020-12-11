@@ -17,40 +17,42 @@ function loginPageScript() {
 
     // 2fa popup
     function login_get_f2a_code(callback) {
-        const popup_buttons_html = `\
-<div class="left">
-    <button name="close" class="ui-button1 t-frameless w-500">CLOSE</button>
-</div>
-<div class="right">
-    <button name="login" class="ui-button1 t-frameless c-blue w-500">LOG IN</button>
-</div>`;
-
         const popup_body_html = `\
 <p>Please, enter a 6-digit code from your authenticator app or a one-time use backup code.</p>
 
-<form class="ui-form-container" name="login-f2acheck">
-    <div class="ui-input-box">
-        <div class="popup"></div>
-        <div class="ui-input-name1">6-digit code or backup code</div>
-        <input type="text" name="otp" data-handler="" class="ui-input1 roboto-mono" autocomplete="off">
-    </div>
-</form>`;
+<form class="ui-form-container column" name="login-f2acheck">
+    <input type="text" name="otp" data-handler="" placeholder="one-time password" class="ui-input1 big monospace otp-input" autocomplete="off">
 
-        const popup_el = ede.showPopup("login-f2acheck", "Two-factor authentication", popup_body_html, popup_buttons_html, {
-            close: ede.closePopup,
-            login: e => {
-                // Validate the form
-                const validation_result = ede.form.validate("login-f2acheck");
-                if(validation_result.invalid) return;
+    <button name="submit" class="ui-button1 t-big login-button">Log in</button>
+</form>
+`;
 
-                // Get the code
-                login_f2a_otp = ede.form.list["login-f2acheck"].otp.value;
+        // close: ede.closePopup,
+        // login: e => {
+        //     // Validate the form
+        //     const validation_result = ede.form.validate("login-f2acheck");
+        //     if(validation_result.invalid) return;
 
-                callback(e);
-            }
-        }, 460);
+        //     // Get the code
+        //     login_f2a_otp = ede.form.list["login-f2acheck"].otp.value;
+
+        //     callback(e);
+        // }
+
+        const popup_el = ede.showPopup("login-f2acheck", "Two-factor authentication", popup_body_html, false, 460);
 
         ede.updateForms(popup_el);
+
+        ede.form.list["login-f2acheck"].submit.onclick = e => {
+            // Validate the form
+            const validation_result = ede.form.validate("login-f2acheck");
+            if(validation_result.invalid) return;
+
+            // Get the code
+            login_f2a_otp = ede.form.list["login-f2acheck"].otp.value;
+
+            callback(e);
+        }
     }
 
     // On form submit
