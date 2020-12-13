@@ -59,9 +59,9 @@ export function userLoginRoute(req: any, res: any): void {
         .then(async (user: User.User) => {
             // Check if user is blocked from logging in
             if(user.blocks.includes("lockout")) {
-                const msg = (await SystemMessage.get(["login-message-blocked"]))["login-message-blocked"];
+                const msg = (await SystemMessage.get_value(["login-message-blocked"]))["login-message-blocked"];
 
-                res.status(403).send({ error: "blocked", message: msg.value });
+                res.status(403).send({ error: "blocked", message: msg });
                 return;
             }
 
@@ -75,9 +75,9 @@ export function userLoginRoute(req: any, res: any): void {
             .then(async (password_hash: Util.Hash) => {
                 // Compare the provided password hash to the correct one
                 if(user.password_hash_hash !== password_hash.key) {
-                    const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
+                    const msg = (await SystemMessage.get_value(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
 
-                    res.status(403).send({ error: "invalid_credentials", message: msg.value });
+                    res.status(403).send({ error: "invalid_credentials", message: msg });
                     return;
                 }
 
@@ -112,9 +112,9 @@ export function userLoginRoute(req: any, res: any): void {
                         // Incorrect code provided
 
                         // TODO Notify user if they used an already used backup code
-                        const msg = (await SystemMessage.get(["login-message-invalidf2aotp"]))["login-message-invalidf2aotp"];
+                        const msg = (await SystemMessage.get_value(["login-message-invalidf2aotp"]))["login-message-invalidf2aotp"];
 
-                        res.status(403).send({ error: "invalid_f2a_otp", message: msg.value });
+                        res.status(403).send({ error: "invalid_f2a_otp", message: msg });
                         return;
                     }
                 }
@@ -163,9 +163,9 @@ export function userLoginRoute(req: any, res: any): void {
             });
         })
         .catch(async (error: any) => {
-            const msg = (await SystemMessage.get(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
+            const msg = (await SystemMessage.get_value(["login-message-invalidcredentials"]))["login-message-invalidcredentials"];
 
-            res.status(403).send({ error: "invalid_credentials", message: msg.value });
+            res.status(403).send({ error: "invalid_credentials", message: msg });
         });
     });
 }

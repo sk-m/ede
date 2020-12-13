@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
@@ -58,14 +58,18 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(9, 'auth.session_cookie_ttl', NULL, 'int', NULL, '2630000', NULL, NULL, 'Time to live for a session cookie', 'ede', b'1100'),
 	(10, 'instance.domain', NULL, 'string', '^(?!:\\/\\/)([a-zA-Z0-9-_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9-_]+\\.[a-zA-Z]{2,11}?$', 'localhost.local', NULL, NULL, 'This instance\'s domain', 'ede', b'1100'),
 	(11, 'security.restricted_rights', NULL, 'array', NULL, NULL, NULL, NULL, 'Rights that can not be assigned or removed using the web interface', 'ede', b'1100'),
-	(12, 'security.protected_groups', 'sysadmin', 'array', NULL, NULL, NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
+	(12, 'security.protected_groups', NULL, 'array', NULL, 'sysadmin', NULL, NULL, 'Groups that can not be deleted using the web interface', 'ede', b'1100'),
 	(13, 'mail.enabled', NULL, 'bool', NULL, 'false', NULL, NULL, 'Enable outbound email. Used for user notification and password restoration', 'ede', b'1000'),
 	(14, 'mail.host', NULL, 'string', NULL, NULL, NULL, NULL, 'Host for outbound email', 'ede', b'1010'),
 	(15, 'mail.port', NULL, 'int', NULL, '465', NULL, NULL, 'Oubound email SMTP server port', 'ede', b'1010'),
 	(16, 'mail.user', NULL, 'string', NULL, NULL, NULL, NULL, 'User for outbound email', 'ede', b'1111'),
 	(17, 'mail.password', NULL, 'string', NULL, NULL, NULL, NULL, 'Password for outbound email user', 'ede', b'1111'),
 	(18, 'mail.secure', NULL, 'bool', NULL, 'true', NULL, NULL, 'Use SSL/TLS for outboud email', 'ede', b'1010'),
-	(19, 'mail.ignore_invalid_certs', NULL, 'bool', NULL, 'false', NULL, NULL, 'Ignore unauthorized certificates', 'ede', b'1010');
+	(19, 'mail.ignore_invalid_certs', NULL, 'bool', NULL, 'false', NULL, NULL, 'Ignore unauthorized certificates', 'ede', b'1010'),
+	(20, 'caching.enabled', 'true', 'bool', NULL, 'false', NULL, NULL, 'Enable caching (global switch)', 'ede', b'1010'),
+	(21, 'caching.host', '127.0.0.1', 'string', NULL, NULL, NULL, NULL, 'Hashing database host', 'ede', b'1010'),
+	(24, 'caching.port', NULL, 'int', NULL, '6379', NULL, NULL, 'Hashing database port', 'ede', b'1010'),
+	(26, 'caching.cachesystemmessages', 'true', 'bool', NULL, 'true', NULL, NULL, 'Keep system messages in the cache?', 'ede', b'1010');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
@@ -199,7 +203,7 @@ CREATE TABLE IF NOT EXISTS `system_messages` (
   `deletable` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `system_message_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `system_messages` DISABLE KEYS */;
 INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_history`, `deletable`) VALUES
@@ -240,7 +244,13 @@ INSERT INTO `system_messages` (`id`, `name`, `value`, `default_value`, `rev_hist
 	(35, 'right-description-wiki_deletepage', NULL, 'Delete wiki pages', '{}', b'0'),
 	(36, 'wikipagerestore-toptext', NULL, 'You are about to restore the page', '{}', b'0'),
 	(37, 'page-error-deleted', NULL, '<div class="ui-text b">This page was deleted at some point.</div>', '{}', b'0'),
-	(38, 'login-join-message-ipblocked', NULL, 'Your ip address is currently blocked from creating new accounts.', '{}', b'0');
+	(38, 'login-join-message-ipblocked', NULL, 'Your ip address is currently blocked from creating new accounts.', '{}', b'0'),
+	(39, 'edeconfig-category-mail-name', NULL, 'Mail', '{}', b'0'),
+	(40, 'edeconfig-category-mail-description', NULL, 'Mail related configuration items', '{}', b'0'),
+	(41, 'edeconfig-category-mail-iconclass', NULL, 'fas fa-envelope', '{}', b'0'),
+	(42, 'edeconfig-category-caching-name', NULL, 'Caching', '{}', b'0'),
+	(43, 'edeconfig-category-caching-description', NULL, 'Caching related configuration items. EDE uses Redis for caching, if enabled. You can also use some Redis forks like KeyDB with EDE.', '{}', b'0'),
+	(44, 'edeconfig-category-caching-iconclass', NULL, 'fas fa-fire', '{}', b'0');
 /*!40000 ALTER TABLE `system_messages` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `users` (

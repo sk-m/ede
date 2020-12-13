@@ -17,9 +17,9 @@ export async function userJoinRoute(req: any, res: any): Promise<void> {
 
     // ip address is blocked from creating new accounts
     if(Array.isArray(ip_blocks) && ip_blocks.includes("account_creation")) {
-        const msg = (await SystemMessage.get(["login-join-message-ipblocked"]))["login-join-message-ipblocked"];
+        const msg = (await SystemMessage.get_value(["login-join-message-ipblocked"]))["login-join-message-ipblocked"];
 
-        res.status(403).send({ error: "ip_blocked", message: msg.value });
+        res.status(403).send({ error: "ip_blocked", message: msg });
         return;
     }
 

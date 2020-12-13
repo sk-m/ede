@@ -120,7 +120,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-shortdescription`);
         sysmsgs_query_arr.push(`usergroup-${ queried_group_name }-fulldescription`);
 
-        const sysmsgs = await SystemMessage.get(sysmsgs_query_arr);
+        const sysmsgs = await SystemMessage.get_value(sysmsgs_query_arr);
 
         // Get logs for this group
         const log_entries = await Log.getEntries("groupupdate", undefined, queried_group_name);
@@ -228,7 +228,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="right-container" style="width: 100%">
         <div class="description-container">
             <div>
-                <div class="ui-text">${ sysmsgs[`right-description-${ right_name }`].value }</div>
+                <div class="ui-text">${ sysmsgs[`right-description-${ right_name }`] }</div>
                 <div class="ui-text small gray i"><i class="ui-text small gray fas fa-caret-down"></i> ${ arguments_count || "no" } arguments</div>
             </div>
             <div class="icon">${ arguments_count ? '<i class="fas fa-chevron-down"></i>' : "" }</div>
@@ -305,10 +305,10 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         // TODO "Main information" block should be moved to the systempage header box
         page_config.body_html = `\
 <form name="usergroupmanagement" data-onsubmit="test">
-    ${ sysmsgs["usergroupmanagement-toptext"].value !== "" ? `\
+    ${ sysmsgs["usergroupmanagement-toptext"] !== "" ? `\
 <div class="ui-info-box">
     <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
-    <div class="text ui-text">${ sysmsgs["usergroupmanagement-toptext"].value }</div>
+    <div class="text ui-text">${ sysmsgs["usergroupmanagement-toptext"] }</div>
 </div>` : "" }
 
     <div class="ui-form-box">
@@ -317,11 +317,11 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         <div class="ui-form-container ui-keyvalue-container">
             <div class="item">
                 <div class="key">Name</div>
-                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-name`].value }</div>
+                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-name`] }</div>
             </div>
             <div class="item">
                 <div class="key">Short description</div>
-                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-shortdescription`].value }</div>
+                <div class="value ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-shortdescription`] }</div>
             </div>
             <div class="item">
                 <div class="key">Currently assigned rights</div>
@@ -333,7 +333,7 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
     <div class="ui-form-box user-group-management-rights-root">
         ${ UI.constructFormBoxTitleBar("rights", "Rights") }
 
-        ${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`].value !== "" ? `<div class="ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`].value }</div>` : "" }
+        ${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`] !== "" ? `<div class="ui-text">${ sysmsgs[`usergroup-${ queried_group_name }-fulldescription`] }</div>` : "" }
 
         <div class="text-container">${ client_can_alter ? "You can modify rights for this group" : "You don't have permission to modify\
 rights for this group" }</div>
@@ -354,7 +354,7 @@ rights for this group" }</div>
         </div>
 
         <div class="ui-form-container between margin-top">
-            <div class="ui-text">${ sysmsgs["usergroupmanagement-savetext"].value }</div>
+            <div class="ui-text">${ sysmsgs["usergroupmanagement-savetext"] }</div>
             <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
         </div>
     </div>` : "" }

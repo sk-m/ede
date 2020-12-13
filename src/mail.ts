@@ -1,5 +1,5 @@
 import { registry_config } from "./registry";
-import { _mailer } from "./server";
+import { _mailer, _mailer_ok } from "./server";
 
 import * as User from "./user";
 import * as Util from "./utils";
@@ -10,7 +10,7 @@ import * as Util from "./utils";
 export function checkEnabled(): boolean {
     const registry_config_snapshot = registry_config.get();
 
-    return _mailer && (registry_config_snapshot["mail.enabled"].value as boolean === true)
+    return _mailer_ok && (registry_config_snapshot["mail.enabled"].value as boolean === true)
 }
 
 /**

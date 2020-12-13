@@ -195,18 +195,18 @@ export interface Namespace {
 export async function systemNamespaceHandler(address: PageAddress, client: User.User): Promise<ResponsePage> {
     return new Promise(async (resolve: any) => {
         // Get the "System page" badge (which is just a system message)
-        const systempage_badge_sysmsg = (await SystemMessage.get(["page-badge-systempage"]))["page-badge-systempage"];
+        const systempage_badge_sysmsg = (await SystemMessage.get_value(["page-badge-systempage"]))["page-badge-systempage"]!;
 
         // Sets the content to notfound system message and appends a notfound badge
         const notFound = (notfound_page: ResponsePage) => {
             return new Promise(async (notfound_resolve: any) => {
-                const sysmsgs = await SystemMessage.get([
+                const sysmsgs = await SystemMessage.get_value([
                     "systempage-error-notfound",
                     "page-badge-pagenotfound"
                 ]);
 
-                notfound_page.parsed_content = sysmsgs["systempage-error-notfound"].value;
-                notfound_page.badges.push(sysmsgs["page-badge-pagenotfound"].value);
+                notfound_page.parsed_content = sysmsgs["systempage-error-notfound"];
+                notfound_page.badges.push(sysmsgs["page-badge-pagenotfound"]!);
 
                 notfound_resolve(notfound_page);
             });
@@ -216,7 +216,7 @@ export async function systemNamespaceHandler(address: PageAddress, client: User.
         let page: ResponsePage = {
             address,
 
-            badges: [systempage_badge_sysmsg.value],
+            badges: [systempage_badge_sysmsg],
 
             additional_css: [],
             additional_js: [],
@@ -1058,7 +1058,7 @@ export async function get(address: PageAddress, client: User.User, template_para
         // Handler for common namespaces (or nonexistent)
         const commonHandler = (page: ResponsePage) => {
             return new Promise(async (common_resolve: any) => {
-                let error_sysmsgs: SystemMessage.SystemMessagesObject = {};
+                let error_sysmsgs: SystemMessage.SystemMessageValuesObject = {};
 
                 // Page was not found
                 if(page.status.includes("page_not_found")) {
@@ -1069,24 +1069,24 @@ export async function get(address: PageAddress, client: User.User, template_para
                     ];
 
                     // Get error system messages (we preload page-badge-namespacenotfound)
-                    error_sysmsgs = await SystemMessage.get(sysmsgs_query);
+                    error_sysmsgs = await SystemMessage.get_value(sysmsgs_query);
 
                     // Set page's content to the notfound message
-                    page.parsed_content = error_sysmsgs["page-error-notfound"].value;
+                    page.parsed_content = error_sysmsgs["page-error-notfound"];
 
                     // Set a notfound badge
-                    page.badges.push(error_sysmsgs["page-badge-pagenotfound"].value);
+                    page.badges.push(error_sysmsgs["page-badge-pagenotfound"]!);
                 }
 
                 // Revision was hidden
                 if(page.status.includes("page_revision_hidden")) {
                     // Get page-error-revisionhidden system message
-                    error_sysmsgs = await SystemMessage.get([
+                    error_sysmsgs = await SystemMessage.get_value([
                         "page-error-revisionhidden"
                     ]);
 
                     // Set page's content to the notfound message
-                    page.parsed_content = error_sysmsgs["page-error-revisionhidden"].value;
+                    page.parsed_content = error_sysmsgs["page-error-revisionhidden"];
                 }
 
                 // Check if namespace exists
@@ -1110,7 +1110,7 @@ export async function get(address: PageAddress, client: User.User, template_para
                     page.status.push("namespace_not_found");
 
                     // Set a badge
-                    page.badges.push(error_sysmsgs["page-badge-namespacenotfound"].value);
+                    page.badges.push(error_sysmsgs["page-badge-namespacenotfound"]!);
                 }
 
                 // Render content, passing the template params

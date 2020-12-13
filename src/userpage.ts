@@ -62,7 +62,7 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
             sysmsgs_query_arr.push("usergroupmembership-toptext");
             sysmsgs_query_arr.push("usergroupmembership-savetext");
 
-            const sysmsgs = await SystemMessages.get(sysmsgs_query_arr);
+            const sysmsgs = await SystemMessages.get_value(sysmsgs_query_arr, false, false);
 
             // For every available group
             for(const group_name in registry_usergroups_snapshot) {
@@ -92,7 +92,7 @@ async function groups_page(target_user: User.User, client: User.User, client_rig
 data-checked="${ group_already_assigned ? "true" : "false" }">
 <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
 <div class="text">\
-    ${ sysmsgs[`usergroup-${ group_name }-name`].does_exist ? sysmsgs[`usergroup-${ group_name }-name`].value : group_name }
+    ${ sysmsgs[`usergroup-${ group_name }-name`] || `<code>${ group_name }</code>` }
     <a class="ui-text small" style="margin-left: 3px" href="/System:UserGroupManagement/${ group_name }"><i class="fas fa-arrow-right"></i></a>
 </div>
 </div>`;
@@ -128,7 +128,7 @@ data-checked="${ group_already_assigned ? "true" : "false" }">
 <form class="ui-form-box" name="usergroupmembership-groups">
 ${ UI.constructFormBoxTitleBar("groups", "Groups", "Select groups this user will be a member of. Keep in mind that there could be groups that you won't be able to remove after assigning them") }
 
-${ sysmsgs["usergroupmembership-toptext"].value !== "" ? `<div class="ui-text roboto margin-bottom">${ sysmsgs["usergroupmembership-toptext"].value }</div>` : "" }
+${ sysmsgs["usergroupmembership-toptext"] !== undefined ? `<div class="ui-text roboto margin-bottom">${ sysmsgs["usergroupmembership-toptext"] }</div>` : "" }
 
 ${ client_can_modify_groups ? `\
 <div class="ui-text">You have permission to modify this user's groups</div>` : `<div class="ui-text">You don't have permission to modify this user's groups</div>` }
@@ -154,7 +154,7 @@ ${ UI.constructFormBoxTitleBar("save", "Save") }
     </div>
 </div>
 <div class="ui-form-container between margin-top">
-<div class="ui-text">${ sysmsgs["usergroupmembership-savetext"].value }</div>
+<div class="ui-text">${ sysmsgs["usergroupmembership-savetext"] }</div>
 <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save groups</button>
 </div>
 </form>` : "" }
@@ -329,9 +329,9 @@ export async function userNamespaceHandler(address: Page.PageAddress, client: Us
         }
 
         // Get user
-        let queried_user_error = false;
+        let queried_user_error: Util.Rejection | false = false;
 
-        const queried_user = await User.getFromUsername(username).catch(error => { queried_user_error = error });
+        const queried_user = await User.getFromUsername(username).catch((error: Util.Rejection) => { queried_user_error = error });
 
         if(!queried_user_error && queried_user) {
             // Get queried user's groups

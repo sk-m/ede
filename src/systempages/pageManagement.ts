@@ -80,7 +80,7 @@ async function move_page(queried_page: Page.PageInfo, queried_page_title: string
         const log_entries = await Log.getEntries("movewikipage", undefined, queried_page_title);
 
         // Get system messages
-        const sysmsgs = await SystemMessage.get([
+        const sysmsgs = await SystemMessage.get_value([
             "wikipagemove-toptext"
         ]);
 
@@ -100,7 +100,7 @@ async function move_page(queried_page: Page.PageInfo, queried_page_title: string
 <form name="movepage-form" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("move_move", "Move page") }
 
-    <div class="ui-text margin-bottom">${ sysmsgs["wikipagemove-toptext"].value }</div>
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagemove-toptext"] }</div>
 
     <div input-container class="ui-input-box margin-top">
         <div class="ui-input-name1">Move to</div>
@@ -148,7 +148,7 @@ async function delete_page(queried_page: Page.PageInfo, queried_page_title: stri
         const client_can_completely_remove = client_rights.rights.wiki_deletepage.allow_complete_erase === true;
         const log_entries = await Log.getEntries(["deletewikipage", "restorewikipage"], undefined, queried_page_title);
 
-        const sysmsgs = await SystemMessage.get([
+        const sysmsgs = await SystemMessage.get_value([
             "wikipagedelete-toptext"
         ]);
 
@@ -156,7 +156,7 @@ async function delete_page(queried_page: Page.PageInfo, queried_page_title: stri
 <form name="deletepage-form" class="ui-form-box">
     ${ UI.constructFormBoxTitleBar("delete_delete", "Delete page") }
 
-    <div class="ui-text margin-bottom">${ sysmsgs["wikipagedelete-toptext"].value }</div>
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagedelete-toptext"] }</div>
 
     <div input name="db_removal" class="ui-checkbox-1${ client_can_completely_remove? "" : " disabled" }">
         <div class="checkbox">${ UI_CHECKBOX_SVG }</div>

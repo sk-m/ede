@@ -4,6 +4,8 @@ import path from "path";
 import mysql from "mysql2";
 import fastify from "fastify";
 import nodemailer from "nodemailer";
+// tslint:disable-next-line: no-var-requires
+const Redis = require("redis-fast-driver");
 
 import fastify_static = require("fastify-static");
 import fastify_cookie = require("fastify-cookie");
@@ -57,6 +59,11 @@ export const sql: any = mysql.createConnection({
 
 /** @ignore Do not use this object! */
 export let _mailer: any;
+export let _mailer_ok = false;
+
+/** @ignore Do not use this object! */
+export let _redis: any;
+export let _redis_ok = false;
 
 sql.connect(serverInit);
 
@@ -180,13 +187,34 @@ async function serverInit(db_error: Error): Promise<void> {
             if(error) {
                 Util.log(`Mailer could not connect to the mail server`, 3, error);
             } else {
+                _mailer_ok = true;
+
                 Util.log(`Mailer was successfully connected to the mail server`);
             }
         });
+    }
 
+    // Set up redis
+    if(registry_config_snapshot["caching.enabled"].value as boolean) {
+        _redis = new Redis({
+            host: registry_config_snapshot["caching.host"].value as string,
+            port: registry_config_snapshot["caching.port"].value as number,
+            maxRetries: 0,
+            // auth: "",
+            autoConnect: true,
+            doNotSetClientName: false,
+            doNotRunQuitOnEnd: false
+        });
 
-    } else {
-        _mailer = false;
+        _redis.on("ready", () => {
+            _redis_ok = true;
+
+            Util.log("Successfully connected to the Redis server");
+        });
+
+        _redis.on("error", (error: Error) => {
+            Util.log(`Could not connect the Redis server`, 3, error);
+        });
     }
 
     // Register ede hooks

@@ -1,6 +1,7 @@
-import { sql } from "./server";
+import { sql, _redis, _redis_ok } from "./server";
 import * as Util from "./utils";
 import he from "he";
+import { registry_config } from "./registry";
 
 export type SystemMessagesObject = { [name: string]: SystemMessage };
 export interface SystemMessage {
@@ -9,6 +10,7 @@ export interface SystemMessage {
     /** The value is the same as default_value, if it is not set */
     value: string;
     default_value: string;
+    raw_value?: string;
     is_default: boolean;
     is_deletable: boolean;
     does_exist: boolean;
@@ -84,7 +86,19 @@ export async function set(name: string, value: string): Promise<void> {
                 return;
             }
 
+            // We successfully updated the system message
             resolve();
+
+            // Remove from cache
+            const registry_config_snapshot = registry_config.get();
+
+            if(_redis_ok && registry_config_snapshot["caching.cachesystemmessages"].value as boolean === true) {
+                _redis.rawCall(["del", `systemmessage|${ name }`], (cache_error: any) => {
+                    if(cache_error) {
+                        Util.log("Could not remove a system message from cache. Triggered by SystemMessage.set()", 3, cache_error);
+                    }
+                });
+            }
         });
     });
 }
@@ -149,12 +163,158 @@ export async function remove(name: string): Promise<void> {
     });
 }
 
+export type SystemMessageValuesObject = { [name: string]: string | undefined };
+
+/**
+ * Get system message(s) value (Not encoded by default!)
+ *
+ * This function gets *only* the values of the system messages. If you need the whole objects, use get_object() instead.
+ * Keep in mind that although this function gets the values from the cache, the get_object() function gets the objects from the database,
+ * so the latter one can be a bit slower.
+ *
+ * @param query name(s) of the system messsage(s) (with or without arguments)
+ * @param encode encode the values?
+ * @param use_placeholder set the value to the `[! SYSMSG ... !]` if not found?
+ */
+export async function get_value(
+    query: string[] | string[][],
+    encode: boolean = false,
+    use_placeholder: boolean = true
+    ): Promise<SystemMessageValuesObject> {
+    return new Promise(async (resolve: any, reject: any) => {
+        // Get the values from the get_object() function
+        // This is called when the caching failed or is disabled
+        const get_slow = async () => {
+            const slow_query_results = await get_object(query, encode);
+            const final_results: { [name: string]: string } = {};
+
+            // tslint:disable-next-line: forin
+            for(const name in slow_query_results) {
+                final_results[name] = slow_query_results[name].value;
+            }
+
+            return final_results;
+        };
+
+        // Check if we should get the system messages from cache
+        const registry_config_snapshot = registry_config.get();
+
+        if(!_redis_ok || registry_config_snapshot["caching.cachesystemmessages"].value as boolean !== true) {
+            // Caching is disabled, get from the main database
+            resolve(await get_slow());
+            return;
+        }
+
+        // Caching is enabled, continue
+
+        // Create a valid names query
+        const query_names: string[] = [];
+        const normalized_query: string[][] = [];
+
+        // Each element in the query parameter can either be a system message name or a array like [msg_name, arg1, arg2, ...]
+        // We do not allow names with a ' in them to avoid SQL injection attacks
+        for(const el of query) {
+            if(Array.isArray(el)) {
+                // Element is an array, where first item is a name
+                if(!el[0].includes("'")) {
+                    query_names.push(el[0]);
+                    normalized_query.push(el);
+                }
+            } else {
+                // Element is just a sysmsg name, so no parameters are included
+                if(!el.includes("'")) {
+                    query_names.push(el);
+                    normalized_query.push([el]);
+                }
+            }
+        }
+
+        // Create a redis query
+        const redis_query = ["mget"];
+
+        for(const name of query_names) {
+            redis_query.push(`systemmessage|${ name }`);
+        }
+
+        // Get the system messages from the cache
+        _redis.rawCall(redis_query, async (error: any, results: any) => {
+            if(error) {
+                // Some error occured, just get all the messages from the main database
+                Util.log("Could not get system messages from get_value function, getting directly from the database", 3, error);
+
+                resolve(await get_slow());
+                return;
+            }
+
+            // No errors reported. We might not have *all* the sysmsgs that were requested, so we have to add those, that we couldn't get
+            // from cache
+            const final_results: SystemMessageValuesObject = {};
+            const unavailable_sysmsgs_indexes: number[] = [];
+
+            let i = 0;
+
+            // Go throgh the results and check if we recieved a value for each query element
+            for(let value of results) {
+                if(value) {
+                    // We got this particular system message, append to the final results
+
+                    // Put in arguments, if rerquested to do so
+                    // Here, el is a query element. If it is an array, some arguments were provided
+                    const el = normalized_query[i];
+                    if(Array.isArray(el)) {
+                        for(let arg_i = 1; arg_i < el.length; arg_i++) {
+                            value = value.replace(`$${ arg_i }`, el[arg_i]);
+                        }
+                    }
+
+                    final_results[query_names[i]] = value;
+                } else {
+                    // We didn't get this system message from the database, we will have to get this one from the main database
+                    unavailable_sysmsgs_indexes.push(i);
+                }
+
+                i++;
+            }
+
+            if(unavailable_sysmsgs_indexes.length !== 0) {
+                // We have got some system messages that we did not get from the cache, get them from the main db now
+
+                const slow_query: any[] = [];
+
+                // Get the names that we do not have
+                for(const index of unavailable_sysmsgs_indexes) {
+                    slow_query.push(normalized_query[index]);
+                }
+
+                // Query the main db
+                const slow_query_results = await get_object(slow_query, encode);
+
+                // Populate the results
+                // We can't just return the result of the slow query because the slow query returns an object, not just a value
+                // tslint:disable-next-line: forin
+                for(const name in slow_query_results) {
+                    final_results[name] = (!slow_query_results[name].does_exist && !use_placeholder)
+                    ? undefined
+                    : slow_query_results[name].value;
+                }
+            }
+
+            resolve(final_results);
+        });
+    });
+}
+
 /**
  * Get system message (Not encoded by default!)
  *
- * @param name Name(s) of the system messsage(s)
+ * This function will get all the information about a system message from the database. If you just need the value, it is a much better
+ * idea to use the get_value function that has the exact same function parameters. get_value function will be faster in most cases,
+ * because it recieves the system messages from the cache (if caching is enabled).
+ *
+ * @param query name(s) of the system messsage(s) (with or without arguments)
+ * @param encode encode the values?
  */
-export async function get(query: string[] | string[][], encode: boolean = false): Promise<SystemMessagesObject> {
+export async function get_object(query: string[] | string[][], encode: boolean = false, cache: boolean = true): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
         // Create a valid names query
         const query_names: string[] = [];
@@ -162,7 +322,6 @@ export async function get(query: string[] | string[][], encode: boolean = false)
 
         // Each element in the query parameter can either be a system message name or an array like [msg_name, arg1, arg2, ...]
         // We do not allow names with a ' in them to avoid SQL injection attacks
-        // TODO in future, we should disable multiple exressions in one SQL query to be even safer
         for(const el of query) {
             if(Array.isArray(el)) {
                 // Element is an array, where first item is a name
@@ -224,6 +383,7 @@ export async function get(query: string[] | string[][], encode: boolean = false)
                         ...sysmsg,
 
                         value: final_value,
+                        raw_value: sysmsg.value,
                         is_default: !sysmsg.value,
                         is_deletable: sysmsg.deletable.readInt8(0) === 1,
                         does_exist: true,
@@ -247,6 +407,32 @@ export async function get(query: string[] | string[][], encode: boolean = false)
 
             // Return the result
             resolve(final_results);
+
+            // Check if we need to cache what we got
+            const registry_config_snapshot = registry_config.get();
+
+            if(cache && _redis_ok && registry_config_snapshot["caching.cachesystemmessages"].value as boolean === true) {
+                const redis_query: string[] = ["mset"];
+
+                for(const name of query_names) {
+                    // Don't cache nonexistent system messages
+                    if(!final_results[name].does_exist) continue;
+
+                    // Key
+                    redis_query.push(`systemmessage|${ name }`);
+                    // Value
+                    redis_query.push(final_results[name].raw_value || final_results[name].value);
+                }
+
+                // Save
+                if(redis_query.length > 1) {
+                    _redis.rawCall(redis_query, (cache_error: any) => {
+                        if(cache_error) {
+                            Util.log("Could not cache system messages", 3, cache_error);
+                        }
+                    });
+                }
+            }
         });
     });
 }
