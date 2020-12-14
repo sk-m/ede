@@ -86,6 +86,7 @@ function configPageScript() {
                 status_el.innerHTML = "<i class=\"fas fa-check\"></i> Saved successfully!";
                 status_el.className = "status green";
 
+                input_el.dataset.cleanvalue = is_checkbox ? input_el.dataset.checked : input_el.value;
                 config_option_el.classList.remove("dirty");
                 e.target.classList.add("disabled");
             })
