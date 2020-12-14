@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `config` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_key` (`key`),
   KEY `NOT_EDITABLE` (`key`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8;
 
 /*!40000 ALTER TABLE `config` DISABLE KEYS */;
 INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `default_value`, `allowed_values`, `tags`, `description`, `source`, `access_level`) VALUES
@@ -66,10 +66,11 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(17, 'mail.password', NULL, 'string', NULL, NULL, NULL, NULL, 'Password for outbound email user', 'ede', b'1111'),
 	(18, 'mail.secure', NULL, 'bool', NULL, 'true', NULL, NULL, 'Use SSL/TLS for outboud email', 'ede', b'1010'),
 	(19, 'mail.ignore_invalid_certs', NULL, 'bool', NULL, 'false', NULL, NULL, 'Ignore unauthorized certificates', 'ede', b'1010'),
-	(20, 'caching.enabled', 'true', 'bool', NULL, 'false', NULL, NULL, 'Enable caching (global switch)', 'ede', b'1010'),
-	(21, 'caching.host', '127.0.0.1', 'string', NULL, NULL, NULL, NULL, 'Hashing database host', 'ede', b'1010'),
+	(20, 'caching.enabled', NULL, 'bool', NULL, 'false', NULL, NULL, 'Enable caching (global switch)', 'ede', b'1010'),
+	(21, 'caching.host', NULL, 'string', NULL, '127.0.0.1', NULL, NULL, 'Hashing database host', 'ede', b'1010'),
 	(24, 'caching.port', NULL, 'int', NULL, '6379', NULL, NULL, 'Hashing database port', 'ede', b'1010'),
-	(26, 'caching.cachesystemmessages', 'true', 'bool', NULL, 'true', NULL, NULL, 'Keep system messages in the cache?', 'ede', b'1010');
+	(26, 'caching.cachesystemmessages', NULL, 'bool', NULL, 'true', NULL, NULL, 'Keep system messages in the cache?', 'ede', b'1010'),
+	(27, 'caching.cacheusersids', NULL, 'bool', NULL, 'true', NULL, NULL, 'Cache cleartext user sids? This will keep user\'s *unhashed* sids in the redis database. If you think that this is unsafe, you can disable this functionality.', 'ede', b'1010');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (

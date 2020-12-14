@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import cookie from "cookie";
 
-import { sql } from "./server";
+import { sql, _redis, _redis_ok } from "./server";
 import * as Util from "./utils";
 
 import { registry_config, registry_usernotification_types } from "./registry";
@@ -651,15 +651,49 @@ export async function getFromSession(http_request: any): Promise<User> {
             /*
                 We store a hashed sid in the database for additinal security, but it makes getting users by their session slower, as
                 we have to hash it every single time.
+
+                However, if the option is enabled in the EDE Config, caching the cleartext user's sid is possible, which makes this
+                function a bit faster.
             */
 
-            // Hash sid provided by the user
-            const cookie_sid_hash: Util.Hash = await Util.pbkdf2(cookies.sid, db_response.session_sid_salt,
-            SECURITY_SID_HASHING_ITERATIONS, SECURITY_SID_HASHING_KEYLEN);
+            const registry_config_snapshot = registry_config.get();
 
-            // Check if hashes match
-            if(cookie_sid_hash.key === db_response.session_sid_hash) {
-                // Hashes match => user provided session is correct => return the user
+            let sid_correct = false;
+            let correct_cookie_sid_from_cache: string | false = false;
+
+            // Check if user's sid is cached
+            if(_redis_ok && registry_config_snapshot["caching.cacheusersids"].value as boolean === true) {
+                correct_cookie_sid_from_cache = await new Promise((resolve_cache: any) => {
+                    _redis.rawCall(["get", `user_sid|${ st_uid }`], (cache_error: any, result: any) => {
+                        if(!cache_error && result) resolve_cache(result);
+                        else resolve_cache(false);
+                    });
+                });
+            }
+
+            // Check if cached sid is correct
+            if(correct_cookie_sid_from_cache !== false && correct_cookie_sid_from_cache === cookies.sid) sid_correct = true;
+
+            // Hash sid provided by the user, if cached check failed
+            if(!sid_correct) {
+                const cookie_sid_hash = await Util.pbkdf2(cookies.sid, db_response.session_sid_salt,
+                SECURITY_SID_HASHING_ITERATIONS, SECURITY_SID_HASHING_KEYLEN);
+
+                // Check if hashes match
+                if(cookie_sid_hash.key === db_response.session_sid_hash) sid_correct = true;
+            }
+
+            if(sid_correct) {
+                // Sid is correct => user provided session is correct => return the user
+
+                // Cache the cleartext seed (the one in the cookie)
+                if(_redis_ok && registry_config_snapshot["caching.cacheusersids"].value as boolean === true) {
+                    _redis.rawCall(["set", `user_sid|${ st_uid }`, cookies.sid, "EX", 3600], (cache_error: any) => {
+                        if(cache_error) {
+                            Util.log("Could not cache user's sid", 3, cache_error);
+                        }
+                    });
+                }
 
                 const user_password = db_response.user_password.split(";");
 
