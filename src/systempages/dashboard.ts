@@ -58,12 +58,14 @@ async function constructSystemPagesListHTML(): Promise<string> {
 
 export async function dashboard(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
-        // Load css and js files for this system page
-        const page_css = fs.readFileSync("./static/Dashboard/styles.css", "utf8");
-        const page_js = fs.readFileSync("./static/Dashboard/script.js", "utf8");
+        // Get the files
+        const page_files = await Page.getPageFiles("System:Dashboard", {
+            js: "./static/Dashboard/script.js",
+            css: "./static/Dashboard/styles.css",
+        });
 
-        page.additional_css = [page_css];
-        page.additional_js = [page_js];
+        page.additional_css = [page_files.css];
+        page.additional_js = [page_files.js];
 
         // Set some info items
         page.info.hiddentitle = true;

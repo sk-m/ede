@@ -228,12 +228,14 @@ ${ !changeable ? " disabled": "" }${ config_item.value_pattern ? ` patern="${ co
 // TODO don't forget to add tags like `wip_placeholder`
 export async function config(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
-        // Load css and js files for this system page
-        const page_css = fs.readFileSync("./static/Config/styles.css", "utf8");
-        const page_js = fs.readFileSync("./static/Config/script.js", "utf8");
+        // Get the files
+        const page_files = await Page.getPageFiles("System:Config", {
+            js: "./static/Config/script.js",
+            css: "./static/Config/styles.css",
+        });
 
-        page.additional_css = [page_css];
-        page.additional_js = [page_js];
+        page.additional_css = [page_files.css];
+        page.additional_js = [page_files.js];
 
         // Set some info items
         page.info.hiddentitle = true;

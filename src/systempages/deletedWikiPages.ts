@@ -20,10 +20,12 @@ export async function deletedWikiPages(page: Page.ResponsePage, client: User.Use
             body_html: ""
         }
 
-        // Get page js
-        const page_js = fs.readFileSync("./static/DeletedWikiPages/script.js", "utf8");
+        // Get the files
+        const page_files = await Page.getPageFiles("System:DeletedWikiPages", {
+            js: "./static/DeletedWikiPages/script.js"
+        });
 
-        page_config.page.additional_js = [page_js];
+        page.additional_js = [page_files.js];
 
         if(!queried_page_fullname) {
             // No page title

@@ -35,8 +35,8 @@ export async function getSkins(): Promise<SkinsObject> {
             // Set index_path to default if it was not provided in manifest.json
 
             skins[manifest.name] = {
-                html: index_html,
-                ...manifest
+                ...manifest,
+                html: index_html
             };
         }
 

@@ -1,5 +1,3 @@
-import fs from "fs";
-
 import * as User from "../user";
 import * as Page from "../page";
 import * as UI from "../ui";
@@ -16,12 +14,14 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
             body_html: ""
         }
 
-        // Load css and js files for this system page
-        const page_css = fs.readFileSync("./static/SystemMessages/styles.css", "utf8");
-        const page_js = fs.readFileSync("./static/SystemMessages/script.js", "utf8");
+        // Get the files
+        const page_files = await Page.getPageFiles("System:SystemMessages", {
+            js: "./static/SystemMessages/script.js",
+            css: "./static/SystemMessages/styles.css",
+        });
 
-        page.additional_css = [page_css];
-        page.additional_js = [page_js];
+        page.additional_css = [page_files.css];
+        page.additional_js = [page_files.js];
 
         // Get the queried system message name
         const queried_message = page.address.url_params[1];

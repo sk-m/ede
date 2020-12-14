@@ -23,12 +23,14 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             body_html: ""
         }
 
-        // Load css and js files for this system page
-        const page_css = fs.readFileSync("./static/UserGroupManagement/styles.css", "utf8");
-        const page_js = fs.readFileSync("./static/UserGroupManagement/script.js", "utf8");
+        // Get the files
+        const page_files = await Page.getPageFiles("System:UserGroupManagement", {
+            js: "./static/UserGroupManagement/script.js",
+            css: "./static/UserGroupManagement/styles.css",
+        });
 
-        page.additional_css = [page_css];
-        page.additional_js = [page_js];
+        page.additional_css = [page_files.css];
+        page.additional_js = [page_files.js];
 
         // Check if client can alter requeted group
         if(client) {

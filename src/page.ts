@@ -1,10 +1,11 @@
 import crypto from "crypto";
+import fs from "fs";
 import * as JsDiff from "diff";
 
-import { sql } from "./server";
+import { sql, _redis, _redis_ok } from "./server";
 import * as Log from "./log";
 import * as Util from "./utils";
-import { registry_namespaces, registry_systempages } from "./registry";
+import { registry_config, registry_namespaces, registry_systempages } from "./registry";
 import * as SystemMessage from "./system_message";
 import { systempageBuilder } from "./systempage";
 import * as User from "./user";
@@ -186,6 +187,90 @@ export interface Namespace {
     content_model: string;
 
     handler?: (address: PageAddress, client: User.User) => Promise<ResponsePage>;
+}
+
+export type PageFilesObject = { [name: string]: string };
+
+/**
+ * Get a (cached, if enabled) page css, js and other files
+ *
+ * @param page_title page title
+ * @param files file_type: file_path obect (ex. { js: "./static/.../script.js" })
+ */
+export async function getPageFiles(page_title: string, files: PageFilesObject): Promise<PageFilesObject> {
+    return new Promise(async (resolve: any) => {
+        const final_results: PageFilesObject = {};
+
+        // Try to get the files from the cache
+        const registry_config_snapshot = registry_config.get();
+        const files_caching_enabled = _redis_ok && registry_config_snapshot["caching.cachepagefiles"].value as boolean === true;
+
+        if(files_caching_enabled) {
+            // File caching is enabled, get what we can from the cache
+
+            // Construct the query
+            const redis_query: string[] = ["mget"];
+
+            // tslint:disable-next-line: forin
+            for(const file_type in files) {
+                redis_query.push(`page_file|${ page_title }|${ file_type }`);
+            }
+
+            // Get the files
+            await new Promise((cache_get_resolve: any) => {
+                _redis.rawCall(redis_query, (error: any, cache_results: any) => {
+                    if(error) {
+                        Util.log("Could not get page files from cache", 3, error);
+                    } else {
+                        let i = 0;
+
+                        // Populate the results object
+                        // tslint:disable-next-line: forin
+                        for(const file_type in files) {
+                            // Do not append the file types that we did not get
+
+                            if(cache_results[i])
+                                final_results[file_type] = cache_results[i];
+
+                            i++;
+                        }
+                    }
+
+                    cache_get_resolve();
+                });
+            });
+        }
+
+        // Check if there are some files that were not in the cache
+        const cache_redis_query: string[] = ["mset"];
+
+        for(const file_type in files) {
+            if(!final_results[file_type]) {
+                // We could not get this file
+
+                // Get from filesystem
+                const file_content = fs.readFileSync(files[file_type], "utf8");
+
+                // Update the final_results
+                final_results[file_type] = file_content;
+
+                // Add to the "to cache" list
+                cache_redis_query.push(`page_file|${ page_title }|${ file_type }`);
+                cache_redis_query.push(file_content);
+            }
+        }
+
+        resolve(final_results);
+
+        // Cache the files that were not in the cache before
+        if(files_caching_enabled && cache_redis_query.length !== 1) {
+            _redis.rawCall(cache_redis_query, (error: any) => {
+                if(error) {
+                    Util.log("Could not cache page files", 3, error);
+                }
+            });
+        }
+    });
 }
 
 /**

@@ -230,9 +230,11 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 </form>`;
 
             // Load query js
-            const page_js = fs.readFileSync("./static/PageManagement/query.js", "utf8");
+            const page_files = await Page.getPageFiles("System:PageManagement", {
+                query_js: "./static/PageManagement/query.js"
+            });
 
-            page_config.page.additional_js = [page_js];
+            page.additional_js = [page_files.query_js];
 
             resolve(page_config);
             return;
@@ -358,9 +360,12 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
         switch(page.address.url_params[1]) {
             case "delete": {
-                const page_js = fs.readFileSync("./static/PageManagement/delete.js", "utf8");
+                // Load js file
+                const page_files = await Page.getPageFiles("System:PageManagement", {
+                    del_js: "./static/PageManagement/delete.js"
+                });
 
-                page_config.page.additional_js = [page_js];
+                page.additional_js = [page_files.del_js];
 
                 page_config.breadcrumbs_data.push(["Delete"]);
                 page_config.header_config = {
@@ -371,9 +376,12 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 page_config.body_html = await delete_page(queried_page, page_address.title, client, client_groups || undefined);
             } break;
             case "move": {
-                const page_js = fs.readFileSync("./static/PageManagement/move.js", "utf8");
+                // Load js file
+                const page_files = await Page.getPageFiles("System:PageManagement", {
+                    move_js: "./static/PageManagement/move.js"
+                });
 
-                page_config.page.additional_js = [page_js];
+                page.additional_js = [page_files.move_js];
 
                 page_config.breadcrumbs_data.push(["Move"]);
                 page_config.header_config = {

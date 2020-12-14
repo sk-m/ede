@@ -141,9 +141,14 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
         page.info.hiddentitle = true;
         page.info.nocontainer = true;
 
-        // Load css
-        const page_css = fs.readFileSync("./static/UserSettings/styles.css", "utf8");
-        page.additional_css = [page_css];
+        // Get the files
+        const page_files = await Page.getPageFiles("System:UserSettings", {
+            js: "./static/UserSettings/script.js",
+            css: "./static/UserSettings/styles.css",
+        });
+
+        page.additional_css = [page_files.css];
+        page.additional_js = [page_files.js];
 
         // User is not logged in
         if(!client) {
@@ -167,10 +172,6 @@ export async function userSettings(page: Page.ResponsePage, client: User.User): 
             resolve(page);
             return;
         }
-
-        // Load JS
-        const page_js = fs.readFileSync("./static/UserSettings/script.js", "utf8");
-        page.additional_js = [page_js];
 
         // Check email_token_action
         if(page.address.query.email_token_action && page.address.query.email_token) {

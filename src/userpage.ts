@@ -424,9 +424,12 @@ title="This user is a member of the ${ group_name } group. Click to see the grou
 
             switch(address.url_params[1]) {
                 case "groups": {
-                    const page_js = fs.readFileSync("./static/User/group_membership.js", "utf8");
+                    // Get the files
+                    const page_files = await Page.getPageFiles("User:", {
+                        group_membership_js: "./static/User/group_membership.js"
+                    });
 
-                    page_config.page.additional_js = [page_js];
+                    page.additional_js = [page_files.group_membership_js];
 
                     page_config.breadcrumbs_data.push(["Manage groups"]);
                     page_config.body_html = await groups_page(queried_user, client, client_groups || undefined, queried_user_groups || undefined);
@@ -436,9 +439,12 @@ title="This user is a member of the ${ group_name } group. Click to see the grou
                     page_config.body_html = rename_page(queried_user, client, client_groups || undefined);
                 } break;
                 case "block": {
-                    const page_js = fs.readFileSync("./static/User/block.js", "utf8");
+                    // Get the files
+                    const page_files = await Page.getPageFiles("User:", {
+                        block_js: "./static/User/block.js"
+                    });
 
-                    page_config.page.additional_js = [page_js];
+                    page.additional_js = [page_files.block_js];
 
                     page_config.breadcrumbs_data.push(["Block"]);
                     page_config.body_html = await block_page(queried_user, client, client_groups || undefined);
