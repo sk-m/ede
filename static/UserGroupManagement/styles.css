@@ -113,6 +113,9 @@
     margin: 0 3px;
     padding: 1px 3px;
     
+    word-break: break-all;
+    line-height: 19px;
+
     border-radius: 2px;
     background-color: hsl(0, 0%, 95%);
 }
