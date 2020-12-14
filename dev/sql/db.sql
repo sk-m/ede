@@ -71,7 +71,8 @@ INSERT INTO `config` (`id`, `key`, `value`, `value_type`, `value_pattern`, `defa
 	(24, 'caching.port', NULL, 'int', NULL, '6379', NULL, NULL, 'Hashing database port', 'ede', b'1010'),
 	(26, 'caching.cachesystemmessages', NULL, 'bool', NULL, 'true', NULL, NULL, 'Keep system messages in the cache?', 'ede', b'1010'),
 	(27, 'caching.cacheusersids', NULL, 'bool', NULL, 'true', NULL, NULL, 'Cache cleartext user sids? This will keep user\'s *unhashed* sids in the redis database. If you think that this is unsafe, you can disable this functionality.', 'ede', b'1010'),
-	(28, 'caching.cachepagefiles', NULL, 'bool', NULL, 'true', NULL, NULL, 'Cache system page\'s css, js and other files?', 'ede', b'1010');
+	(28, 'caching.cachepagefiles', NULL, 'bool', NULL, 'true', NULL, NULL, 'Cache system page\'s css, js and other files?', 'ede', b'1010'),
+	(29, 'security.protected_actions', NULL, 'array', NULL, NULL, NULL, NULL, 'Actions (represented as API route names) that require a two-factor verification', 'ede', b'1100');
 /*!40000 ALTER TABLE `config` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (

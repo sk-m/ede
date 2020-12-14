@@ -17,8 +17,9 @@ interface CheckResult {
  *
  * @param user_id user's id
  * @param otp user's one-time password or backup code
+ * @param allow_backup_codes allow the use of backup codes?
  */
-export async function check(user_id: number, otp?: string): Promise<CheckResult> {
+export async function check(user_id: number, otp?: string, allow_backup_codes: boolean = true): Promise<CheckResult> {
     // TODO @cleanup
     return new Promise((resolve: any) => {
         // Get all the info about user's f2a setup we need
@@ -46,7 +47,21 @@ export async function check(user_id: number, otp?: string): Promise<CheckResult>
                     const backup_codes = results[0].backup_codes;
 
                     if(Object.keys(backup_codes).includes(otp)) {
-                        // User used a valid backup code, check if it is unused
+                        // User used a valid backup cod
+
+                        // Check if backup codes are allowed
+                        if(!allow_backup_codes) {
+                            resolve({
+                                enabled: true,
+                                otp_correct: false,
+                                is_backup_code: true,
+                                message: "Use of backup codes is disallowed"
+                            });
+
+                            return;
+                        }
+
+                        // Check if backup code is unused
                         if(backup_codes[otp].used) {
                             // The code was correct, but it was already used
                             resolve({

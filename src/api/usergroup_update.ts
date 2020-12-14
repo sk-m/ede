@@ -3,7 +3,7 @@ import * as Log from "../log";
 import * as Util from "../utils";
 import { registry_config, registry_usergroups } from "../registry";
 import { Group, GroupsAndRightsObject } from "../right";
-import { apiSendError, apiSendSuccess } from "../api";
+import { apiSendError, apiSendSuccess, checkUserSignature } from "../api";
 
 /**
  * Modify the user group ("usergroup/update")
@@ -32,6 +32,14 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     // Check if the group exsists
     if(!registry_usergroups.get()[req.body.group_name]) {
         apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Specified group doesn't exists"));
+        return;
+    }
+
+    // Check the signature
+    const signature_check = await checkUserSignature("usergroup/update", client_user.id, req.body.signature);
+
+    if(!signature_check.valid) {
+        apiSendError(res, signature_check.rejection!);
         return;
     }
 
@@ -146,7 +154,8 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
         // Log the update
         // TODO more detailed log message
         Log.createEntry("groupupdate", client_user.id, req.body.group_name,
-`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`, req.body.summary);
+`<a href="/User:${ client_user.username }">${ client_user.username }</a> updated group <a href="/System:UserGroupManagement/${ req.body.group_name }">${ req.body.group_name }</a>`,
+req.body.summary, signature_check.check_skipped ? [] : ["f2asigned"]);
 
         apiSendSuccess(res);
     })

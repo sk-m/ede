@@ -1,5 +1,3 @@
-import fs from "fs";
-
 import * as Page from "../page";
 import * as User from "../user";
 import * as Log from "../log";
@@ -102,6 +100,14 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         const sysmsgs_query_arr: string[] = [];
 
         let is_group_protected = false;
+
+        // Check if this action requires a signature
+        let signature_required = false;
+
+        if(registry_config_snapshot["security.protected_actions"].value instanceof Array
+        && registry_config_snapshot["security.protected_actions"].value.includes("usergroup/update")) {
+            signature_required = true;
+        }
 
         // Check if the group is deletable
         if(registry_config_snapshot["security.protected_groups"].value instanceof Array
@@ -354,6 +360,16 @@ rights for this group" }</div>
             <div class="ui-input-name1">Summary</div>
             <input type="text" name="summary" data-handler="summary" class="ui-input1">
         </div>
+
+        ${ signature_required ? `<div class="ui-signature-container">
+            <div class="left">
+                <div class="icon"><i class="fas fa-key"></i></div>
+                <div class="text">This action requires a two-factor verification</div>
+            </div>
+            <div class="input-container">
+                <input class="ui-input1" type="text" name="signature" data-handler="otp" placeholder="Please, enter your one-time password here">
+            </div>
+        </div>` : "" }
 
         <div class="ui-form-container between margin-top">
             <div class="ui-text">${ sysmsgs["usergroupmanagement-savetext"] }</div>

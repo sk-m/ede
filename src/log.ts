@@ -12,12 +12,13 @@ export interface LogEntry {
 
     action_text: string;
     summary_text: string;
+    tags: string[];
 
     created_on: number;
     visibility_level: number;
 }
 
-export let log_icons: { [log_type: string]: string } = {
+export const log_icons: { [log_type: string]: string } = {
     groupupdate: "fas fa-users-cog",
 
     usergroupsupdate: "fas fa-user-cog",
@@ -27,6 +28,22 @@ export let log_icons: { [log_type: string]: string } = {
     deletewikipage: "fas fa-trash",
     restorewikipage: "fas fa-trash-restore",
     movewikipage: "fas fa-arrow-right",
+};
+
+export interface LogTagDescriptor {
+    icon_class: string;
+    text: string;
+    title: string;
+    color: string;
+}
+
+export const log_tags_info: { [name: string]: LogTagDescriptor } = {
+    f2asigned: {
+        icon_class: "fas fa-key",
+        text: "2fa signed",
+        title: "This action was verified with a 2fa challenge",
+        color: "purple"
+    }
 };
 
 /**
@@ -46,6 +63,16 @@ export function constructLogEntriesHTML(entries: LogEntry[]): string {
     for(const entry of entries) {
         const date = new Date(entry.created_on * 1000);
         icon = log_icons[entry.type] || "fas fa-cog";
+        let tags_html = "";
+
+        if(entry.tags.length !== 0) {
+            for(const tag_type of entry.tags) {
+                const tag_info = log_tags_info[tag_type];
+
+                tags_html += `\
+<span title="${ tag_info.title }" class="c-${ tag_info.color }"><i class="${ tag_info.icon_class }"></i> ${ tag_info.text }</span>`;
+            }
+        }
 
         html += `\
 <div class="ui-log-item" data-logid="${ entry.id }">
@@ -53,7 +80,8 @@ export function constructLogEntriesHTML(entries: LogEntry[]): string {
         <i class="${ icon }"></i>
         <span>${ Util.formatTimeString(entry.created_on) }</span>
     </span>
-    <span>${ entry.action_text }</span>
+    ${ tags_html ? `<span class="tags">${ tags_html }</span>` : "" }
+    <span class="action-text">${ entry.action_text }</span>
     ${ entry.summary_text ? `<span class="summary">(${ entry.summary_text })</span>` : "" }
 </div>`;
     }
@@ -77,12 +105,13 @@ export async function createEntry(
     target: number | string,
     action_text: string,
     summary_text?: string,
+    tags: string[] = [],
     visibility_level: number = 0
 ): Promise<number> {
     return new Promise((resolve: any, reject: any) => {
-        sql.execute("INSERT INTO `logs` (`type`, `executor`, `target`, `action_text`, `summary_text`, `created_on`, `visibility_level`) \
-VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [type, executor, target, action_text, summary_text, Math.floor(new Date().getTime() / 1000), visibility_level],
+        sql.execute("INSERT INTO `logs` (`type`, `executor`, `target`, `action_text`, `summary_text`, `tags`, `created_on`, `visibility_level`) \
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [type, executor, target, action_text, summary_text, tags.join("|"), Math.floor(new Date().getTime() / 1000), visibility_level],
         (error: any, results: any) => {
             if(error) reject(error);
             else resolve(results.insertId);
@@ -131,6 +160,7 @@ export async function getEntries(type: string | string[], executor?: number, tar
                     final_results.push({
                         ...entry,
 
+                        tags: entry.tags ? entry.tags.split("|") : [],
                         action_text,
                         summary_text: encode ? he.encode(summary_text) : ""
                     })

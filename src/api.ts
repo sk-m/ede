@@ -1,7 +1,8 @@
 import * as Page from "./page";
 import { pageTitleParser } from "./routes";
 import * as User from "./user";
-import { registry_apiRoutes } from "./registry";
+import * as F2A from "./f2a";
+import { registry_apiRoutes, registry_config } from "./registry";
 import { GroupsAndRightsObject } from "./right";
 import { renderWikitext } from "./wikitext";
 import { Rejection, RejectionType } from "./utils";
@@ -75,6 +76,66 @@ export function apiSendError(res: any, rejection: Rejection): void {
         status: "error",
         error_type: RejectionType[rejection.type],
         message: rejection.client_message
+    });
+}
+
+export interface UserSignatureCheckResults {
+    valid: boolean;
+    check_skipped: boolean;
+    rejection?: Rejection;
+}
+
+/**
+ * Check user's signature (second factor) for a protected action (EDE Config -> security.protected_actions)
+ *
+ * @param api_route api route address (ex. "usergroup/update")
+ * @param user_id executor's user id
+ * @param signature signature string (one-time password)
+ */
+export async function checkUserSignature(api_route: string, user_id: number, signature: string): Promise<UserSignatureCheckResults> {
+    return new Promise(async (resolve: any) => {
+        const registry_config_snapshot = registry_config.get();
+
+        if(registry_config_snapshot["security.protected_actions"].value instanceof Array
+        && registry_config_snapshot["security.protected_actions"].value.indexOf(api_route) > -1) {
+            // Signature is required, check it
+
+            const check_results = await F2A.check(user_id, signature, false);
+
+            if(!check_results.enabled) {
+                // Executor does not have an f2a enabled
+
+                resolve({
+                    valid: false,
+                    check_skipped: false,
+                    rejection: new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "This action requires an enabled 2FA")
+                });
+
+                return;
+            } else if(!check_results.otp_correct) {
+                // Executor has an f2a enabled, but the provided one-time password is incorrect
+
+                resolve({
+                    valid: false,
+                    check_skipped: false,
+                    rejection: new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "Two-factor check failed. Keep in mind that backup codes are disallowed")
+                });
+
+                return;
+            }
+
+            // Valid code provided
+            resolve({
+                valid: true,
+                check_skipped: false
+            });
+        } else {
+            // Action does not require a signature (not protected)
+            resolve({
+                valid: true,
+                check_skipped: true
+            });
+        }
     });
 }
 
