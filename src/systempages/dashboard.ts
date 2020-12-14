@@ -1,5 +1,3 @@
-import fs from "fs";
-
 import * as User from "../user";
 import * as Page from "../page";
 import * as SystemMessages from "../system_message";

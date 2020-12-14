@@ -1,5 +1,3 @@
-import fs from "fs";
-
 import * as Page from "./page";
 import * as User from "./user";
 import * as Log from "./log";

@@ -8,7 +8,7 @@ export interface SystemMessage {
     name: string;
 
     /** The value is the same as default_value, if it is not set */
-    value: string;
+    value?: string;
     default_value: string;
     raw_value?: string;
     is_default: boolean;
@@ -185,8 +185,8 @@ export async function get_value(
         // Get the values from the get_object() function
         // This is called when the caching failed or is disabled
         const get_slow = async () => {
-            const slow_query_results = await get_object(query, encode);
-            const final_results: { [name: string]: string } = {};
+            const slow_query_results = await get_object(query, encode, use_placeholder);
+            const final_results: SystemMessageValuesObject = {};
 
             // tslint:disable-next-line: forin
             for(const name in slow_query_results) {
@@ -287,7 +287,7 @@ export async function get_value(
                 }
 
                 // Query the main db
-                const slow_query_results = await get_object(slow_query, encode);
+                const slow_query_results = await get_object(slow_query, encode, use_placeholder);
 
                 // Populate the results
                 // We can't just return the result of the slow query because the slow query returns an object, not just a value
@@ -313,8 +313,9 @@ export async function get_value(
  *
  * @param query name(s) of the system messsage(s) (with or without arguments)
  * @param encode encode the values?
+ * @param use_placeholder set the value to the `[! SYSMSG ... !]` if not found?
  */
-export async function get_object(query: string[] | string[][], encode: boolean = false, cache: boolean = true): Promise<SystemMessagesObject> {
+export async function get_object(query: string[] | string[][], encode: boolean = false, use_placeholder: boolean = false): Promise<SystemMessagesObject> {
     return new Promise((resolve: any) => {
         // Create a valid names query
         const query_names: string[] = [];
@@ -394,7 +395,9 @@ export async function get_object(query: string[] | string[][], encode: boolean =
                     final_results[name] = {
                         name,
 
-                        value: `<a href="/System:SystemMessages/${ name }" title="Edit this system message" class="ui-text monospace ede-undefined-sysmsg">[! SYSMSG ${ name } !]</a>`,
+                        value: use_placeholder
+                        ? `<a href="/System:SystemMessages/${ name }" title="Edit this system message" class="ui-text monospace ede-undefined-sysmsg">[! SYSMSG ${ name } !]</a>`
+                        : undefined,
                         default_value: "",
                         is_default: false,
                         is_deletable: false,
@@ -411,7 +414,7 @@ export async function get_object(query: string[] | string[][], encode: boolean =
             // Check if we need to cache what we got
             const registry_config_snapshot = registry_config.get();
 
-            if(cache && _redis_ok && registry_config_snapshot["caching.cachesystemmessages"].value as boolean === true) {
+            if(_redis_ok && registry_config_snapshot["caching.cachesystemmessages"].value as boolean === true) {
                 const redis_query: string[] = ["mset"];
 
                 for(const name of query_names) {
@@ -421,7 +424,7 @@ export async function get_object(query: string[] | string[][], encode: boolean =
                     // Key
                     redis_query.push(`systemmessage|${ name }`);
                     // Value
-                    redis_query.push(final_results[name].raw_value || final_results[name].value);
+                    redis_query.push(final_results[name].raw_value || final_results[name].value!);
                 }
 
                 // Save
