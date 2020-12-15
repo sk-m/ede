@@ -246,7 +246,7 @@ function userSettingsPageScript() {
                     e.target.classList.remove("loading");
 
                     ede.closePopup();
-                    ede.showNotification("user-changeemailrequest-success", "Verification email sent", "A verification email was sent to your new address.");
+                    ede.showNotification("user-changeemailrequest-success", "Verification email sent", "A verification email has been sent to your new address.");
                 })
                 .catch(error => {
                     e.target.classList.remove("loading");

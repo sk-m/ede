@@ -173,6 +173,7 @@ function userGroupManagementPageScript() {
             ede.apiCall("usergroup/update", params_final, true)
             .then(() => {
                 ede.closePopup();
+                ede.refresh();
 
                 ede.showNotification("usergroupmanagement-update-success", "Success", "Group saved successfully.");
             })

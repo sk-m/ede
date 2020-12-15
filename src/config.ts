@@ -9,6 +9,13 @@ type ConfigItemValueTypeName = "bool" | "int" | "string" | "json" | "array" | "a
 type ConfigItemValueType = boolean | number | string | JSON | string[] | undefined;
 
 export type ConfigItemsObject = { [key: string]: DatabaseConfigItem };
+export type ConfigTriggersObject = { [key: string]: ConfigTrigger };
+
+export interface ConfigTrigger {
+    description: string;
+
+    handler: (...params: any) => void;
+}
 
 export enum ConfigItemAccessLevel {
     /** All (only for read). */
@@ -36,7 +43,8 @@ export interface DatabaseConfigItem {
     allowed_values?: ConfigItemValueType[];
     value_pattern?: RegExp;
 
-    tags?: string[];
+    tags: string[];
+    triggers: string[];
     description?: string;
     source: string;
 
@@ -124,7 +132,14 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
                     allowed_values: parsed_allowed_values,
                     value_pattern: item.value_pattern,
 
-                    tags: item.tags,
+                    tags: item.tags
+                    ? item.tags.split("|")
+                    : [],
+
+                    triggers: item.triggers
+                    ? item.triggers.split("|")
+                    : [],
+
                     description: item.description,
                     source: item.source,
 

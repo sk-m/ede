@@ -2,7 +2,7 @@ import * as User from "../user";
 import * as Config from "../config";
 import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
-import { registry_config } from "../registry";
+import { registry_config, registry_config_triggers } from "../registry";
 import { ConfigItemAccessLevel } from "../config";
 import { Rejection, RejectionType } from "../utils";
 
@@ -64,12 +64,23 @@ EDE configuration"));
     // Everything is ok, update the config item
     Config.setValue(key, new_value)
     .then(() => {
+        apiSendSuccess(res);
+
         // Update the registry config
-        registry_config.update();
+        registry_config.update()
+        .then(() => {
+            // Process triggers
+            if(config_item.triggers.length !== 0) {
+                const registry_config_triggers_snapshot = registry_config_triggers.get();
+
+                for(const trigger_name of config_item.triggers) {
+                    // Call the trigger function
+                    registry_config_triggers_snapshot[trigger_name].handler();
+                }
+            }
+        });
 
         // TODO? log config update
-
-        apiSendSuccess(res);
     })
     .catch((rejection: Rejection) => {
         apiSendError(res, rejection);

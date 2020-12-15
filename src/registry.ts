@@ -1,4 +1,4 @@
-import { ConfigItemsObject, getConfigFromDB } from "./config";
+import { ConfigItemsObject, ConfigTriggersObject, getConfigFromDB } from "./config";
 import { SkinsObject, getSkins } from "./skin";
 import * as Page from "./page";
 import { HookSubscribersObject, HooksObject } from "./hook";
@@ -44,6 +44,7 @@ import { systemmessageGetRoute } from "./api/systemmessage_get";
 import { getUserNotificationsRoute } from "./api/user_get_notifications";
 import { markUserNotificationReadRoute } from "./api/user_notification_mark_read";
 import { userGetNotificationsStatusRoute } from "./api/user_get_notifications_status";
+import { managecachingserver, managemailer } from "./config_triggers";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -168,6 +169,21 @@ export class RegistryContainer<T> {
 
 // Core engine containers
 export const registry_config = new RegistryContainer<ConfigItemsObject>("ede", getConfigFromDB);
+
+export const registry_config_triggers = new RegistryContainer<ConfigTriggersObject>("ede", undefined, {
+    managecachingserver: {
+        description: "Caching client will be connecter or disconnected after saving this config item",
+
+        handler: managecachingserver
+    },
+    managemailer: {
+        description: "Mailer will be connecter or disconnected after saving this config item",
+
+        handler: managemailer
+    }
+});
+
+
 export const registry_hook_subscribers = new RegistryContainer<HookSubscribersObject>("ede", undefined, {});
 export const registry_hooks = new RegistryContainer<HooksObject>("ede", undefined, {});
 

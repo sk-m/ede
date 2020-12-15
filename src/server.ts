@@ -67,6 +67,80 @@ export let _redis_ok = false;
 
 sql.connect(serverInit);
 
+export function redisDisconnect(): void {
+    _redis.end();
+    _redis = null;
+    _redis_ok = false;
+
+    Util.log("Disconnected from the Redis server");
+}
+
+export function redisConnect(): void {
+    const registry_config_snapshot = registry_config.get();
+
+    // If connection is already established - drop it
+    if(_redis || _redis_ok) redisDisconnect();
+
+    // Connect to the redis database
+    _redis = new Redis({
+        host: registry_config_snapshot["caching.host"].value as string,
+        port: registry_config_snapshot["caching.port"].value as number,
+        maxRetries: 0,
+        // auth: "",
+        autoConnect: true,
+        doNotSetClientName: false,
+        doNotRunQuitOnEnd: false
+    });
+
+    _redis.on("ready", () => {
+        _redis_ok = true;
+
+        Util.log("Successfully connected to the Redis server");
+    });
+
+    _redis.on("error", (error: Error) => {
+        Util.log(`Could not connect the Redis server`, 3, error);
+    });
+}
+
+export function mailerDisconnect(): void {
+    _mailer.close();
+    _mailer = null;
+    _mailer_ok = false;
+
+    Util.log("Disconnected from the mail server");
+}
+
+export function mailerConnect(): void {
+    const registry_config_snapshot = registry_config.get();
+
+    // If connection is already established - drop it
+    if(_mailer || _mailer_ok) mailerDisconnect();
+
+    _mailer = nodemailer.createTransport({
+        host: registry_config_snapshot["mail.host"].value as string,
+        port: registry_config_snapshot["mail.port"].value as number,
+        secure: registry_config_snapshot["mail.secure"].value as boolean,
+        auth: {
+          user: registry_config_snapshot["mail.user"].value as string,
+          pass: registry_config_snapshot["mail.password"].value as string
+        },
+        tls: {
+            rejectUnauthorized: !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean)
+        }
+    });
+
+    _mailer.verify((error: any, success: boolean) => {
+        if(error) {
+            Util.log(`Mailer could not connect to the mail server`, 3, error);
+        } else {
+            _mailer_ok = true;
+
+            Util.log(`Mailer was successfully connected to the mail server`);
+        }
+    });
+}
+
 // ===== ServerInit (runs when the server starts) =====
 /** @ignore */
 async function serverInit(db_error: Error): Promise<void> {
@@ -166,56 +240,15 @@ async function serverInit(db_error: Error): Promise<void> {
         Util.log(`EDE local management server listening on ${ address } (should not be accessible from outside)`);
     });
 
-    // Set up the mailer
     const registry_config_snapshot = registry_config.get();
 
-    if(registry_config_snapshot["mail.enabled"].value as boolean) {
-        _mailer = nodemailer.createTransport({
-            host: registry_config_snapshot["mail.host"].value as string,
-            port: registry_config_snapshot["mail.port"].value as number,
-            secure: registry_config_snapshot["mail.secure"].value as boolean,
-            auth: {
-              user: registry_config_snapshot["mail.user"].value as string,
-              pass: registry_config_snapshot["mail.password"].value as string
-            },
-            tls: {
-                rejectUnauthorized: !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean)
-            }
-        });
-
-        _mailer.verify((error: any, success: boolean) => {
-            if(error) {
-                Util.log(`Mailer could not connect to the mail server`, 3, error);
-            } else {
-                _mailer_ok = true;
-
-                Util.log(`Mailer was successfully connected to the mail server`);
-            }
-        });
-    }
+    // Set up the mailer
+    if(registry_config_snapshot["mail.enabled"].value as boolean)
+        mailerConnect();
 
     // Set up redis
-    if(registry_config_snapshot["caching.enabled"].value as boolean) {
-        _redis = new Redis({
-            host: registry_config_snapshot["caching.host"].value as string,
-            port: registry_config_snapshot["caching.port"].value as number,
-            maxRetries: 0,
-            // auth: "",
-            autoConnect: true,
-            doNotSetClientName: false,
-            doNotRunQuitOnEnd: false
-        });
-
-        _redis.on("ready", () => {
-            _redis_ok = true;
-
-            Util.log("Successfully connected to the Redis server");
-        });
-
-        _redis.on("error", (error: Error) => {
-            Util.log(`Could not connect the Redis server`, 3, error);
-        });
-    }
+    if(registry_config_snapshot["caching.enabled"].value as boolean)
+        redisConnect();
 
     // Register ede hooks
     registry_hooks.set({

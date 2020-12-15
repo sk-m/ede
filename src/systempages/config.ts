@@ -2,7 +2,7 @@ import * as User from "../user";
 import * as Page from "../page";
 import * as SystemMessages from "../system_message";
 import { ConfigItemsObject, ConfigItemAccessLevel } from "../config";
-import { registry_config } from "../registry";
+import { registry_config, registry_config_triggers } from "../registry";
 import { GroupsAndRightsObject } from "../right";
 import { UI_CHECKBOX_SVG } from "../constants";
 
@@ -147,6 +147,17 @@ only"><i class="fas fa-lock"></i> CLI Only (write)</div>`;
                     // Write right
                     // client_can_alter is only true if the client has a right
                     changeable = client_can_alter;
+                }
+            }
+
+            // Trigger indicators
+            if(config_item.triggers.length !== 0) {
+                const registry_config_triggers_snapshot = registry_config_triggers.get();
+
+                for(const trigger_name of config_item.triggers) {
+                    const trigger_descriptor = registry_config_triggers_snapshot[trigger_name];
+
+                    indicator_html += `<div class="indicator c-blue" title="${ trigger_descriptor.description }"><i class="fas fa-wrench"></i> Has a trigger</div>`;
                 }
             }
 
