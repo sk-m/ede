@@ -60,17 +60,20 @@ export const sql: any = mysql.createConnection({
 /** @ignore Do not use this object! */
 export let _mailer: any;
 export let _mailer_ok = false;
+export let _mailer_failed = false;
 
 /** @ignore Do not use this object! */
 export let _redis: any;
 export let _redis_ok = false;
+export let _redis_failed = false;
 
 sql.connect(serverInit);
 
 export function redisDisconnect(): void {
-    _redis.end();
+    if(!_redis_failed && _redis) _redis.end();
     _redis = null;
     _redis_ok = false;
+    _redis_failed = false;
 
     Util.log("Disconnected from the Redis server");
 }
@@ -99,14 +102,17 @@ export function redisConnect(): void {
     });
 
     _redis.on("error", (error: Error) => {
+        _redis_failed = true;
+
         Util.log(`Could not connect the Redis server`, 3, error);
     });
 }
 
 export function mailerDisconnect(): void {
-    _mailer.close();
+    if(_mailer) _mailer.close();
     _mailer = null;
     _mailer_ok = false;
+    _mailer_failed = false;
 
     Util.log("Disconnected from the mail server");
 }
@@ -132,6 +138,8 @@ export function mailerConnect(): void {
 
     _mailer.verify((error: any, success: boolean) => {
         if(error) {
+            _mailer_failed = true;
+
             Util.log(`Mailer could not connect to the mail server`, 3, error);
         } else {
             _mailer_ok = true;

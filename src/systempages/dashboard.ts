@@ -2,6 +2,7 @@ import * as User from "../user";
 import * as Page from "../page";
 import * as SystemMessages from "../system_message";
 import { registry_systempages } from "../registry";
+import { _mailer_failed, _mailer_ok, _redis_failed, _redis_ok } from "../server";
 
 // TODO @performance
 async function constructSystemPagesListHTML(): Promise<string> {
@@ -78,6 +79,38 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
 </div>
 
 <div id="systempage-dashboard-root">
+    <div class="status-root">
+        <div class="column" style="width: 50%">
+            <div class="row">
+                <div class="status-panel"><i>Something will be here some day...</i></div>
+            </div>
+        </div>
+        <div class="column" style="width: 50%">
+            <div class="row">
+                <div class="status-panel clients-status">
+                    <div class="client c-${ _mailer_ok ? "green" : (_mailer_failed ? "red" : "gray") }">
+                        <div class="left">
+                            <div class="icon"><i class="fas fa-envelope"></i></div>
+                            <div class="name">Mailer</div>
+                        </div>
+                        <div class="right">
+                            <div class="status"><i class="fas fa-${ _mailer_ok ? "check" : (_mailer_failed ? "exclamation" : "dot-circle") }"></i></div>
+                        </div>
+                    </div>
+                    <div class="client c-${ _redis_ok ? "green" : (_redis_failed ? "red" : "gray") }">
+                        <div class="left">
+                            <div class="icon"><i class="fas fa-fire"></i></div>
+                            <div class="name">Caching client</div>
+                        </div>
+                        <div class="right">
+                            <div class="status"><i class="fas fa-${ _redis_ok ? "check" : (_redis_failed ? "exclamation" : "dot-circle") }"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     ${ await constructSystemPagesListHTML() }
 </div>`;
 
