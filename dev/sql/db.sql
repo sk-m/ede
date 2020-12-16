@@ -116,6 +116,22 @@ CREATE TABLE IF NOT EXISTS `email_tokens` (
 /*!40000 ALTER TABLE `email_tokens` DISABLE KEYS */;
 /*!40000 ALTER TABLE `email_tokens` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `incident_logs` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `severity` tinyint unsigned NOT NULL,
+  `error_message` text NOT NULL,
+  `error_stacktrace` text,
+  `error_info` json DEFAULT NULL,
+  `timestamp` int unsigned NOT NULL,
+  `events` int unsigned NOT NULL DEFAULT '1',
+  `was_handled` bit(1) NOT NULL,
+  `is_read` bit(1) NOT NULL DEFAULT b'0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `incident_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `incident_logs` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `type` varchar(128) NOT NULL,
@@ -151,6 +167,33 @@ INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, 
 	(3, 'User', 'system', '{}', '{}'),
 	(4, 'Template', 'wiki', '{}', '{}');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
+
+DELIMITER //
+CREATE PROCEDURE `new_incident_log`(
+	IN `p_severity` TINYINT,
+	IN `p_error_message` TEXT,
+	IN `p_error_stacktrace` TEXT,
+	IN `p_error_info` JSON,
+	IN `p_was_handled` BIT
+)
+    NO SQL
+    COMMENT 'Creates a new incident_logs entry or increments an events field if already reported before'
+BEGIN
+	DECLARE l_id INT;
+
+	# Check if there is already a record with the same stack trace
+	SELECT id INTO l_id FROM `incident_logs` WHERE `error_stacktrace` = p_error_stacktrace LIMIT 1;
+	
+	IF l_id IS NULL THEN
+		# No such records, this is a new error. Create a new enrty
+		INSERT INTO `incident_logs` (`severity`, `error_message`, `error_stacktrace`, `error_info`, `timestamp`, `was_handled`)
+		VALUES (p_severity, p_error_message, p_error_stacktrace, p_error_info, UNIX_TIMESTAMP(), p_was_handled);
+	ELSE
+		# There is already a record with the same stack trace
+		UPDATE `incident_logs` SET `events` = `events` + 1, `error_info` = p_error_info WHERE id = l_id;
+	END IF;
+END//
+DELIMITER ;
 
 CREATE TABLE IF NOT EXISTS `revisions` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,

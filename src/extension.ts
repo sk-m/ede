@@ -59,8 +59,7 @@ export async function loadAll(): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
         fs.readdir(path.join(__dirname, "../extensions"), async (dirs_error: any, folders: string[]) => {
             if(dirs_error) {
-                const error_message = "Could not loadd all extensions! The ./extensions folder\
- might be an issue";
+                const error_message = "Could not load all extensions from ./extensions directory";
 
                 Util.log(error_message, 3);
 

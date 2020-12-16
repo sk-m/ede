@@ -1,6 +1,8 @@
 import he from "he";
 import crypto from "crypto"
 
+import * as IncidentLog from "./incident_log";
+
 export interface Hash {
     readonly salt: string,
     readonly key: string,
@@ -49,8 +51,10 @@ const crit_text = `${ Colors.FgWhite }${ Colors.BgRed }[ CRIT ]${ Colors.Reset }
  * @param message message text
  * @param type log type: 1 - info; 2 - warn; 3 - error; 4 - critical
  * @param error error object
+ * @param additional_info additional info object
+ * @param add_to_incidents save this error to the database as an incident?
  */
-export function log(message: string, type: number = 1, error?: Error): void {
+export function log(message: string, type: number = 1, error?: Error, additional_info?: any, add_to_incidents: boolean = true): void {
     let brackets_text = info_text;
 
     switch(type) {
@@ -63,7 +67,13 @@ export function log(message: string, type: number = 1, error?: Error): void {
     // tslint:disable-next-line: no-console
     console.log(`${ brackets_text }`, message ,`${ Colors.Reset }`);
     // tslint:disable-next-line: no-console
-    if(error) console.log(error);
+    if(additional_info) console.log(`         ${ Colors.FgCyan }Additional info${ Colors.Reset }:`, additional_info);
+    // tslint:disable-next-line: no-console
+    if(error) console.log(`         ${ Colors.FgCyan }Error object${ Colors.Reset }:`, error);
+
+    // Save as incident
+    if(type > 1 && add_to_incidents)
+        IncidentLog.createEntry(message, type, error?.stack, true, additional_info);
 }
 
 /**

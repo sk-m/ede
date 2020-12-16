@@ -22,6 +22,7 @@ import * as Page from "./page";
 import * as Extension from "./extension";
 import * as Hook from "./hook";
 import * as Api from "./api";
+import * as IncidentLog from "./incident_log";
 import { userNamespaceHandler } from "./userpage";
 import { getEditorRoute } from "./editor";
 import { userJoinRoute } from "./api/user/user_join";
@@ -85,9 +86,12 @@ export function redisConnect(): void {
     if(_redis || _redis_ok) redisDisconnect();
 
     // Connect to the redis database
+    const host = registry_config_snapshot["caching.host"].value as string;
+    const port = registry_config_snapshot["caching.port"].value as number;
+
     _redis = new Redis({
-        host: registry_config_snapshot["caching.host"].value as string,
-        port: registry_config_snapshot["caching.port"].value as number,
+        host,
+        port,
         maxRetries: 0,
         // auth: "",
         autoConnect: true,
@@ -104,7 +108,7 @@ export function redisConnect(): void {
     _redis.on("error", (error: Error) => {
         _redis_failed = true;
 
-        Util.log(`Could not connect the Redis server`, 3, error);
+        Util.log(`Could not connect to the Redis server`, 3, error, { host, port });
     });
 }
 
@@ -123,16 +127,20 @@ export function mailerConnect(): void {
     // If connection is already established - drop it
     if(_mailer || _mailer_ok) mailerDisconnect();
 
+    const host = registry_config_snapshot["mail.host"].value as string;
+    const port = registry_config_snapshot["mail.port"].value as number;
+    const user = registry_config_snapshot["mail.user"].value as string;
+    const pass = registry_config_snapshot["mail.pass"].value as string;
+    const secure = registry_config_snapshot["mail.secure"].value as boolean;
+    const reject_unauthorized = !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean);
+
     _mailer = nodemailer.createTransport({
-        host: registry_config_snapshot["mail.host"].value as string,
-        port: registry_config_snapshot["mail.port"].value as number,
-        secure: registry_config_snapshot["mail.secure"].value as boolean,
-        auth: {
-          user: registry_config_snapshot["mail.user"].value as string,
-          pass: registry_config_snapshot["mail.password"].value as string
-        },
+        host,
+        port,
+        secure,
+        auth: { user, pass },
         tls: {
-            rejectUnauthorized: !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean)
+            rejectUnauthorized: reject_unauthorized
         }
     });
 
@@ -140,7 +148,7 @@ export function mailerConnect(): void {
         if(error) {
             _mailer_failed = true;
 
-            Util.log(`Mailer could not connect to the mail server`, 3, error);
+            Util.log(`Mailer could not connect to the mail server`, 3, error, { host, port, user, secure, reject_unauthorized });
         } else {
             _mailer_ok = true;
 
@@ -148,6 +156,13 @@ export function mailerConnect(): void {
         }
     });
 }
+
+// Unhandled rejection handler for incident logging
+process.on("unhandledRejection", (reason: any, promise: any) => {
+    promise.catch((error: any) => {
+        IncidentLog.createEntry(`Unhandled promise rejection: ${ reason.message }`, 3, error.stack || null, false);
+    });
+});
 
 // ===== ServerInit (runs when the server starts) =====
 /** @ignore */

@@ -168,7 +168,7 @@ export async function getNotifications(user_id: number, records_number: number =
         // Get the notifications
         sql.execute(sql_query, sql_args, (error: any, results: any) => {
             if(error) {
-                Util.log(`Could not get notifications for a userid ${ user_id }`, 3, error);
+                Util.log(`Could not get notifications for a user`, 3, error, { sql_query, sql_args });
 
                 resolve([]);
             } else {
@@ -217,7 +217,7 @@ VALUES (?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
         (error: any) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not send a user notification"));
-                Util.log(`Could not create a new user notification in the database (user_id = ${ user_id })`, 3, error);
+                Util.log(`Could not create a new user notification`, 3, error, { user_id, type, text, additional_text, additional_info });
             } else {
                 resolve();
             }
@@ -238,7 +238,7 @@ export async function markNotificationRead(user_id: number, notification_id: num
         (error: any) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not mark notification as read"));
-                Util.log(`Could not mark notification as read (user_id = ${ user_id }, notification_id = ${ notification_id })`, 3, error);
+                Util.log(`Could not mark a user notification as read`, 3, error, { notification_id, user_id });
             } else {
                 resolve();
             }
@@ -257,7 +257,7 @@ export async function hasUnreadNotifications(user_id: number): Promise<boolean> 
         [user_id],
         (error: any, results: any) => {
             if(error) {
-                Util.log(`Could not check if user has unread notifications (user_id = ${ user_id })`, 3, error);
+                Util.log(`Could not check if user has unread notifications`, 3, error, { user_id });
                 resolve(false)
             } else {
                 resolve(results.length !== 0);
@@ -275,7 +275,7 @@ export async function getAllUserGroups(): Promise<any> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT `name`, `added_rights`, `right_arguments` FROM `user_groups`", (error: any, results: any) => {
             if(error || results.length < 1) {
-                Util.log("Could not get all user groups from the database", 4, error);
+                Util.log("Could not get all available user groups from the database", 4, error);
 
                 process.exit(1);
             } else {
@@ -316,7 +316,7 @@ export async function saveUserGroup(user_group: Group): Promise<void> {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not save user group to the database"));
 
-                Util.log(`Could not save user group '${ user_group.name }' to the database`, 3, error);
+                Util.log(`Could not save a user group to the database`, 3, error, { user_group });
             } else {
                 resolve();
             }
@@ -343,7 +343,7 @@ export async function createUserGroup(name: string): Promise<void> {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user group"));
 
-                Util.log(`Could not create a new user group '${ name }'`, 3, error);
+                Util.log(`Could not create a new user group`, 3, error, { name });
             } else {
                 resolve();
             }
@@ -364,7 +364,7 @@ export async function deleteUserGroup(name: string): Promise<void> {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not delete user group"));
 
-                Util.log(`Could not delete '${ name }' user group`, 3, error);
+                Util.log(`Could not delete a user group`, 3, error, { name });
             } else {
                 resolve();
             }
@@ -395,7 +395,7 @@ export async function getRights(user_id: number): Promise<GroupsAndRightsObject>
         (group_error: any, group_results: any) => {
             if(group_error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not a list of user's groups"));
-                Util.log(`Could not a list of user's groups (user id ${ user_id })`, 3, group_error);
+                Util.log(`Could not get a list of all user's groups`, 3, group_error, { user_id });
 
                 return;
             } else {
@@ -411,7 +411,7 @@ export async function getRights(user_id: number): Promise<GroupsAndRightsObject>
                 (right_error: any, right_results: any) => {
                     if(right_error) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not get rights assigned to a user group(s)"));
-                        Util.log(`Could not get rights assigned to a user group(s) (${ result.groups.join("','") })`, 3, right_error);
+                        Util.log(`Could not get all rights assigned to a user group(s)`, 3, right_error, { query: result.groups.join("','") });
 
                         return;
                     } else {
@@ -784,7 +784,7 @@ ${ password_hash_keylen }`;
                 (error: any, results: any) => {
                     if(error) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user"));
-                        Util.log(`Could not create a new user`, 3, error);
+                        Util.log(`Could not create a new user`, 3, error, { username, email_address, user_stats });
                     } else {
                         // User created successfully, return it
 
@@ -831,7 +831,7 @@ export async function newUserTrackingRecord(user_id: number, ip_address: string,
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN));
-                Util.log(`Could not create a new user_tracking record for user id ${ user_id }`, 3, error);
+                Util.log(`Could not create a new user_tracking record`, 3, error, { user_id, ip_address, user_agent });
 
                 return;
             } else {
@@ -895,7 +895,7 @@ export async function createSession(user_id: number, ip_address: string, user_ag
                 (error: any) => {
                     if(error) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new user session"));
-                        Util.log(`Could not create a new user session`, 3, error);
+                        Util.log(`Could not create a new user session`, 3, error, { user_id });
                     }
 
                     // Session successfully created, return it
@@ -904,9 +904,7 @@ export async function createSession(user_id: number, ip_address: string, user_ag
 
                 // Create a new user_tracking record. We don't have to await here
                 newUserTrackingRecord(user_id, ip_address, user_agent)
-                .catch((rejection: Util.Rejection) => {
-                    Util.log(rejection.client_message || "could not create a newUserTrackingRecord", 3);
-                });
+                .catch(() => undefined);
             })
             .catch((error: Error) => {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not hash a sid"));
@@ -942,7 +940,7 @@ export async function createElevatedSession(user_id: number): Promise<[string, D
             (error: any, results: any) => {
                 if(error || results.length < 1) {
                     reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new elevated session"));
-                    Util.log(`Could not create a new elevated session for user id ${ user_id }`, 3, error);
+                    Util.log(`Could not create a new elevated session`, 3, error, { user_id });
                 } else {
                     resolve([esid, valid_until]);
                 }
@@ -991,11 +989,9 @@ export async function checkElevatedSession(user_id: number, esid: string): Promi
  */
 export async function updateUserBlocks(user_id: number, restrictions: string[]): Promise<void> {
     return new Promise((resolve: any, reject: any) => {
-        let blocks_string;
-
-        // Create a blocks string
-        if(restrictions.length === 0) blocks_string = "";
-        else blocks_string = Util.sanitize(restrictions.join(";"));
+        const blocks_string = restrictions.length === 0
+        ? ""
+        : Util.sanitize(restrictions.join(";"));
 
         // Update the user
         sql.execute("UPDATE `users` SET `blocks` = ? WHERE id = ?",
@@ -1003,7 +999,7 @@ export async function updateUserBlocks(user_id: number, restrictions: string[]):
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's blocks"));
-                Util.log(`Could not update blocks for user id ${ user_id }`, 3, error);
+                Util.log(`Could not update blocks for a user`, 3, error, { user_id, blocks_string });
             } else {
                 resolve();
             }
@@ -1026,19 +1022,17 @@ export async function blockAddress(address: string, restrictions: string[]): Pro
             return;
         }
 
-        let blocks_string;
-
-        // Construct blocks string
-        if(restrictions.length === 0) blocks_string = "";
-        else blocks_string = Util.sanitize(restrictions.join(";"));
+        const blocks_string = restrictions.length === 0
+        ? ""
+        : Util.sanitize(restrictions.join(";"));
 
         // Add a record to the database
-        sql.execute("INSERT INTO `blocked_addresses` (`address`, `restrictions`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `restrictions` = ?",
-        [address, blocks_string, blocks_string],
+        sql.execute("INSERT INTO `blocked_addresses` (`address`, `restrictions`) VALUES (?, ?) AS new ON DUPLICATE KEY UPDATE `restrictions` = new.restrictions",
+        [address, blocks_string],
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not change block settings for an ip-address"));
-                Util.log(`Could not change block settings for address ${ address }`, 3, error);
+                Util.log(`Could not change block settings for an address`, 3, error, { address, blocks_string });
             } else {
                 resolve();
             }
@@ -1061,7 +1055,7 @@ export async function getAddressBlocks(address: string): Promise<string[]> {
                 // Could not get address blocks
 
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not get block setting for an ip-address"));
-                Util.log(`Could not get block setting for address ${ address }`, 3, error);
+                Util.log(`Could not get block setting for an address`, 3, error, { address });
             } else if(results.length !== 1) {
                 // The address is not blocked in any way
 
@@ -1092,7 +1086,7 @@ export async function destroyUserSessions(user_id: number): Promise<void> {
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not destroy user's sessions"));
-                Util.log(`Could not destroy sessions for user id ${ user_id }`, 3, error);
+                Util.log(`Could not destroy sessions for a user`, 3, error, { user_id });
             } else {
                 resolve();
             }
@@ -1113,7 +1107,7 @@ export async function invalidateUserSession(user_id: number, session_token: stri
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not invalidate user's session"));
-                Util.log(`Could not invalidate user's session (user ${ user_id })`, 3, error);
+                Util.log(`Could not invalidate user's session`, 3, error, { user_id, session_token });
             } else {
                 resolve();
             }
@@ -1149,7 +1143,7 @@ export async function createEmailToken(user_id: number, token_type: string, sent
             (error: any, results: any) => {
                 if(error || results.affectedRows < 1) {
                     reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new email token"));
-                    Util.log(`Could not create and save a new email token for user id ${ user_id }`, 3, error);
+                    Util.log(`Could not create and save a new email token`, 3, error, { user_id });
                 } else {
                     resolve(token);
                 }
@@ -1197,7 +1191,7 @@ Promise<[boolean, string]> {
                     // Delete the token from the database. No need to await here
                     sql.promise().execute("DELETE FROM `email_tokens` WHERE `token` = ? AND `user` = ?", [token, user_id])
                     .catch((delete_error: Error) => {
-                        Util.log("Could not delete an email token from the database", 3, delete_error);
+                        Util.log("Could not delete an email token from the database", 3, delete_error, { user_id });
                     });
                 }
             }
@@ -1239,14 +1233,14 @@ ${ password_hash_keylen }`;
                 (error: any) => {
                     if(error) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's password"));
-                        Util.log(`Could not update a password for user id ${ user_id }`, 3, error);
+                        Util.log(`Could not update user's password`, 3, error, { user_id });
                     } else {
                         resolve();
                     }
                 });
             }).catch((error: Error) => {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update user's password"));
-                Util.log(`Could not update a password for user id ${ user_id }: hashing error`, 3, error);
+                Util.log(`Could not update user's password: hashing error`, 3, error, { user_id });
             });
         });
     });

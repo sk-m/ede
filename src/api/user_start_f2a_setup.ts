@@ -39,7 +39,7 @@ export async function userStart2FASetupRoute(req: any, res: any, client_user?: U
 
                 apiSendError(res, new Rejection(RejectionType.GENERAL_UNKNOWN, "Could not generate a QR code"));
 
-                Util.log("Could not generate a QR code for user/start_f2a_setup", 3, error);
+                Util.log("Could not generate a QR code for user/start_f2a_setup api route", 3, error, { username: client_user.username });
             } else {
                 apiSendSuccess(res, "user/start_f2a_setup", { qr_code });
             }

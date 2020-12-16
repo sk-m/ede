@@ -88,7 +88,7 @@ export async function check(user_id: number, otp?: string, allow_backup_codes: b
                             [JSON.stringify(backup_codes), user_id],
                             (save_error: any, save_results: any) => {
                                 if(save_error || save_results.affectedRows !== 1) {
-                                    Util.log(`Could not update backup code's state to used (user id ${ user_id })`, 3, save_error);
+                                    Util.log(`Could not update backup code's state to used`, 3, save_error, { user_id });
                                 }
                             });
                         }
@@ -132,7 +132,6 @@ export async function disable(user_id: number): Promise<void> {
         (error: any, results: any) => {
             if(error || results.affectedRows < 1) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "User does not have 2FA enabled"));
-                Util.log(`User does not have 2FA enabled (user id ${ user_id })`, 3, error);
             } else {
                 resolve();
             }
@@ -159,22 +158,8 @@ export async function startSetup(user_id: number): Promise<string> {
 
         // Generate a secret key
         tfa.generateKey(64, (key_error: any, secret_key: string) => {
-            if(key_error) {
-                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
-                Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
-
-                return;
-            }
-
             // We have a new secret key, generate backup codes
             tfa.generateBackupCodes(8, "xxxx-xxxx-xxxx", (backup_codes_error: any, backup_codes_arr: string[]) => {
-                if(backup_codes_error) {
-                    reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
-                    Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
-
-                    return;
-                }
-
                 // Format backup codes
                 const backup_codes_obj: { [code: string]: any } = {};
 
@@ -191,7 +176,7 @@ export async function startSetup(user_id: number): Promise<string> {
                 (error: any, results: any) => {
                     if(error || results.affectedRows < 1) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not start 2FA setup"));
-                        Util.log(`Could not start 2FA setup for user id ${ user_id }`, 3, key_error);
+                        Util.log('Could not start a 2FA setup for a user', 3, key_error, { user_id });
                     } else {
                         resolve(secret_key);
                     }
@@ -216,15 +201,14 @@ export async function finishSetup(user_id: number, otp: number): Promise<any> {
         [user_id],
         (query_error: any, results: any) => {
             if(query_error || results.length !== 1) {
-                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not finish 2FA setup"));
-                Util.log(`Could not finish 2FA setup for user id ${ user_id }`, 3, query_error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "2FA setup has not been started yet"));
 
                 return;
             }
 
             // Check if f2a is already enabled for the user
             if(results[0].setup_mode.readInt8(0) === 0) {
-                reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, "F2A is already enabled for this user"));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, "2FA is already enabled for this user"));
 
                 return;
             }
@@ -241,7 +225,7 @@ export async function finishSetup(user_id: number, otp: number): Promise<any> {
                 (enable_error: any, enable_results: any) => {
                     if(enable_error || enable_results.affectedRows < 1) {
                         reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not finish 2FA setup"));
-                        Util.log(`Could not finish 2FA setup for user id ${ user_id }`, 3, query_error);
+                        Util.log(`Could not finish 2FA setup for a user - could not set 2fa state to enabled`, 3, query_error, { user_id });
                     } else {
                         resolve(results[0].backup_codes);
                     }

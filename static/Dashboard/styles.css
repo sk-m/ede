@@ -15,12 +15,38 @@
 #systempage-dashboard-root > .status-root .status-panel {
     box-sizing: border-box;
 
-    margin: 10px;
-    padding: 12px 16px;
+    margin: 12px 10px;
+    max-height: 400px;
+
+    font-family: "Roboto", sans-serif;
 
     background-color: white;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 4px rgba(0, 0, 0, 0.08);
     border-radius: 3px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel > .panel-heading-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 15px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel > .panel-heading-container > .heading {
+    color: hsl(0, 0%, 8%);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .panel-heading-container > .right-container {
+    color: hsl(0, 0%, 25%);
+    font-size: 12px;
+    font-style: italic;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .panel-heading-container > .right-container > i {
+    margin-left: 2px;
 }
 
 #systempage-dashboard-root > .status-root .status-panel.clients-status {
@@ -83,7 +109,6 @@
     color: hsl(0, 0%, 20%);
     font-weight: 500;
     font-size: 14px;
-    font-family: "Roboto", sans-serif;
 }
 
 #systempage-dashboard-root > .status-root .status-panel.clients-status > .client.c-red > .right > .status {
@@ -95,8 +120,121 @@
 }
 
 #systempage-dashboard-root > .status-root .status-panel.clients-status > .client > .right > .status {
+    margin-left: 10px;
+    
     color: hsl(0, 0%, 33%);
     font-size: 12px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents {
+    display: flex;
+    flex-direction: column;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list {
+    overflow-y: auto;
+    height: 100%;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .no-incidents-text {
+    padding: 20px;
+
+    border-top: 1px solid var(--color-gray2);
+
+    color: hsl(0, 0%, 33%);
+    text-align: center;
+    font-style: italic;
+    font-size: 13px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    cursor: pointer;
+
+    padding: 12px 15px;
+
+    border-top: 1px solid var(--color-gray2);
+
+    transition: 0.15s;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident:hover {
+    background-color: hsl(0, 0%, 98%);
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .message {
+    display: flex;
+    align-items: center;
+
+    color: hsl(0, 0%, 12%);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .message > .bubble.warning {
+    color: hsl(34, 100%, 56%);
+    background-color: hsla(38, 100%, 60%, 0.125);
+    /* border: 1px solid var(--color-orange-transparent-2) */
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .message > .bubble.uncaught {
+    color: #cc1b00;
+    background-color: rgba(204, 27, 0, 0.1);
+    /* border: 1px solid rgba(204, 27, 0, 0.1); */
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .message > .bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 18px;
+    height: 18px;
+
+    margin-left: 5px;
+
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
+    /* border: 1px solid var(--color-red-transparent-1); */
+
+    font-weight: 600;
+    font-family: "Roboto Mono", monospace;
+    font-size: 12px;
+
+    border-radius: 3px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .stacktrace {
+    margin-top: 2px;
+
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+    font-family: monospace;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .time {
+    margin-top: 8px;
+
+    color: hsl(0, 0%, 33%);
+    font-size: 12px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .left > .time > i {
+    margin-right: 5px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .right {
+    margin-left: 25px;
+}
+
+#systempage-dashboard-root > .status-root .status-panel.incidents > .incidents-list > .incident > .right > .events-count {
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto Mono", monospace;
+    font-weight: 500;
+    font-size: 16px;
 }
 
 #systempage-dashboard-root .section {

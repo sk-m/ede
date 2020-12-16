@@ -220,7 +220,7 @@ export async function getPageFiles(page_title: string, files: PageFilesObject): 
             await new Promise((cache_get_resolve: any) => {
                 _redis.rawCall(redis_query, (error: any, cache_results: any) => {
                     if(error) {
-                        Util.log("Could not get page files from cache", 3, error);
+                        Util.log("Could not get page files from cache", 3, error, { page_title, files });
                     } else {
                         let i = 0;
 
@@ -266,7 +266,7 @@ export async function getPageFiles(page_title: string, files: PageFilesObject): 
         if(files_caching_enabled && cache_redis_query.length !== 1) {
             _redis.rawCall(cache_redis_query, (error: any) => {
                 if(error) {
-                    Util.log("Could not cache page files", 3, error);
+                    Util.log("Could not cache page files", 3, error, { page_title, files });
                 }
             });
         }
@@ -429,7 +429,7 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
         [page_address.namespace, page_address.name])
         .catch((error: Error) => {
             reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new page"));
-            Util.log("Could not create a new page", 3, error);
+            Util.log("Could not query a page from a database while trying to create a new revision", 3, error, { page_address });
 
             sql_error = true;
         });
@@ -478,7 +478,7 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
             [page_address.namespace, page_address.name, JSON.stringify(page_info)])
             .catch((error: Error) => {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new page"));
-                Util.log("Could not create a new page", 3, error);
+                Util.log("Could not create a new wiki page", 3, error, { page_address, page_info });
 
                 sql_error = true;
             });
@@ -503,7 +503,7 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
                 resolve();
             } else {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new revision"));
-                Util.log(`Could not create a new revision for a page (pageid ${ target_page_id || "?" })`, 3, error);
+                Util.log(`Could not create a new revision for a wiki page`, 3, error, { target_page_id, clean_content, summary });
                 return;
             }
         });
@@ -527,7 +527,7 @@ export async function deletePage(page_namespace: string, page_name: string, dele
         (error: any, results: any) => {
             if(error || results.length < 1) {
                 reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not delete a wiki page"));
-                Util.log(`Could not delete a wiki page (title: '${ page_namespace }:${ page_name }')`, 3, error);
+                if(error) Util.log(`Could not delete a wiki page`, 3, error, { page_namespace, page_name, summary });
 
                 return;
             }
@@ -607,7 +607,7 @@ INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHE
             (restore_error: any, restore_results: any) => {
                 if(restore_error) {
                     reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not restore a page"));
-                    Util.log("Could not restore a page", 3, restore_error);
+                    Util.log("Could not restore a wiki wiki page", 3, restore_error, { page_id, new_address, revid, deleted_page });
 
                     return;
                 }
@@ -662,7 +662,7 @@ export async function movePage(old_namespace: string, old_name: string, new_name
         (error: any, results: any) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not move a page"));
-                Util.log(`Could not move a page (${ new_namespace }:${ new_name })`, 3, error);
+                Util.log(`Could not move (rename) a wiki page`, 3, error, { old_namespace, old_name, new_address });
 
                 return;
             }
@@ -844,7 +844,7 @@ FROM `revisions` WHERE `page` = ?";
             const users_results = await sql.promise().query(`SELECT id, \`username\` FROM \`users\` WHERE id IN (${ users_query.join(",") })`)
             .catch((error: Error) => {
                 resolve({});
-                Util.log("Could not query users for a getPageRevisions function", 3, error);
+                Util.log("Could not query users for a getPageRevisions function", 3, error, { users_query });
 
                 sql_error = true;
             });

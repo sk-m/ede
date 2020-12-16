@@ -140,7 +140,7 @@ AND \`group\` IN ('${ removed_groups.join("','") }')`,
         [target_user.id])
         .catch((error: Error) => {
             apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not remove groups from user"));
-            Util.log(`Could not remove groups from user id ${ target_user.id }`, 3, error);
+            Util.log(`Could not remove groups from a user`, 3, error, { user_id: target_user.id, removed_groups });
 
             error_occured = true;
         });
@@ -151,7 +151,7 @@ AND \`group\` IN ('${ removed_groups.join("','") }')`,
         await sql.promise().query(`INSERT IGNORE INTO \`user_group_membership\` (\`user\`,\`group\`) VALUES ${ insert_sql_query }`)
         .catch((error: Error) => {
             apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not assign groups to user"));
-            Util.log(`Could not assign groups to user id ${ target_user.id }`, 3, error);
+            Util.log(`Could not assign groups to a user`, 3, error, { user_id: target_user.id, insert_sql_query });
 
             error_occured = true;
         });

@@ -47,13 +47,13 @@ export async function send(addresses: string | string[], subject: string, html_b
             disableUrlAccess: true
         })
         .then((info: any) => {
-            // Check if email was sent successfully
-            if(info.rejected.length !== 0) {
-                Util.log(`Email was rejected (tried to send to ${ addresses })`, 2);
-            }
+            // // Check if email was sent successfully
+            // if(info.rejected.length !== 0) {
+            //     Util.log(`Email message was rejected`, 2, undefined, { addresses });
+            // }
         })
         .catch((error: Error) => {
-            Util.log(`Could not send an email to ${ addresses })`, 3, error);
+            Util.log(`Could not send an email`, 3, error, { addresses });
         });
     });
 }

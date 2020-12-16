@@ -81,7 +81,7 @@ export async function set(name: string, value: string): Promise<void> {
         (error: Error) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not set a new value for a system message"));
-                Util.log(`Could not set a new value for a system message (name: '${ name }', value: '${ value }')`, 3, error);
+                Util.log(`Could not set a new value for a system message`, 3, error, { name, value });
 
                 return;
             }
@@ -95,7 +95,7 @@ export async function set(name: string, value: string): Promise<void> {
             if(_redis_ok && registry_config_snapshot["caching.cachesystemmessages"].value as boolean === true) {
                 _redis.rawCall(["del", `systemmessage|${ name }`], (cache_error: any) => {
                     if(cache_error) {
-                        Util.log("Could not remove a system message from cache. Triggered by SystemMessage.set()", 3, cache_error);
+                        Util.log("Could not remove a system message from cache. Triggered by SystemMessage.set()", 3, cache_error, { name });
                     }
                 });
             }
@@ -124,7 +124,7 @@ export async function create(name: string, value: string): Promise<void> {
         (error: Error) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not create a new system message"));
-                Util.log(`Could not create a new system message (name: '${ name }', value: '${ value }')`, 3, error);
+                Util.log(`Could not create a new system message`, 3, error, { name, value });
 
                 return;
             }
@@ -146,7 +146,7 @@ export async function remove(name: string): Promise<void> {
         (error: Error, results: any) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not remove a system message"));
-                Util.log(`Could not remove a system message (name: '${ name }')`, 3, error);
+                Util.log(`Could not remove a system message`, 3, error, { name });
 
                 return;
             }
@@ -345,7 +345,7 @@ export async function get_object(query: string[] | string[][], encode: boolean =
         (error: Error, results: any) => {
             if(error) {
                 resolve({});
-                Util.log(`Could not load '${ query }' system messages`, 2, error);
+                Util.log(`Could not load system messages from the database by query`, 2, error, { query });
 
                 return;
             }

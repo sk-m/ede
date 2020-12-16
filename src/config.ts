@@ -96,7 +96,7 @@ export async function getConfigFromDB(): Promise<ConfigItemsObject> {
     return new Promise((resolve: any, reject: any) => {
         sql.execute("SELECT * FROM `config`", (error: Error, results: any) => {
             if(error) {
-                Util.log(`Failed to get configuration from the database!`, 4, error);
+                Util.log(`Failed to get configuration from the database!`, 4, error, null, false);
 
                 process.exit(1);
             }
@@ -170,7 +170,6 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
         // Check if config item with requested key exists
         if(!config_item) {
             reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Requested config item does not exist"));
-            Util.log(`Config item does not exist (${ key })`, 3);
 
             return;
         }
@@ -244,7 +243,7 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
         (error: any) => {
             if(error) {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not update config item"));
-                Util.log(`Could not update config item (key: '${ key }', raw value: '${ value }')`, 3, error);
+                Util.log(`Could not update a config item`, 3, error, { key, value });
             } else resolve();
         });
     });
@@ -263,7 +262,6 @@ export async function resetItem(key: string): Promise<void> {
         // Check if such key exists
         if(!config_item) {
             reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Requested config item does not exist"));
-            Util.log(`Config item does not exist (${ key })`, 3);
 
             return;
         }
@@ -271,7 +269,6 @@ export async function resetItem(key: string): Promise<void> {
         // Check if we can reset
         if(!config_item.default_value) {
             reject(new Util.Rejection(Util.RejectionType.CONFIG_ITEM_NOT_FOUND, "Can't reset config item because there is no default value to reset to"));
-            Util.log(`Can't reset config item because there is no default value to reset to (${ key })`, 3);
 
             return;
         }
@@ -280,8 +277,8 @@ export async function resetItem(key: string): Promise<void> {
         [config_item.default_value, config_item.key],
         (error: any) => {
             if(error) {
-                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not reset config item"));
-                Util.log(`Could not reset config item (key: '${ key }')`, 3, error);
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not reset a config item"));
+                Util.log(`Could not reset a config item`, 3, error, { key });
             } else resolve();
         });
     });

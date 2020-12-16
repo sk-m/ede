@@ -1,8 +1,11 @@
+import * as Util from "../utils";
 import * as User from "../user";
 import * as Page from "../page";
+import * as IncidentLogs from "../incident_log";
 import * as SystemMessages from "../system_message";
 import { registry_systempages } from "../registry";
 import { _mailer_failed, _mailer_ok, _redis_failed, _redis_ok } from "../server";
+import { GroupsAndRightsObject } from "../right";
 
 // TODO @performance
 async function constructSystemPagesListHTML(): Promise<string> {
@@ -55,6 +58,35 @@ async function constructSystemPagesListHTML(): Promise<string> {
     return final_html;
 }
 
+function constructIncidentsList(incidents: IncidentLogs.IncidentLogEntry[]): string {
+    let html = "";
+
+    for(const incident of incidents) {
+        const stacktrace_str = incident.error_stacktrace
+        ? incident.error_stacktrace.split("\n", 2)[0]
+        : "(stack trace not available)";
+
+        html += `\
+<div class="incident">
+    <div class="left">
+        <div class="message">
+            <div>${ incident.error_message }</div>
+            ${ incident.severity === 2 ? `<div class="bubble warning"><span>W</span></div>` : "" }
+            ${ incident.severity === 3 ? `<div class="bubble error"><span>E</span></div>` : "" }
+            ${ !incident.was_handled ? `<div class="bubble uncaught"><span>U</span></div>` : "" }
+        </div>
+        <div class="stacktrace">${ stacktrace_str }</div>
+        <div class="time"><i class="far fa-clock"></i>${ Util.formatTimeString(incident.timestamp) }</div>
+    </div>
+    <div class="right">
+        <div class="events-count">${ incident.events }</div>
+    </div>
+</div>`;
+    }
+
+    return html;
+}
+
 export async function dashboard(page: Page.ResponsePage, client: User.User): Promise<Page.ResponsePage> {
     return new Promise(async (resolve: any) => {
         // Get the files
@@ -70,6 +102,28 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
         page.info.hiddentitle = true;
         page.info.nocontainer = true;
 
+        // Check user's rights
+        let client_can_see_status = false;
+        let client_can_see_incidents = false;
+
+        if(client) {
+            await User.getRights(client.id)
+            .then((client_grouprights: GroupsAndRightsObject) => {
+                if(client_grouprights.rights.viewdashboardstatus) client_can_see_status = true;
+                if(client_grouprights.rights.viewincidentslog) client_can_see_incidents = true;
+            })
+            .catch(() => undefined);
+        }
+
+
+        // Get unread incident logs
+        let unread_incidents_html = "";
+
+        if(client_can_see_incidents) {
+            const unread_incidents = await IncidentLogs.getAll(true, 25);
+            unread_incidents_html = constructIncidentsList(unread_incidents);
+        }
+
         page.parsed_content = `\
 <div class="ui-systempage-header-box">
     <div class="title-container">
@@ -79,10 +133,11 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
 </div>
 
 <div id="systempage-dashboard-root">
-    <div class="status-root">
+    ${ client_can_see_status ?
+    `<div class="status-root">
         <div class="column" style="width: 50%">
             <div class="row">
-                <div class="status-panel"><i>Something will be here some day...</i></div>
+                <div class="status-panel" style="padding: 12px 16px"><i>Something will be here some day...</i></div>
             </div>
         </div>
         <div class="column" style="width: 50%">
@@ -108,8 +163,19 @@ export async function dashboard(page: Page.ResponsePage, client: User.User): Pro
                     </div>
                 </div>
             </div>
+            <div class="row">
+                ${ client_can_see_incidents ? `<div class="status-panel incidents">
+                    <div class="panel-heading-container">
+                        <div class="heading">Unread incidents</div>
+                        <div class="right-container">showing up to 25 incidents <i class="fas fa-long-arrow-alt-down"></i></div>
+                    </div>
+                    <div class="incidents-list ui-scrollbar">
+                        ${ unread_incidents_html || "<div class=\"no-incidents-text\">No incidents reported.</div>" }
+                    </div>
+                </div>` : "" }
+            </div>
         </div>
-    </div>
+    </div>` : "" }
 
     ${ await constructSystemPagesListHTML() }
 </div>`;

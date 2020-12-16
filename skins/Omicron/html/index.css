@@ -776,16 +776,6 @@
     overflow-y: auto;
 }
 
-#ede-usernotifications-root > .notifications-box > .notifications-list::-webkit-scrollbar {
-    width: 6px;
-    background: transparent;
-}
-
-#ede-usernotifications-root > .notifications-box > .notifications-list::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
-}
-
 #ede-usernotifications-root > .notifications-box > .notifications-list > .footer {
     color: hsl(0, 0%, 55%);
     font-size: 12px;

@@ -163,7 +163,6 @@ ${ UI.constructFormBoxTitleBar("logs", "User rights log") }
 <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`);
         } else {
-            Util.log(`Error occured trying to get groups and rights for user id ${ target_user.id }`, 3);
             resolve("Some error occured!");
         }
     });

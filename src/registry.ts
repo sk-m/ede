@@ -405,6 +405,21 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
             }
         }
     },
+    viewdashboardstatus: {
+        name: "viewdashboardstatus",
+
+        source: "ede",
+
+        arguments: {}
+    },
+    viewincidentslog: {
+        name: "viewincidentslog",
+        risk_text: "Semi-dangerous",
+
+        source: "ede",
+
+        arguments: {}
+    },
     editsystemmessages: {
         name: "editsystemmessages",
         risk_text: "Dangerous",
