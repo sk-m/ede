@@ -1,0 +1,307 @@
+#incidentslog-content-container {
+    padding: 0;
+}
+
+
+#systempage-incidentslog-root > .incidents-list {
+    overflow-y: auto;
+    height: 100%;
+
+    font-family: "Roboto", sans-serif;
+
+    border-top: 1px solid var(--color-gray3);
+}
+
+#systempage-incidentslog-root > .incidents-list > .show-more-button {
+    padding: 20px;
+
+    border-bottom: 1px solid var(--color-gray3);
+
+    cursor: pointer;
+
+    color: hsl(0, 0%, 20%);
+    text-align: center;
+    font-weight: 500;
+    font-size: 13px;
+
+    transition: 0.15s;
+}
+
+#systempage-incidentslog-root > .incidents-list > .show-more-button:hover {
+    color: var(--color-blue);
+    background-color: var(--color-blue2-transparent-1);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container {
+    overflow: hidden;
+    
+    /* Hidden state */
+    height: 0;
+    padding: 0;
+    border-bottom: 0px solid var(--color-gray3);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .full-container {
+    height: auto;
+    padding: 12px 12px 15px 12px;
+    border-bottom: 1px solid var(--color-gray3);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container > .block {
+    margin-bottom: 25px;
+    padding: 0 5px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container > .block > .na-text {
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container > .block .notice {
+    display: inline-flex;
+    align-items: center;
+
+    overflow: hidden;
+    padding-right: 6px;
+
+    margin-bottom: 10px;
+
+    color: var(--color-orange-darker);
+    font-size: 13px;
+    font-weight: 500;
+
+    background-color: var(--color-orange-transparent-2);
+    border-radius: 3px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container > .block .notice > .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 25px;
+    height: 25px;
+
+    margin-right: 6px;
+
+    background-color: var(--color-orange-transparent-2);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container > .block:last-of-type {
+    margin-bottom: 0;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .heading {
+    font-weight: 500;
+    color: hsl(0, 0%, 12%);
+    font-size: 16px;
+
+    margin-bottom: 10px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .info-item {
+    margin-bottom: 4px;
+
+    color: hsl(0, 0%, 33%);
+    font-size: 12px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .info-item:last-of-type {
+    margin-bottom: 0;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .info-item > i {
+    width: 14px;
+    margin-right: 5px;
+
+    text-align: center;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .additional-info,
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .full-stacktrace {
+    padding: 8px 10px;
+
+    color: hsl(0, 0%, 12%);
+    font-family: monospace;
+
+    background-color: hsl(0, 0%, 97%);
+    border-radius: 3px;
+
+    transition: 0.15s;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .full-stacktrace > dl {
+    margin: 0;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .full-stacktrace > dl > dd {
+    margin-inline-start: 4ch;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .full-container .full-stacktrace > dl > dd[internal] {
+    color: hsl(0, 0%, 55%);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    cursor: pointer;
+
+    padding: 15px 15px;
+
+    border-bottom: 1px solid var(--color-gray3);
+
+    transition: all 0.15s, box-shadow 0s, border-bottom 0s;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container:hover {
+    box-shadow: inset 0 -1px 0 0 var(--color-gray3);
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container:hover + .full-container .additional-info,
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container:hover + .full-container .full-stacktrace {
+    color: hsl(0, 0%, 10%);
+    background-color: hsl(0, 0%, 96%);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container:hover + .full-container,
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container:hover {
+    background-color: hsl(0, 0%, 99%);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .message > .expand-arrow {
+    font-size: 12px;
+    margin-right: 10px;
+
+    transition: 0.15s;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident:hover > .preview-container > .left > .message > .expand-arrow {
+    transform: rotate(-90deg);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container > .left > .message > .expand-arrow {
+    transform: rotate(-180deg);
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container:hover > .left > .message > .expand-arrow {
+    transform: translateY(-2px) rotate(180deg) !important;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .message {
+    display: flex;
+    align-items: center;
+
+    color: hsl(0, 0%, 20%);
+    font-weight: 600;
+    font-size: 18px;
+}
+
+@keyframes highlighted-incident-name {
+    from {
+        color: var(--color-orange-darker);
+    }
+    to {
+        color: hsl(0, 0%, 20%);
+    }
+}
+
+@keyframes highlighted-incident-container {
+    from {
+        background-color: var(--color-orange-transparent-2);
+    }
+    to {
+        background-color: transparent;
+    }
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[highlighted] > .preview-container {
+    animation: highlighted-incident-container ease-in-out 2s 0.15s 1;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[highlighted] > .preview-container > .left > .message > .name {
+    animation: highlighted-incident-name ease-in-out 2s 0.15s 1;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .message > .bubble.warning {
+    color: hsl(34, 100%, 56%);
+    background-color: hsla(38, 100%, 60%, 0.125);
+    /* border: 1px solid var(--color-orange-transparent-2) */
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .message > .bubble.uncaught {
+    color: #cc1b00;
+    background-color: rgba(204, 27, 0, 0.1);
+    /* border: 1px solid rgba(204, 27, 0, 0.1); */
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .message > .bubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 18px;
+    height: 18px;
+
+    margin-left: 5px;
+
+    color: var(--color-red);
+    background-color: var(--color-red-transparent-1);
+    /* border: 1px solid var(--color-red-transparent-1); */
+
+    font-weight: 600;
+    font-family: "Roboto Mono", monospace;
+    font-size: 12px;
+
+    border-radius: 3px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .stacktrace {
+    margin-top: 5px;
+
+    color: hsl(0, 0%, 55%);
+    font-size: 12px;
+    font-family: monospace;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .info {
+    margin-top: 8px;
+
+    color: hsl(0, 0%, 33%);
+    font-size: 12px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .info i {
+    margin-right: 5px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .left > .info > .additional-info-notice {
+    font-weight: 500;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .right {
+    margin: 0 25px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident > .preview-container > .right > .events-count {
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto Mono", monospace;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container {
+    border-bottom: 0;
+}
+
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container .events-count,
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container .info,
+#systempage-incidentslog-root > .incidents-list > .incident[expanded] > .preview-container .stacktrace {
+    overflow: hidden;
+    height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}

@@ -25,8 +25,6 @@ export async function getUserNotificationsRoute(req: any, res: any, client_user?
         apiSendSuccess(res, "user/get_notifications", { notifications });
     })
     .catch((rejection: Util.Rejection) => {
-        // TODO log this incident to file
-        // TODO also might be nice to have a systempage with such incidents
         apiSendError(res, rejection);
     });
 }

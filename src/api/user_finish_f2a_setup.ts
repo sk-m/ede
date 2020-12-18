@@ -25,8 +25,6 @@ export async function userFinish2FASetupRoute(req: any, res: any, client_user?: 
         apiSendSuccess(res, "user/finish_f2a_setup", { backup_codes });
     })
     .catch((rejection: Rejection) => {
-        // TODO log this incident to file
-        // TODO also might be nice to have a systempage with such incidents
         apiSendError(res, rejection);
     });
 }

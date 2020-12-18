@@ -190,7 +190,7 @@ BEGIN
 		VALUES (p_severity, p_error_message, p_error_stacktrace, p_error_info, UNIX_TIMESTAMP(), p_was_handled);
 	ELSE
 		# There is already a record with the same stack trace
-		UPDATE `incident_logs` SET `events` = `events` + 1, `error_info` = p_error_info WHERE id = l_id;
+		UPDATE `incident_logs` SET `events` = `events` + 1, `error_info` = p_error_info, `timestamp` = UNIX_TIMESTAMP() WHERE id = l_id;
 	END IF;
 END//
 DELIMITER ;

@@ -46,8 +46,6 @@ export async function createUserGroupRoute(req: any, res: any, client_user?: Use
         apiSendSuccess(res);
     })
     .catch((rejection: Rejection) => {
-        // TODO log this incident to file
-        // TODO also might be nice to have a systempage with such incidents
         apiSendError(res, rejection);
     });
 }

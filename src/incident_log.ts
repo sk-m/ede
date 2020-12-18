@@ -35,7 +35,7 @@ export function createEntry(
 ): void {
     const error_info_str = error_info
     ? JSON.stringify(error_info)
-    : "{}";
+    : "null";
 
     sql.execute("CALL new_incident_log(?, ?, ?, ?, ?)",
     [severity, error_message, error_stacktrace || null, error_info_str, was_handled ? 1 : 0],
@@ -45,7 +45,7 @@ export function createEntry(
 }
 
 /**
- * Get all incident logs (ordered from newest to oldest)
+ * Get all incident logs (ordered from newest to oldest / higher id to lower id)
  *
  * @param unread_only get only unread incidents?
  * @param records_number number of records to retrieve
@@ -58,14 +58,18 @@ export async function getAll(unread_only: boolean = false, records_number: numbe
         let sql_args: any[] = [records_number];
 
         // Add an unread "filter"
-        if(unread_only) sql_query += " WHERE is_read = b'0'";
-
-        sql_query += " ORDER BY id DESC LIMIT ?";
+        if(unread_only) sql_query += " WHERE `is_read` = b'0'";
 
         // Starting id provided, add to the query
         if(from) {
-            sql_query += ", ?";
-            sql_args = [from, records_number];
+            // If we added a filter, we should add an "AND" keyword to our query, because we already have one coulmn in the WHERE clause
+            if(unread_only) sql_query += " AND";
+            else sql_query += " WHERE";
+
+            sql_query += " id < ? ORDER BY id DESC LIMIT ?";
+            sql_args = [from - 1, records_number];
+        } else {
+            sql_query += " ORDER BY id DESC LIMIT ?";
         }
 
         // Get the records

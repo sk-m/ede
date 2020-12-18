@@ -160,8 +160,6 @@ req.body.summary, signature_check.check_skipped ? [] : ["f2asigned"]);
         apiSendSuccess(res);
     })
     .catch((rejection: Util.Rejection) => {
-        // TODO log this incident to file
-        // TODO also might be nice to have a systempage with such incidents
         apiSendError(res, rejection);
     });
 }

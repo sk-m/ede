@@ -159,8 +159,14 @@ export function mailerConnect(): void {
 
 // Unhandled rejection handler for incident logging
 process.on("unhandledRejection", (reason: any, promise: any) => {
-    promise.catch((error: any) => {
-        IncidentLog.createEntry(`Unhandled promise rejection: ${ reason.message }`, 3, error.stack || null, false);
+    promise.catch((error: Error | Util.Rejection) => {
+        if(error instanceof Util.Rejection) {
+            IncidentLog.createEntry(`Unhandled promise rejection: ${ error.client_message }`, 3, undefined, false);
+            Util.log(`Unhandled promise rejection: ${ error.client_message }`, 3, undefined, null, false);
+        } else {
+            IncidentLog.createEntry(`Unhandled promise rejection: ${ error.message }`, 3, error.stack || null, false);
+            Util.log(`Unhandled promise rejection: ${ error.message }`, 3, error, null, false);
+        }
     });
 });
 

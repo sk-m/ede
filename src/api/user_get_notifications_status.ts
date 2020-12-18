@@ -14,8 +14,6 @@ export async function userGetNotificationsStatusRoute(req: any, res: any, client
         apiSendSuccess(res, "user/get_notifications_status", { has_unread_notifications });
     })
     .catch((rejection: Util.Rejection) => {
-        // TODO log this incident to file
-        // TODO also might be nice to have a systempage with such incidents
         apiSendError(res, rejection);
     });
 }

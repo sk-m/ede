@@ -67,7 +67,7 @@ function constructIncidentsList(incidents: IncidentLogs.IncidentLogEntry[]): str
         : "(stack trace not available)";
 
         html += `\
-<div class="incident">
+<div class="incident" onclick="ede.navigate('/System:IncidentsLog?incident_id=${ incident.id }')">
     <div class="left">
         <div class="message">
             <div>${ incident.error_message }</div>

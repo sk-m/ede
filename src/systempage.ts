@@ -111,7 +111,7 @@ ${ item[0] }</a>`;
 ${ breadcrumbs_html }
 ${ header_html }
 
-<div class="ui-systempage-content-container">
+<div class="ui-systempage-content-container" id="${ config.page.address.name.toLowerCase() }-content-container">
     <div class="ui-systempage-main-content">
         ${ config.body_html }
     </div>

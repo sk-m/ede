@@ -45,6 +45,8 @@ import { getUserNotificationsRoute } from "./api/user_get_notifications";
 import { markUserNotificationReadRoute } from "./api/user_notification_mark_read";
 import { userGetNotificationsStatusRoute } from "./api/user_get_notifications_status";
 import { managecachingserver, managemailer } from "./config_triggers";
+import { incidentsLog } from "./systempages/incidentsLog";
+import { getIncidentLogsRoute } from "./api/incidentlogs_get";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -557,6 +559,18 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
         source: "ede",
 
         systempage_config: systemMessages
+    },
+    incidentslog: {
+        name: "IncidentsLog",
+
+        display_title: "Incidents log",
+        display_category: "other",
+        display_description: "View all incident/error logs",
+        display_icon: "fas fa-bug",
+
+        source: "ede",
+
+        systempage_config: incidentsLog
     },
 });
 
@@ -1262,6 +1276,34 @@ not it is assigned to the user",
         },
 
         handler: systemmessageDeleteRoute
+    },
+    "incidentlogs/get": {
+        name: "incidentlogs/get",
+        method: "GET",
+
+        description: "Get incident logs",
+
+        required_arguments: [],
+        required_rights: ["viewincidentslog"],
+
+        arguments: {
+            from: {
+                name: "from",
+                display_name: "Start id",
+                description: "Start id of the incident log",
+
+                type: "number"
+            },
+            records_number: {
+                name: "records_number",
+                display_name: "Number of records",
+                description: "Number of logs to retrieve. Max 100",
+
+                type: "number"
+            }
+        },
+
+        handler: getIncidentLogsRoute
     },
     "user/block": {
         name: "user/block",
