@@ -124,7 +124,7 @@ export async function incidentsLog(page: Page.ResponsePage, client: User.User): 
         }
 
         // Get the files
-        const page_files = await Page.getPageFiles("System:SystemMessages", {
+        const page_files = await Page.getPageFiles("System:IncidentsLog", {
             js: "./static/IncidentsLog/script.js",
             css: "./static/IncidentsLog/styles.css",
         });
