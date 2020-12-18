@@ -51,6 +51,7 @@
     "lint": "tslint --project .",
     "precommit": "yarn lint && yarn build-src && echo \"Everything looks good. Ready to commit!\"",
     "docs": "typedoc --mode modules --excludeNotExported --excludeExternals --readme none --ignoreCompilerErrors --out docs src",
+    "build": "tsc && cp -a ./static ./build/static && cp -a ./skins ./build/skins && cp -a ./lib ./build/lib",
     "build-win": "tsc && xcopy /E /I static build\\static && xcopy /E /I skins build\\skins && xcopy /E /I lib build\\lib",
     "build-src": "tsc"
   }

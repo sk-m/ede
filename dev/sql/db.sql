@@ -139,6 +139,7 @@ CREATE TABLE IF NOT EXISTS `logs` (
   `target` varchar(256) NOT NULL,
   `action_text` varbinary(4096) NOT NULL,
   `summary_text` varbinary(4096) DEFAULT NULL,
+  `tags` varchar(1024) DEFAULT NULL,
   `created_on` int unsigned NOT NULL,
   `visibility_level` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
