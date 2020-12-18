@@ -25,7 +25,7 @@ export async function send(addresses: string | string[], subject: string, html_b
         const registry_config_snapshot = registry_config.get();
 
         if(!checkEnabled()) {
-            reject(new Error("Outbound email is disabled"));
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, "Outbound email is disabled"));
             return;
         } else {
             resolve(true);
@@ -76,13 +76,14 @@ export async function sendToUser(user: User.User | string, subject: string, html
 
         // Check user
         if(!user || !user.email_address) {
-            reject(new Error("Invalid user, or email address not provided"));
+            Util.log("Can't send en email to a user — invalid user", 3, undefined, { user_id: user.id });
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid user, or email address not provided"));
             return;
         }
 
         // Check if email address is verified
         if(!user.email_verified && !ignore_if_unverified) {
-            reject(new Error("User's email address is not verfied"));
+            reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, "User's email address is not verfied"));
             return;
         }
 

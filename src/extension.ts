@@ -61,9 +61,9 @@ export async function loadAll(): Promise<void> {
             if(dirs_error) {
                 const error_message = "Could not load all extensions from ./extensions directory";
 
-                Util.log(error_message, 3);
+                Util.log(error_message, 3, dirs_error);
 
-                reject(new Error(error_message));
+                reject(new Util.Rejection(Util.RejectionType.GENERAL_OTHER, error_message));
                 return;
             }
 

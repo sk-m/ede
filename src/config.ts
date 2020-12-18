@@ -220,7 +220,7 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
             case "bool": {
                 // Also check if value is represented by a string
                 if(typeof value !== "boolean" && !(value === "true" || value === "false")) {
-                    reject(new Error("Invalid value. Expected a boolean"));
+                    reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Expected a boolean"));
                     return;
                 }
             } break;
@@ -229,7 +229,7 @@ export async function setValue(key: string, value: any, sanitize: boolean = true
                 // Check regex pattern
                 if(config_item.value_pattern) {
                     if(!new RegExp(config_item.value_pattern, "gm").test(value)) {
-                        reject(new Error("Invalid value. Pattern mismatch"));
+                        reject(new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, "Invalid value. Pattern mismatch"));
                         return;
                     }
                 }

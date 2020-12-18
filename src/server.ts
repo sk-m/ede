@@ -130,7 +130,7 @@ export function mailerConnect(): void {
     const host = registry_config_snapshot["mail.host"].value as string;
     const port = registry_config_snapshot["mail.port"].value as number;
     const user = registry_config_snapshot["mail.user"].value as string;
-    const pass = registry_config_snapshot["mail.pass"].value as string;
+    const pass = registry_config_snapshot["mail.password"].value as string;
     const secure = registry_config_snapshot["mail.secure"].value as boolean;
     const reject_unauthorized = !(registry_config_snapshot["mail.ignore_invalid_certs"].value as boolean);
 
