@@ -23,7 +23,7 @@ async function constructSystemPagesListHTML(): Promise<string> {
             if(!categories[display_category]) categories[display_category] = "";
 
             categories[display_category] += `\
-<div class="systempage-item" onclick="ede.navigate('/System:${ systempage_name }')">
+<a class="systempage-item" href="/System:${ systempage_name }">
     <div class="left">
         <div class="icon"><i class="${ systempage.display_icon || "fas fa-ellipsis-h" }"></i></div>
         <div class="name-container">
@@ -36,7 +36,7 @@ async function constructSystemPagesListHTML(): Promise<string> {
             ${ systempage.source !== "ede" ? `<div class="icon" title="System page provided by '${ systempage.source }' extension"><i class="fas fa-puzzle-piece"></i></div>` : "" }
         </div>
     </div>
-</div>`;
+</a>`;
         }
     }
 
