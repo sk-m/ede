@@ -556,10 +556,10 @@ export async function restorePage(page_id: number, new_namespace?: string, new_n
     return new Promise((resolve: any, reject: any) => {
         // Get the deleted page and the last revision
         sql.query("SELECT `revisions`.`id` AS `revision_id`, `deleted_wiki_pages`.* FROM `deleted_wiki_pages` \
-INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHERE `deleted_wiki_pages`.`pageid` = 28 ORDER BY id DESC LIMIT 1;",
-        [page_id, page_id],
+INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHERE `deleted_wiki_pages`.`pageid` = ? ORDER BY id DESC LIMIT 1;",
+        [page_id],
         async (get_error: any, results: any) => {
-            if(get_error || results[0].length < 1) {
+            if(get_error || results.length < 1) {
                 // No such page in the archive;
                 reject(new Util.Rejection(Util.RejectionType.PAGE_NOT_FOUND, "Could not find such page in the archive"));
                 return;
@@ -1047,7 +1047,7 @@ export async function getPageByRevid(revid: number, get_deleted: boolean = false
                 } else {
                     // Everything is ok, return the page
 
-                    page.raw_content = db_results.content;
+                    page.raw_content = (db_results.content as Buffer).toString("utf8");
                     resolve(page);
                 }
             }

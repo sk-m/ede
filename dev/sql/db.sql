@@ -516,7 +516,7 @@ CREATE PROCEDURE `wiki_get_page_by_revid`(
     COMMENT 'Get a wiki page by the revid'
 BEGIN
 	DECLARE l_pageid INT;
-	DECLARE l_content TEXT;
+	DECLARE l_content MEDIUMBLOB;
 	DECLARE l_visibility BIT(5);
 	DECLARE l_namespace VARCHAR(64);
 	DECLARE l_name VARCHAR(2048);

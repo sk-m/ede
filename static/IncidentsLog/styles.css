@@ -1,7 +1,7 @@
 #incidentslog-content-container {
     padding: 0;
+    max-width: unset;
 }
-
 
 #systempage-incidentslog-root > .incidents-list {
     overflow-y: auto;
