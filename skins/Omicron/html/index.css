@@ -8,7 +8,7 @@
     height: 58px;
 
     background-color: var(--color-gray);
-    border-bottom: 2px solid var(--color-gray3);
+    border-bottom: 1px solid var(--color-gray3);
 }
 
 #ede-top-panel > .left,
@@ -746,6 +746,8 @@
 
 #ede-usernotifications-root > .notifications-box > .status-bar .settings-link:hover {
     color: hsl(0, 0%, 20%);
+
+    transform: rotate(30deg);
 }
 
 #ede-usernotifications-root > .notifications-box > .status-bar .unread-bubble.hidden {

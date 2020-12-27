@@ -46,11 +46,11 @@ async function constructSystemPagesListHTML(): Promise<string> {
         const sysmsg_name = `dashboard-categoryname-${ cat_name }`;
 
         final_html += `\
+<div class="section-name">
+    <div class="name">${ sysmsgs[sysmsg_name] ? sysmsgs[sysmsg_name].value : `[! SYSMSG ${ sysmsg_name } !]` }</div>
+    <div class="line"></div>
+</div>
 <div class="section">
-    <div class="section-name">
-        <div class="name">${ sysmsgs[sysmsg_name] ? sysmsgs[sysmsg_name].value : `[! SYSMSG ${ sysmsg_name } !]` }</div>
-        <div class="line"></div>
-    </div>
     ${ categories[cat_name] }
 </div>`;
     }
