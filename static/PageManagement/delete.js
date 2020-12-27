@@ -4,14 +4,6 @@ function wikipageDeletePageScript() {
     // Check if the form is available
     if(!delete_form) return;
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     // Show complete removal confirmation checkbox when the option is selected
     const db_removal_checkbox_el = delete_form.db_removal;
     const db_removal_confirm_el = delete_form.confirm_db_removal_checkbox;

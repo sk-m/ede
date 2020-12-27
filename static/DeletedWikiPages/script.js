@@ -31,14 +31,6 @@ function deletedWikiPagesPageScript() {
     // If the page was not found, a restore form will not be present
     if(!restore_form) return;
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     // Get rendered revisions checkbox
     const retrieve_rendered_revisions_checkbox = ede.form.list["deletedwikipages-preview"].retrieve_rendered_revisions;
 

@@ -4,14 +4,6 @@ function wikipageMovePageScript() {
     // Check if the form is available
     if(!move_form) return;
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     move_form.submit.onclick = e => {
         const final_params = ede.form.getParams("movepage-form");
 

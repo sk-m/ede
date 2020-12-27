@@ -1,12 +1,4 @@
 function userGroupManagementPageScript() {
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     // Handler for right elements
     const right_el_click_handler = el => {
         if(el.className.includes("open")) {

@@ -1,14 +1,6 @@
 function userBlockingPageScript() {
     const block_form = ede.form.list["blockuser-form"];
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     // Confirm checkbox
     block_form.confirm_checkbox.addEventListener("click", () => {
         if(block_form.confirm_checkbox.dataset.checked === "true") {

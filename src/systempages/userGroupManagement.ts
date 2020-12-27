@@ -373,7 +373,7 @@ rights for this group" }</div>
 
         <div class="ui-form-container between margin-top">
             <div class="ui-text">${ sysmsgs["usergroupmanagement-savetext"] }</div>
-            <button name="submit" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
+            <button name="submit" type="button" class="ui-button1"><i class="fas fa-check"></i> Save group</button>
         </div>
     </div>` : "" }
 

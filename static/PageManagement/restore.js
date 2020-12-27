@@ -4,14 +4,6 @@ function wikipageRestorePageScript() {
     // Check if the form is available
     if(!restore_form) return;
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     restore_form.submit.onclick = e => {
         const final_params = ede.form.getParams("restorepage-form");
 

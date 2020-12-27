@@ -53,7 +53,7 @@ export async function systemMessages(page: Page.ResponsePage, client: User.User)
         <input type="text" name="message_name" value="${ queried_message || "" }" data-handler="systemmessage_name" class="ui-input1">
     </div>
     <div class="ui-form-container between margin-top">
-        <button name="create" class="ui-button1"><i class="fas fa-star-of-life"></i> Create</button>
+        <button name="create" type="button" class="ui-button1"><i class="fas fa-star-of-life"></i> Create</button>
         <button name="submit" class="ui-button1"><i class="fas fa-search"></i> Search</button>
     </div>
 </form>`;

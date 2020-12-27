@@ -171,14 +171,6 @@ function SystemMessagesPageScript() {
 
     /* ----- Page script start ----- */
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     const query_form = ede.form.list["systemmessages-query"];
     const create_form = document.getElementById("systempage-systemmessages-create-form");
 

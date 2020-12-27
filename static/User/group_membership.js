@@ -1,14 +1,6 @@
 function userGroupMembershipPageScript() {
     const save_form = ede.form.list["usergroupmembership-save"];
 
-    // Disable submit on enter key
-    window.addEventListener("keydown", e => {
-        if(e.keyCode === 13) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
     // All nonexistent groups handler
     const nonexistent_groups_checkbox = ede.form.list["usergroupmembership-groups"].all_nonexistent_groups;
 
