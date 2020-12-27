@@ -3,6 +3,7 @@ import * as Page from "../page";
 import * as IncidentLogs from "../incident_log";
 import * as Util from "../utils";
 import { GroupsAndRightsObject } from "../right";
+import he from "he";
 
 function constructIncidentsList(incidents: IncidentLogs.IncidentLogEntry[], selected_id?: number): string {
     let html = "";
@@ -98,7 +99,7 @@ function constructIncidentsList(incidents: IncidentLogs.IncidentLogEntry[], sele
             <div class="icon"><i class="fas fa-info"></i></div>
             <div class="text">Such error was reported multiple times. Only the last reported error info is shown.</div>
             </div>` : "" }
-            ${ incident.error_info ? `<div class="additional-info">${ JSON.stringify(incident.error_info) }</div>` :
+            ${ incident.error_info ? `<div class="additional-info">${ he.encode(JSON.stringify(incident.error_info)) }</div>` :
             "<div class=\"na-text\">Additional info is not available</div>" }
         </div>
     </div>
