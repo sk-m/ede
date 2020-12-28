@@ -8,7 +8,8 @@ import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
 import { sql } from "../server";
 import { pageTitleParser } from "../routes";
-import { registry_namespaces } from "../registry";
+import { registry_action_restriction_types, registry_namespaces } from "../registry";
+import { getActionRestrictions, getAllGrantRights } from "../action_restrictions";
 
 async function info_page(queried_page: any, queried_page_title: string, client?: User.User): Promise<string> {
     // TODO include deletion logs
@@ -189,7 +190,106 @@ async function delete_page(queried_page: Page.PageInfo, queried_page_title: stri
 
     <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
 </div>`);
-});
+    });
+}
+
+async function restrictions_page(queried_page: Page.PageInfo, queried_page_title: string, client?: User.User, client_rights?: GroupsAndRightsObject): Promise<string> {
+    return new Promise(async (resolve: any) => {
+        if(!client_rights || !client_rights.rights.manageactionrestrictions) {
+            resolve("You don't have permission to manage action restriction settings for wiki pages.");
+            return;
+        }
+
+        // Get the log entries
+        const log_entries = await Log.getEntries(["restrictwikipage"], undefined, queried_page.id);
+
+        // Get the system messages
+        const sysmsgs = await SystemMessage.get_value([
+            "wikipagerestrictions-toptext"
+        ]);
+
+        // Get current restriction settings for this page
+        const current_action_restrictions = await getActionRestrictions("page@id", queried_page.id);
+        const current_restriction_settings = current_action_restrictions?.restricted_actions || {};
+
+        // Get all available grant rights
+        const grant_rights = await getAllGrantRights();
+        let grant_rights_string = "";
+
+        for(const right_name in grant_rights) {
+            if(!grant_rights[right_name]) continue;
+
+            grant_rights_string += `<div class="choice" data-value="${ right_name }">~${ right_name }</div>`;
+        }
+
+        // Create the restricted actions list
+        const action_restriction_types = registry_action_restriction_types.get().page;
+        let action_restriction_types_list = "";
+
+        for(const restriction_name in action_restriction_types) {
+            if(!action_restriction_types[restriction_name]) continue;
+
+            const restriction = action_restriction_types[restriction_name];
+            const is_currently_restricted = current_restriction_settings[restriction_name];
+
+            action_restriction_types_list += `\
+<div class="restriction-item" restriction-name="${ restriction.name }" ${ is_currently_restricted ? "enabled" : "" }>
+    <div class="left">
+        <div class="icon"><i class="${ restriction.display_iconclass }"></i></div>
+        <div class="container">
+            <div class="name">${ restriction.display_name }</div>
+            <div class="status">${ is_currently_restricted ? "<i class=\"fas fa-ban\"></i> " : "non-" }restricted</div>
+        </div>
+    </div>
+    <div class="right">
+        <div name="restriction;${ restriction.name }" input class="ui-checkbox-1 small red checkbox" data-checked="${ is_currently_restricted ? "true" : "false" }">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+        </div>
+    </div>
+</div>`;
+        }
+
+        resolve(`\
+<form id="pagerestrictions-form" name="pagerestrictions-form" class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("pagerestrictions_restrict", "Page restrictions") }
+
+    <div class="ui-text margin-bottom">${ sysmsgs["wikipagerestrictions-toptext"] }</div>
+
+    <div input-container class="ui-input-box">
+        <div popup class="popup"></div>
+        <div class="ui-input-name1">Restrict actions to a grant right (select existent or create a new one)</div>
+
+        <div input class="ui-input-dropdown1 monospace w-prefix" editable name="restrict_to" data-handler="right_name">
+            <div class="prefix" title="Grant right names always start with a tilda. You don't have to include it in this field as it will be prepended either way"><span>~</span></div>
+            <input type="text" value="${ current_action_restrictions?.restricted_to || "" }">
+            <div class="arrow-icon"><i class="fas fa-chevron-down"></i></div>
+            <div class="choices">
+                ${ grant_rights_string }
+            </div>
+        </div>
+    </div>
+
+    <div class="restrictions-container">
+        ${ action_restriction_types_list }
+    </div>
+
+    <div class="ui-input-box margin-top">
+        <div class="popup"></div>
+        <div class="ui-input-name1">Reason</div>
+        <input type="text" name="summary" data-handler="summary" class="ui-input1">
+    </div>
+
+    <div class="ui-form-container right margin-top">
+        <button name="submit" class="ui-button1">Save restriction settings</button>
+    </div>
+</form>
+
+<div class="ui-form-box">
+    ${ UI.constructFormBoxTitleBar("restriction_logs", "Restriction logs for this page") }
+
+    <div class="ui-form-container ui-logs-container column-reverse">${ Log.constructLogEntriesHTML(log_entries) }</div>
+</div>`);
+    });
 }
 
 export async function wikiPageManagement(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
@@ -358,7 +458,6 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
         switch(page.address.url_params[1]) {
             case "delete": {
-                // Load js file
                 const page_files = await Page.getPageFiles("System:PageManagement", {
                     del_js: "./static/PageManagement/delete.js"
                 });
@@ -374,7 +473,6 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
                 page_config.body_html = await delete_page(queried_page, page_address.title, client, client_groups || undefined);
             } break;
             case "move": {
-                // Load js file
                 const page_files = await Page.getPageFiles("System:PageManagement", {
                     move_js: "./static/PageManagement/move.js"
                 });
@@ -389,10 +487,32 @@ export async function wikiPageManagement(page: Page.ResponsePage, client: User.U
 
                 page_config.body_html = await move_page(queried_page, page_address.title, client, client_groups || undefined);
             } break;
+            case "restrictions": {
+                const page_files = await Page.getPageFiles("System:PageManagement", {
+                    restrictions_js: "./static/PageManagement/restrictions.js",
+                    restrictions_css: "./static/PageManagement/restrictions.css"
+                });
+
+                page.additional_js = [page_files.restrictions_js];
+                page.additional_css.push(page_files.restrictions_css);
+
+                page_config.breadcrumbs_data.push(["Restrictions"]);
+                page_config.header_config = {
+                    icon: "fas fa-unlock",
+                    title: `Restriction settings for ${ page_address.display_title }`
+                };
+
+                page_config.body_html = await restrictions_page(queried_page, page_address.title, client, client_groups || undefined);
+            } break;
             default: {
                 page_config.breadcrumbs_data.push(["Info"]);
                 page_config.body_html = await info_page(queried_page, page_address.title, client);
             }
+        }
+
+        // Provide the page id to the frontend
+        page_config.page.additional_info = {
+            page_id: queried_page.id
         }
 
         resolve(page_config);

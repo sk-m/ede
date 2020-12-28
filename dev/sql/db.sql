@@ -19,6 +19,21 @@ CREATE TABLE IF NOT EXISTS `2fa_data` (
 /*!40000 ALTER TABLE `2fa_data` DISABLE KEYS */;
 /*!40000 ALTER TABLE `2fa_data` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `action_restrictions` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `restricted_object_type` tinytext NOT NULL,
+  `restricted_object` text NOT NULL,
+  `restricted_actions` json NOT NULL,
+  `restriction_type` tinytext NOT NULL,
+  `restricted_to` tinytext NOT NULL,
+  `restricted_by` int unsigned NOT NULL,
+  `restricted_on` int unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `action_restrictions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `action_restrictions` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `blocked_addresses` (
   `address` varchar(64) NOT NULL,
   `restrictions` varchar(512) NOT NULL,
@@ -82,7 +97,6 @@ CREATE TABLE IF NOT EXISTS `deleted_wiki_pages` (
   `namespace` varchar(64) NOT NULL,
   `name` varchar(2048) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `page_info` json NOT NULL,
-  `action_restrictions` json NOT NULL,
   `deleted_by` int unsigned NOT NULL,
   `deleted_on` int unsigned NOT NULL,
   `delete_summary` varbinary(4096) DEFAULT NULL,
@@ -115,6 +129,15 @@ CREATE TABLE IF NOT EXISTS `email_tokens` (
 
 /*!40000 ALTER TABLE `email_tokens` DISABLE KEYS */;
 /*!40000 ALTER TABLE `email_tokens` ENABLE KEYS */;
+
+CREATE TABLE IF NOT EXISTS `grant_rights` (
+  `name` varchar(256) NOT NULL DEFAULT '',
+  `dependents_num` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `grant_rights` DISABLE KEYS */;
+/*!40000 ALTER TABLE `grant_rights` ENABLE KEYS */;
 
 CREATE TABLE IF NOT EXISTS `incident_logs` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -168,6 +191,39 @@ INSERT INTO `namespaces` (`id`, `name`, `content_model`, `action_restrictions`, 
 	(3, 'User', 'system', '{}', '{}'),
 	(4, 'Template', 'wiki', '{}', '{}');
 /*!40000 ALTER TABLE `namespaces` ENABLE KEYS */;
+
+DELIMITER //
+CREATE PROCEDURE `new_action_restriction`(
+	IN `p_restricted_object_type` TINYTEXT,
+	IN `p_restricted_object` TEXT,
+	IN `p_restricted_actions` JSON,
+	IN `p_restriction_type` TINYTEXT,
+	IN `p_restricted_to` TINYTEXT,
+	IN `p_restricted_by` INT
+)
+    NO SQL
+    COMMENT 'Create/update an action restriction'
+BEGIN
+	DECLARE l_id INT;
+	
+	# Check if there is already an action restriction that affects the same object
+	SELECT id INTO l_id FROM `action_restrictions` WHERE `restricted_object_type` = p_restricted_object_type AND `restricted_object` = p_restricted_object;
+	
+	IF l_id IS NULL THEN
+		# No such restriction yet
+		INSERT INTO `action_restrictions` (`restricted_object_type`, `restricted_object`, `restricted_actions`, `restriction_type`, `restricted_to`, `restricted_by`, `restricted_on`)
+		VALUES (p_restricted_object_type, p_restricted_object, p_restricted_actions, p_restriction_type, p_restricted_to, p_restricted_by, UNIX_TIMESTAMP());
+	ELSE
+		# Such restriction already exists, update
+		UPDATE `action_restrictions` SET
+			`restricted_to` = p_restricted_to,
+			`restricted_actions` = p_restricted_actions,
+			`restricted_on` = UNIX_TIMESTAMP(),
+			`restricted_by` = p_restricted_by
+		WHERE id = l_id;
+	END IF;
+END//
+DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE `new_incident_log`(
@@ -462,10 +518,9 @@ CREATE PROCEDURE `wiki_delete_page`(
 this_proc: BEGIN
 	DECLARE l_page_id INT;
 	DECLARE l_page_info JSON;
-	DECLARE l_page_action_restrictions JSON;
 	
 	# Get the page
-	SELECT id, `page_info`, `action_restrictions` INTO l_page_id, l_page_info, l_page_action_restrictions
+	SELECT id, `page_info` INTO l_page_id, l_page_info
 	FROM `wiki_pages` WHERE `namespace` = p_namespace AND `name` = p_name;
 	
 	# Check if page was found
@@ -475,8 +530,8 @@ this_proc: BEGIN
 	END IF;
 	
 	# Create an archive entry
-	INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `action_restrictions`, `deleted_by`, `deleted_on`, `delete_summary`)
-	VALUES (l_page_id, p_namespace, p_name, l_page_info, l_page_action_restrictions, p_deleted_by, UNIX_TIMESTAMP(), p_delete_summary);
+	INSERT INTO `deleted_wiki_pages` (`pageid`, `namespace`, `name`, `page_info`, `deleted_by`, `deleted_on`, `delete_summary`)
+	VALUES (l_page_id, p_namespace, p_name, l_page_info, p_deleted_by, UNIX_TIMESTAMP(), p_delete_summary);
 	
 	# Delete the page from the wiki_pages
 	DELETE FROM `wiki_pages` WHERE id = l_page_id;
@@ -577,7 +632,6 @@ CREATE TABLE IF NOT EXISTS `wiki_pages` (
   `name` varchar(2048) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `revision` bigint unsigned DEFAULT NULL,
   `page_info` json NOT NULL,
-  `action_restrictions` json NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `revision` (`revision`),
   KEY `namespace` (`namespace`),
@@ -594,8 +648,7 @@ CREATE FUNCTION `wiki_restore_page`(
 	`p_namespace` VARCHAR(64),
 	`p_name` VARCHAR(2048),
 	`p_revid` INT,
-	`p_page_info` JSON,
-	`p_action_restrictions` JSON
+	`p_page_info` JSON
 ) RETURNS int
     NO SQL
     COMMENT 'Restore a wiki page'
@@ -603,8 +656,8 @@ BEGIN
 	DECLARE l_new_pageid INT;
 
 	# Create a new page (restore)
-	INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`, `action_restrictions`)
-   VALUES (p_namespace, p_name, p_revid, p_page_info, p_action_restrictions);
+	INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`)
+   VALUES (p_namespace, p_name, p_revid, p_page_info);
 	
 	# Get the new page id
 	SET l_new_pageid = LAST_INSERT_ID();

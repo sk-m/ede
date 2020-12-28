@@ -28,6 +28,7 @@ export const log_icons: { [log_type: string]: string } = {
     deletewikipage: "fas fa-trash",
     restorewikipage: "fas fa-trash-restore",
     movewikipage: "fas fa-arrow-right",
+    restrictwikipage: "fas fa-unlock"
 };
 
 export interface LogTagDescriptor {

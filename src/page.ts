@@ -149,8 +149,6 @@ export interface PageInfo {
     revision?: number;
     page_info: any;
 
-    action_restrictions: any;
-
     is_deleted: boolean;
 }
 
@@ -473,8 +471,8 @@ export async function createRevision(page_address: PageAddress, new_raw_content:
             };
 
             // Create the actual page
-            const create_results = await sql.promise().execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`,\
-            `action_restrictions`) VALUES (?, ?, NULL, ?, '{}')",
+            const create_results = await sql.promise().execute("INSERT INTO `wiki_pages` (`namespace`, `name`, `revision`, `page_info`) \
+            VALUES (?, ?, NULL, ?)",
             [page_address.namespace, page_address.name, JSON.stringify(page_info)])
             .catch((error: Error) => {
                 reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Some error occured while trying to create a new page"));
@@ -603,7 +601,7 @@ INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHE
             // delete the record from `deleted_wiki_pages`)
             sql.execute("SELECT wiki_restore_page(?, ?, ?, ?, ?, ?) AS new_pageid",
             [page_id, new_address.namespace, new_address.name, revid,
-            JSON.stringify(deleted_page.page_info), JSON.stringify(deleted_page.action_restrictions)],
+            JSON.stringify(deleted_page.page_info), deleted_page.action_restrictions],
             (restore_error: any, restore_results: any) => {
                 if(restore_error) {
                     reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not restore a page"));

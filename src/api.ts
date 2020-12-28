@@ -254,7 +254,7 @@ export async function RootRoute(req: any, res: any): Promise<void> {
         // Check for required arguments
         for(const required_arg of api_route_object.required_arguments) {
             if(!req.body.hasOwnProperty(required_arg)) {
-                apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, `Parameter '${ required_arg }' is required`));
+                apiSendError(res, new Rejection(RejectionType.GENERAL_PARAMETER_REQUIRED, `Parameter '${ required_arg }' is required`));
                 return;
             }
         }

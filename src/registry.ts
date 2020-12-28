@@ -47,6 +47,8 @@ import { userGetNotificationsStatusRoute } from "./api/user_get_notifications_st
 import { managecachingserver, managemailer } from "./config_triggers";
 import { incidentsLog } from "./systempages/incidentsLog";
 import { getIncidentLogsRoute } from "./api/incidentlogs_get";
+import { ActionRestrictionObjectTypes, ActionRestrictionTypesObject } from "./action_restrictions";
+import { updateActionRestrictionsRoute } from "./api/update_action_restrictions";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -407,6 +409,21 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
             }
         }
     },
+    manageactionrestrictions: {
+        name: "manageactionrestrictions",
+        risk_text: "Dangerous",
+
+        source: "ede",
+
+        arguments: {
+            allowed_object_types: {
+                type: ["array"],
+                description: "Object types, action restrictions of which are allowed to be modified",
+
+                default_value: ""
+            }
+        }
+    },
     viewdashboardstatus: {
         name: "viewdashboardstatus",
 
@@ -434,6 +451,39 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 
 export const registry_skins = new RegistryContainer<SkinsObject>("ede", getSkins);
 export const registry_namespaces = new RegistryContainer<Page.NamespacesObject>("ede", Page.getAllNamespacesFromDB);
+
+export const registry_action_restriction_object_types = new RegistryContainer<ActionRestrictionObjectTypes>("ede", undefined, {
+    "page@id": {
+        name: "page@id",
+        description: "Restrict a page by it's id",
+        pattern: /^[0-9]+$/
+    }
+});
+
+export const registry_action_restriction_types = new RegistryContainer<{ [object_type: string]: ActionRestrictionTypesObject }>("ede", undefined, {
+    page: {
+        edit: {
+            name: "edit",
+            display_name: "Editing",
+            display_iconclass: "fas fa-pen"
+        },
+        move: {
+            name: "move",
+            display_name: "Moving (renaming)",
+            display_iconclass: "fas fa-arrow-right"
+        },
+        delete: {
+            name: "delete",
+            display_name: "Deleting",
+            display_iconclass: "fas fa-trash"
+        },
+        viewarchives: {
+            name: "viewarchives",
+            display_name: "Restoring and viewing archives",
+            display_iconclass: "fas fa-archive"
+        }
+    }
+});
 
 export const registry_page_info_types = new RegistryContainer<Page.PageInfoTypes>("ede", undefined, {
     hiddentitle: {
@@ -1161,6 +1211,48 @@ not it is assigned to the user",
         },
 
         handler: configResetItemRoute
+    },
+    "action_restrictions/update": {
+        name: "action_restrictions/update",
+        method: "POST",
+
+        description: "Create/update an action restriction settings for an object",
+
+        required_arguments: ["object_type", "target_object", "restricted_actions", "restrict_to", "csrf_token"],
+        required_rights: ["manageactionrestrictions"],
+
+        arguments: {
+            object_type: {
+                name: "object_type",
+                display_name: "Object type",
+                description: "Type of object, action restrictions of which will be updated. Ex. page@id, sysmsg@name",
+
+                type: "string"
+            },
+            target_object: {
+                name: "target_object",
+                display_name: "Target object",
+                description: "Target object, action restrictions of which will be updated. This can be an id, a name, etc. depending on the object_type argument",
+
+                type: "string"
+            },
+            restricted_actions: {
+                name: "restricted_actions",
+                display_name: "Restricted actions",
+                description: "A JSON object with the restricted actions. true for restricted, false for non-restricted. Ex. { write: true, move: false }",
+
+                type: "JSON"
+            },
+            restrict_to: {
+                name: "restrict_to",
+                display_name: "Restrict to",
+                description: "A grant right name to restrict the actions to (without the prepending tilda). Will be created, if does not exist yet",
+
+                type: "string"
+            },
+        },
+
+        handler: updateActionRestrictionsRoute
     },
     "systemmessage/get": {
         name: "systemmessage/get",
