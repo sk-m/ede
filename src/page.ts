@@ -599,9 +599,9 @@ INNER JOIN `revisions` ON `deleted_wiki_pages`.`pageid` = `revisions`.`page` WHE
 
             // Restore the page (move record from `deleted_wiki_pages` to `wiki_pages`, update pageid for all related revisions and
             // delete the record from `deleted_wiki_pages`)
-            sql.execute("SELECT wiki_restore_page(?, ?, ?, ?, ?, ?) AS new_pageid",
+            sql.execute("SELECT wiki_restore_page(?, ?, ?, ?, ?) AS new_pageid",
             [page_id, new_address.namespace, new_address.name, revid,
-            JSON.stringify(deleted_page.page_info), deleted_page.action_restrictions],
+            JSON.stringify(deleted_page.page_info)],
             (restore_error: any, restore_results: any) => {
                 if(restore_error) {
                     reject(new Util.Rejection(Util.RejectionType.GENERAL_UNKNOWN, "Could not restore a page"));
