@@ -1,3 +1,4 @@
+import { GroupsAndRightsObject } from "./right";
 import { sql } from "./server";
 import * as Util from "./utils";
 
@@ -145,6 +146,42 @@ export async function getActionRestrictions(object_type: string, object: string)
                 });
             }
         });
+    });
+}
+
+/**
+ * Check if an action is restricted for an object, given the GroupsAndRights of the executor
+ *
+ * @param object_type object type
+ * @param object target object
+ * @param action_type type of action user tries to perform
+ * @param grouprights GroupsAndRights object for the user
+ */
+export async function checkActionRestrictions(object_type: string, object: string, action_type: string, grouprights: GroupsAndRightsObject):
+    Promise<[boolean, string]> {
+    return new Promise(async (resolve: any) => {
+        // Get action restrictions for an object
+        const action_restrictions = await getActionRestrictions(object_type, object);
+
+        if(action_restrictions && action_restrictions.restricted_actions[action_type]) {
+            // Action is restricred
+
+            if(action_restrictions.restriction_type === "grant_right") {
+                // Restricted to a grant right, check if user has it
+
+                if(!grouprights.rights["~" + action_restrictions.restricted_to]) {
+                    resolve([true, "You are not allowed to perform this action because it is restricted"]);
+                    return;
+                }
+            } else {
+                // Unsupported restriction type
+                resolve([true, "Restriction type for this object is not supported"]);
+                return;
+            }
+        }
+
+        // Not restricted
+        resolve([false, ""]);
     });
 }
 

@@ -4,6 +4,7 @@ import * as Log from "../log";
 import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
 import { Rejection, RejectionType } from "../utils";
+import { checkActionRestrictions } from "../action_restrictions";
 
 export async function pageRestoreRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
@@ -13,13 +14,25 @@ export async function pageRestoreRoute(req: any, res: any, client_user?: User.Us
     }
 
     let client_permissions_error = true;
+    let client_action_restricted = false;
 
     // Check if client has the rights to restore pages
     await User.getRights(client_user.id)
-    .then((grouprights: GroupsAndRightsObject) => {
+    .then(async (grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_restorepage) client_permissions_error = false;
+
+        // Check action restrictions (viewarchives)
+        const restriction_check_results = await checkActionRestrictions("page@id", req.body.pageid, "viewarchives", grouprights);
+
+        client_action_restricted = restriction_check_results[0];
+
+        if(client_action_restricted)
+            apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, restriction_check_results[1]));
     })
     .catch(() => undefined);
+
+    // Action is restricted, don't continue. We already sent the error message to the client
+    if(client_action_restricted) return;
 
     if(client_permissions_error) {
         apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to restore pages"));

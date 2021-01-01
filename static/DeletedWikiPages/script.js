@@ -126,6 +126,9 @@ Is it hidden?</i>";
         })
         .catch(response => {
             ede.showAPIErrorNotification("deletedwikipages", response);
+
+            revisions_status_text.innerText = "Could not fetch revisions";
+            revisions_container.innerHTML = "";
         });
     }
 

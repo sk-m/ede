@@ -5,6 +5,7 @@ import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
 import { pageTitleParser } from "../routes";
 import { Rejection, RejectionType } from "../utils";
+import { checkActionRestrictions } from "../action_restrictions";
 
 export async function pageDeleteRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
@@ -17,13 +18,19 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
     let client_can_remove_from_db = false;
 
     let client_namespace_restricted = false;
+    let client_action_restricted = false;
 
     // Parse the title
     const address = pageTitleParser(req.body.title);
 
+    // Get the page
+    // TODO @performance a lot of database queries
+    const target_page = await Page.getPageInfo(address);
+    const target_page_id = target_page[1][0].id;
+
     // Check if client has the rights to delete pages
     await User.getRights(client_user.id)
-    .then((grouprights: GroupsAndRightsObject) => {
+    .then(async (grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_deletepage) {
             // Check the main right
             client_permissions_error = false;
@@ -36,9 +43,20 @@ export async function pageDeleteRoute(req: any, res: any, client_user?: User.Use
                && grouprights.rights.wiki_deletepage.disallowed_namespaces.includes(address.namespace)) {
                 client_namespace_restricted = true;
             }
+
+            // Check action restrictions (delete)
+            const restriction_check_results = await checkActionRestrictions("page@id", target_page_id, "delete", grouprights);
+
+            client_action_restricted = restriction_check_results[0];
+
+            if(client_action_restricted)
+                apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, restriction_check_results[1]));
         }
     })
     .catch(() => undefined);
+
+    // Action is restricted, don't continue. We already sent the error message to the client
+    if(client_action_restricted) return;
 
     if(client_permissions_error) {
         apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to delete pages"));

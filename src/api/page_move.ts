@@ -5,6 +5,7 @@ import { apiSendError, apiSendSuccess } from "../api";
 import { GroupsAndRightsObject } from "../right";
 import { pageTitleParser } from "../routes";
 import { Rejection, RejectionType } from "../utils";
+import { checkActionRestrictions } from "../action_restrictions";
 
 export async function pageMoveRoute(req: any, res: any, client_user?: User.User): Promise<void> {
     // Check if client is logged in
@@ -13,17 +14,34 @@ export async function pageMoveRoute(req: any, res: any, client_user?: User.User)
         return;
     }
 
-    let client_permissions_error = true;
-
     // Parse the title
     const old_address = pageTitleParser(req.body.title);
 
+    // Get the page
+    // TODO @performance a lot of database queries
+    const target_page = await Page.getPageInfo(old_address);
+    const target_page_id = target_page[1][0].id;
+
+    let client_permissions_error = true;
+    let client_action_restricted = false;
+
     // Check if client has a right to move pages
     await User.getRights(client_user.id)
-    .then((grouprights: GroupsAndRightsObject) => {
+    .then(async (grouprights: GroupsAndRightsObject) => {
         if(grouprights.rights.wiki_movepage) client_permissions_error = false;
+
+        // Check action restrictions (move)
+        const restriction_check_results = await checkActionRestrictions("page@id", target_page_id, "move", grouprights);
+
+        client_action_restricted = restriction_check_results[0];
+
+        if(client_action_restricted)
+            apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, restriction_check_results[1]));
     })
     .catch(() => undefined);
+
+    // Action is restricted, don't continue. We already sent the error message to the client
+    if(client_action_restricted) return;
 
     if(client_permissions_error) {
         apiSendError(res, new Rejection(RejectionType.GENERAL_ACCESS_DENIED, "You do not have permission to move pages"));
