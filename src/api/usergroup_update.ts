@@ -1,9 +1,10 @@
 import * as User from "../user";
 import * as Log from "../log";
 import * as Util from "../utils";
-import { registry_config, registry_usergroups } from "../registry";
+import { registry_config, registry_rights, registry_usergroups } from "../registry";
 import { Group, GroupsAndRightsObject } from "../right";
 import { apiSendError, apiSendSuccess, checkUserSignature } from "../api";
+import { getAllGrantRights } from "../action_restrictions";
 
 /**
  * Modify the user group ("usergroup/update")
@@ -53,6 +54,8 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
     };
 
     const registry_config_snapshot = registry_config.get();
+    const registry_rights_snapshot = registry_rights.get();
+    const all_grant_rights = await getAllGrantRights();
 
     // Function to check if the right is restricted and can not be added or removed from the group
     function check_restricted(right_name: string): boolean {
@@ -89,9 +92,26 @@ export async function updateUserGroupRoute(req: any, res: any, client_user?: Use
             else if(rights_obj[right_name] === true && !current_usergroup.added_rights.includes(right_name)) {
                 // Right is being added to the group, push it to the new object
 
-                if(check_restricted(right_name)) {
-                    // Tried to add a restricted right to the group
+                // Check if the right exists (we don't allow assigning currently nonexistent rights)
+                if(!registry_rights_snapshot[right_name]) {
+                    if(right_name[0] === "~") {
+                        // This is a grant right, check if exists
 
+                        const grant_name = right_name.substring(1);
+                        if(!all_grant_rights[grant_name]) {
+                            apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, `'${ right_name }' is not registered in the engine as a grant right.`));
+                            return;
+                        }
+                    } else {
+                        // This is a normal right. We already know that it does not exist
+
+                        apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_INVALID_DATA, `Right '${ right_name }' is not registered in the engine.`));
+                        return;
+                    }
+                }
+
+                // Check if right is restricted
+                if(check_restricted(right_name)) {
                     apiSendError(res, new Util.Rejection(Util.RejectionType.GENERAL_ACCESS_DENIED, `Right '${ right_name }' is restricted and can not be altered.`));
                     return;
                 }

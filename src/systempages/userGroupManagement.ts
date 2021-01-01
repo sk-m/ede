@@ -6,6 +6,7 @@ import * as SystemMessage from "../system_message";
 import { registry_usergroups, registry_rights, registry_config } from "../registry";
 import { UI_CHECKBOX_SVG } from "../constants";
 import { GroupsAndRightsObject } from "../right";
+import { getAllGrantRights } from "../action_restrictions";
 
 // TODO add summary field for create and delete actions
 export async function userGroupManagement(page: Page.ResponsePage, client: User.User): Promise<Page.SystempageConfig> {
@@ -95,9 +96,15 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
         }
 
         let available_rights_html = "";
+        let available_grant_rights_html = "";
+        let deleted_grant_rigths_html = "";
+
         const registry_rights_snapshot = registry_rights.get();
         const registry_config_snapshot = registry_config.get();
         const sysmsgs_query_arr: string[] = [];
+
+        // TODO @performance store grant rights in the registry
+        const available_grant_rights = await getAllGrantRights();
 
         let is_group_protected = false;
 
@@ -115,10 +122,15 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             is_group_protected = true;
         }
 
-        // Get all system messages
+        // Get all system messages for normal and grant rights
         // tslint:disable-next-line: forin
         for(const rigth_name in registry_rights_snapshot) {
             sysmsgs_query_arr.push(`right-description-${ rigth_name }`);
+        }
+
+        // tslint:disable-next-line: forin
+        for(const grant_name in available_grant_rights) {
+            sysmsgs_query_arr.push(`grantright-description-${ grant_name }`);
         }
 
         // Also load a name and a description for this group
@@ -132,6 +144,52 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 
         // Get logs for this group
         const log_entries = await Log.getEntries("groupupdate", undefined, queried_group_name);
+
+        // Loop through all available grant rights
+        for(const grant_name in available_grant_rights) {
+            if(!available_grant_rights[grant_name]) continue;
+
+            available_grant_rights_html += `\
+<div id="right-${ grant_name }" class="right">
+<div class="left-container">
+    <div input name="right;~${ grant_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="${ queried_group.added_rights.includes("~" + grant_name) ? "true" : "false" }">
+        <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+        <div class="text">
+            <div class="name">~${ grant_name }</div>
+            <div class="tag">Grant right</div>
+        </div>
+    </div>
+</div>
+<div class="right-container" style="width: 100%">
+    <div class="description-container">
+        <div>
+            <div class="ui-text">${ sysmsgs[`grantright-description-${ grant_name }`] }</div>
+            <div class="ui-text small gray i">${ available_grant_rights[grant_name].dependents_num || "no" } dependent(s)</div>
+        </div>
+    </div>
+</div>
+</div>`;
+        }
+
+        // Find deleted grant rights
+        for(const grant_name of queried_group.added_rights) {
+            const clean_grant_name = grant_name.substring(1);
+            if(grant_name[0] === "~" && !available_grant_rights[clean_grant_name]) {
+
+                deleted_grant_rigths_html += `\
+<div id="right-${ clean_grant_name }" class="right one-side">
+    <div class="left-container">
+        <div input name="right;${ grant_name }" style="width: 33%; min-width: 250px; flex-shrink: 0" class="ui-checkbox-1${ client_can_alter ? "" : " disabled" }" data-checked="true">
+            <div class="checkbox">${ UI_CHECKBOX_SVG }</div>
+            <div class="text">
+                <div class="name">${ grant_name }</div>
+                <div class="tag"><i class="fas fa-times"></i> Deleted grant right</div>
+            </div>
+        </div>
+    </div>
+</div>`;
+            }
+        }
 
         // Loop through all available rigths
         for(const right_name in registry_rights_snapshot) {
@@ -300,15 +358,22 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
             },
         ] };
 
+        // Assigned rights and grants list
         let assigned_rights_html = "";
+        let assigned_grants_html = "";
 
         for(const right_name of queried_group.added_rights) {
-            assigned_rights_html += `<a href="#right-${ right_name }">&rarr;${ right_name }</a>, `;
+            if(right_name[0] === "~") {
+                assigned_grants_html += `<a href="#right-${ right_name.substring(1) }">&rarr;${ right_name }</a>, `;
+            } else {
+                assigned_rights_html += `<a href="#right-${ right_name }">&rarr;${ right_name }</a>, `;
+            }
         }
 
         // Remove the last ', '
-        // TODO @cleanup
+        // TODO @cleanup @performance
         assigned_rights_html = assigned_rights_html.substring(0, assigned_rights_html.length - 2);
+        assigned_grants_html = assigned_grants_html.substring(0, assigned_grants_html.length - 2);
 
         // TODO "Main information" block should be moved to the systempage header box
         page_config.body_html = `\
@@ -335,6 +400,10 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
                 <div class="key">Currently assigned rights</div>
                 <div class="value ui-text monospace">${ assigned_rights_html || "<i>(none)</i>" }</div>
             </div>
+            <div class="item">
+                <div class="key">Currently assigned grants</div>
+                <div class="value ui-text monospace">${ assigned_grants_html || "<i>(none)</i>" }</div>
+            </div>
         </div>
     </div>
 
@@ -347,7 +416,21 @@ export async function userGroupManagement(page: Page.ResponsePage, client: User.
 rights for this group" }</div>
 
         <div class="rights-container">
+        <div class="section-header">
+            <div class="header">Main rights</div>
+            <div class="description">Main rights are defined in the engine itself and can not be created or removed.</div>
+        </div>
         ${ available_rights_html }
+        ${ available_grant_rights_html ? `<div class="section-header">
+            <div class="header">Grant rights</div>
+            <div class="description">Grant rights are needed to perform restricted actions. Grant rights have a higher priority than main rights as they are needed to supress the restrictions on objects. They can be created and removed at any time and always start with a tilda (~).</div>
+        </div>` : "" }
+        ${ available_grant_rights_html }
+        ${ deleted_grant_rigths_html ? `<div class="section-header">
+            <div class="header">Deleted grant rights</div>
+            <div class="description">These grant rights are currently assigned to the group but were deleted and no longer affect anything.</div>
+        </div>` : "" }
+        ${ deleted_grant_rigths_html }
         </div>
     </div>
 
