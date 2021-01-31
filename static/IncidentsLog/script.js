@@ -1,4 +1,4 @@
-function userBlockingPageScript() {
+function incidentsLogPageScript() {
     // Last log id we encountered
     let last_id;
 
@@ -19,6 +19,10 @@ function userBlockingPageScript() {
 
     // Get the elements we need
     const list_el = document.querySelector("#systempage-incidentslog-root > .incidents-list");
+
+    // Not available
+    if(!list_el) return;
+
     const elements = document.querySelectorAll("#systempage-incidentslog-root > .incidents-list > .incident");
     update_elements(elements);
 
@@ -170,6 +174,6 @@ function userBlockingPageScript() {
     }
 }
 
-ede_onready.push(userBlockingPageScript);
+ede_onready.push(incidentsLogPageScript);
 
-userBlockingPageScript;
+incidentsLogPageScript;
