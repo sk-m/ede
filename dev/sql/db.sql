@@ -130,6 +130,20 @@ CREATE TABLE IF NOT EXISTS `email_tokens` (
 /*!40000 ALTER TABLE `email_tokens` DISABLE KEYS */;
 /*!40000 ALTER TABLE `email_tokens` ENABLE KEYS */;
 
+CREATE TABLE IF NOT EXISTS `files` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `uid` varchar(36) NOT NULL,
+  `name` varchar(2048) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `mime_type` varchar(64) DEFAULT NULL,
+  `file_hash` varchar(64) DEFAULT NULL,
+  `uploaded_by` int unsigned NOT NULL,
+  `uploaded_on` int unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40000 ALTER TABLE `files` DISABLE KEYS */;
+/*!40000 ALTER TABLE `files` ENABLE KEYS */;
+
 CREATE TABLE IF NOT EXISTS `grant_rights` (
   `name` varchar(256) NOT NULL DEFAULT '',
   `dependents_num` int unsigned NOT NULL DEFAULT '0',

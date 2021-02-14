@@ -1,0 +1,397 @@
+#systempage-fileupload-root > .status-floater {
+    position: fixed;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+
+    bottom: 0;
+    right: 0;
+
+    width: 300px;
+
+    padding: 12px;
+
+    border-radius: 4px;
+
+    transform: translate(-25px, -25px);
+
+    background-color: white;
+    box-shadow: 0 0 12px 0 rgb(0 0 0 / 6%), 0 2px 2px 0 rgb(0 0 0 / 6%);
+
+    transition: 0.1s;
+}
+
+#systempage-fileupload-root > .status-floater[hidden] {
+    transform: translateY(100%);
+}
+
+#systempage-fileupload-root > .status-floater > .left > .spinner-container {
+    width: 35px;
+    height: 35px;
+
+    background-color: rgba(0, 0, 0, 0.025);
+
+    border-radius: 50%;
+}
+
+#systempage-fileupload-root > .status-floater > .left > .spinner-container > .spinner {
+    width: 100%;
+    height: 100%;
+
+    background-image: url(/public/assets/spinner.svg);
+    background-position: 50% 50%;
+    background-size: 14px;
+    background-repeat: no-repeat;
+
+    opacity: 0.8;
+}
+
+#systempage-fileupload-root > .status-floater > .right {
+    margin-left: 12px;
+
+    width: 100%;
+}
+
+#systempage-fileupload-root > .status-floater > .right > .status-text {
+    font-size: 0.9em;
+    font-family: "Roboto", sans-serif;
+}
+
+#systempage-fileupload-root > .status-floater > .right > .loading-container {
+    overflow: hidden;
+
+    height: 5px;
+    width: 100%;
+
+    margin-top: 5px;
+
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+#systempage-fileupload-root > .status-floater > .right > .loading-container > .loading-indicator {
+    width: 0%;
+    height: 100%;
+
+    border-radius: 3px;
+
+    background: linear-gradient(-90deg, hsl(228, 100%, 60%) 0%, #0020e8 100%);
+    box-shadow: 0 0 10px 0 #1744FF;
+
+    transition: 0.15s;
+}
+
+#systempage-fileupload-root > form .select-container {
+    display: flex;
+    align-items: flex-start;
+}
+
+#systempage-fileupload-root > form .select-container > .spacer {
+    height: 100%;
+    width: 1px;
+
+    background-color: var(--color-gray2);
+
+    margin: 0 0.5em;
+}
+
+#systempage-fileupload-root > form .select-container > .info {
+    margin: 0.3em 0;
+
+    color: hsl(0, 0%, 38%);
+    font-family: "Roboto", sans-serif;
+    font-size: 12px;
+
+    line-height: 16px;
+}
+
+#systempage-fileupload-root > form .select-file-btn {
+    display: block;
+
+    width: 50%;
+    padding: 20px;
+
+    cursor: pointer;
+    outline: none;
+    border: none;
+
+    background-color: rgba(0, 32, 232, 0.05);
+    border: 3px dotted var(--color-blue2-transparent-1);
+    border-radius: 5px;
+
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form .select-file-btn:hover {
+    background-color: rgba(0, 32, 232, 0.1);
+}
+
+#systempage-fileupload-root > form .select-file-btn:hover > .icon-container {
+    background-color: rgba(0, 32, 232, 0.15);
+}
+
+#systempage-fileupload-root > form .select-file-btn:hover > .icon-container > i {
+    margin-top: -4px;
+}
+
+#systempage-fileupload-root > form .select-file-btn > .icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto;
+
+    width: 50px;
+    height: 50px;
+
+    color: var(--color-blue3);
+
+    background-color: rgba(0, 32, 232, 0.1);
+    border-radius: 50%;
+
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form .select-file-btn > .icon-container > i {
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form .select-file-btn > .text {
+    margin-top: 0.66em;
+
+    font-weight: 500;
+    color: var(--color-blue3);
+    font-family: "Roboto", sans-serif;
+
+    text-align: center;
+}
+
+#systempage-fileupload-root > form > .selected-files-list {
+    margin-top: 3em;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 1.3em;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header .selected-n {
+    font-size: 0.8em;
+    color: hsl(0, 0%, 55%);
+    font-weight: 400;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header h1 {
+    font-size: 1.3em;
+    font-weight: 400;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header .upload-files-btn {
+    padding: 10px 20px;
+
+    border: none;
+    outline: none;
+    user-select: none;
+
+    cursor: pointer;
+
+    color: white;
+    font-weight: 500;
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+
+    background-color: var(--color-blue3);
+    border-radius: 3px;
+
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header .upload-files-btn:hover {
+    background-color: var(--color-blue);
+    box-shadow: 0 2px 8px hsla(228, 100%, 60%, 0.33);
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header .upload-files-btn > i {
+    margin-left: 4px;
+    font-size: 12px;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .header .upload-files-btn[disabled] {
+    background-color: hsl(0, 0%, 66%);
+
+    pointer-events: none;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item {
+    position: relative;
+
+    display: flex;
+    align-items: flex-start;
+
+    padding: 15px;
+    margin: 10px 0;
+
+    border-radius: 4px;
+
+    box-shadow: 0 2px 12px rgb(0 0 0 / 5%), 0 2px 2px rgb(0 0 0 / 5%);
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .indicator {
+    position: absolute;
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    top: 0;
+    left: 0;
+
+    width: 18px;
+    height: 18px;
+
+    margin: -9px 0 0 -9px;
+
+    color: hsl(38, 100%, 60%);
+    font-size: 9px;
+    
+    background-color: var(--color-red);
+    border-radius: 50%;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item[w-indicator] > .indicator {
+    display: flex;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .preview-container {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    flex-shrink: 0;
+
+    height: 100px;
+    width: 150px;
+
+    margin-right: 0.5em;
+
+    background-color: rgba(0, 0, 0, 0.05);
+
+    border-radius: 4px;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .preview-container > .preview[hidden] + .preview-placeholder {
+    display: block;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .preview-container > .preview-placeholder {
+    color: var(--color-blue);
+    font-size: 14px;
+
+    display: none;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .preview-container > .preview {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 1;
+
+    object-fit: contain;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    height: 100px;
+    width: 100%;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .filename-container:hover > .icon {
+    transform: translateX(0);
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .filename-container:hover > input {
+    color: hsl(0, 0%, 10%);
+    background-color: rgba(0, 0, 0, 0.033);
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .filename-container {
+    position: relative;
+    display: flex;
+
+    overflow: hidden;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .filename-container > input {
+    border: none;
+
+    outline: none;
+
+    width: 100%;
+
+    padding: 4px 8px;
+    border-radius: 3px;
+
+    margin-bottom: 0.2em;
+
+    color: hsl(0, 0%, 15%);
+    font-family: "Roboto", sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .filename-container > .icon {
+    position: absolute;
+    z-index: 0;
+
+    right: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    transform: translateX(27px);
+
+    width: 27px;
+    height: 27px;
+
+    color: hsl(0, 0%, 15%);
+    font-size: 12px;
+
+    background-color: rgba(0, 0, 0, 0.08);
+    border-radius: 0 3px 3px 0;
+
+    transition: 0.2s;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info .short-info {
+    color: hsl(0, 0%, 38%);
+    font-family: "Roboto", sans-serif;
+    font-size: 12px;
+
+    margin-left: 8px;
+}
+
+#systempage-fileupload-root > form > .selected-files-list > .list > .item > .info > .bottom {
+    margin-left: 8px;
+}

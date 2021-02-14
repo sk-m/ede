@@ -49,6 +49,10 @@ import { incidentsLog } from "./systempages/incidentsLog";
 import { getIncidentLogsRoute } from "./api/incidentlogs_get";
 import { ActionRestrictionObjectTypes, ActionRestrictionTypesObject } from "./action_restrictions";
 import { updateActionRestrictionsRoute } from "./api/update_action_restrictions";
+import { fileUpload } from "./systempages/fileUpload";
+import { uploadRoute } from "./api/file_upload";
+import { fileGetRoute } from "./api/file_get";
+import { fileCheckNamesRoute } from "./api/file_checknames";
 
 /** @ignore */
 interface RegistrySubscriber {
@@ -336,6 +340,20 @@ export const registry_rights = new RegistryContainer<{ [right_name: string]: Rig
 
         arguments: {}
     },
+    file_upload: {
+        name: "file_upload",
+
+        source: "ede",
+
+        arguments: {
+            max_filesize: {
+                type: ["number"],
+                description: "Maximum allowed file size, in bytes",
+
+                default_value: 50000000,
+            },
+        }
+    },
     modifyusergroupmembership: {
         name: "modifyusergroupmembership",
         risk_text: "Dangerous",
@@ -622,10 +640,96 @@ export const registry_systempages = new RegistryContainer<Page.SystemPageDescrip
 
         systempage_config: incidentsLog
     },
+    fileupload: {
+        name: "FileUpload",
+
+        display_title: "File upload",
+        display_category: "files",
+        display_description: "Upload files to EDE",
+        display_icon: "fas fa-upload",
+
+        source: "ede",
+
+        systempage_config: fileUpload
+    },
 });
 
 // TODO add summaries to arguments
 export const registry_apiRoutes = new RegistryContainer<ApiRoutesObject>("ede", undefined, {
+    "file/upload": {
+        name: "file/upload",
+        method: "POST",
+
+        description: "Upload files",
+
+        required_arguments: ["filenames", "destination"],
+        required_rights: ["file_upload"],
+
+        arguments: {
+            filenames: {
+                name: "filenames",
+                display_name: "Array of filenames. file_0 has a name of filenames[0], file_1 is filenames[1], and so on",
+
+                type: "string[]"
+            },
+            destination: {
+                name: "destination",
+                display_name: "Only `file_storage` is supported for now",
+
+                type: "string"
+            },
+        },
+
+        handler: uploadRoute
+    },
+    "file/get": {
+        name: "file/get",
+        method: "GET",
+
+        description: "Download the file",
+
+        required_arguments: [],
+        required_rights: [],
+        anonymous_call_allowed: true,
+
+        arguments: {
+            name: {
+                name: "name",
+                display_name: "File name",
+
+                type: "string"
+            },
+            uid: {
+                name: "uid",
+                display_name: "Unique file id",
+
+                type: "string"
+            },
+        },
+
+        handler: fileGetRoute
+    },
+    "file/checknames": {
+        name: "file/checknames",
+        method: "GET",
+
+        description: "Check if file names are available",
+
+        required_arguments: ["filenames"],
+        required_rights: [],
+        anonymous_call_allowed: true,
+
+        arguments: {
+            filenames: {
+                name: "filenames",
+                display_name: "File names that will be checked",
+
+                type: "string[]"
+            },
+        },
+
+        handler: fileCheckNamesRoute
+    },
     "page/get": {
         name: "page/get",
         method: "GET",

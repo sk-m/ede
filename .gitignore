@@ -2,6 +2,7 @@
 /node_modules
 /build
 /docs
+/storage/uploads
 
 /secrets.json
 *.todo

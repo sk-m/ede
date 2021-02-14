@@ -137,6 +137,25 @@ export function formatTimeString(timestamp: number): string {
     return `${ years } year(s), ${ months } month(s)`;
 }
 
+const filesize_orders_of_magnitude = ["", "K", "M", "G"];
+
+/**
+ * Format the file size. Ex. 50000000 bytes -> 50MB
+ *
+ * @param size_bytes File size in bytes
+ */
+export function formatFileSize(size_bytes: number): string {
+    let i = 0;
+
+    while(size_bytes > 1024) {
+        size_bytes /= 1024;
+
+        i++;
+    }
+
+    return `${ Math.ceil(size_bytes) } ${ filesize_orders_of_magnitude[i] }B`;
+}
+
 /**
  * Transform a buffer to a cookie and url safe string
  *
@@ -186,8 +205,11 @@ export enum RejectionType {
     PAGE_NAME_TAKEN,
     PAGE_TITLE_INVALID,
 
-    NAMESPACE_ERROR,
+    FILE_NAME_TAKEN,
+    FILE_TOO_BIG,
+    FILE_NOT_FOUND,
 
+    NAMESPACE_ERROR,
 }
 
 export class Rejection {

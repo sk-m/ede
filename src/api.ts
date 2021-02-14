@@ -148,7 +148,7 @@ export async function getPageRoute(req: any, res: any, client_user?: User.User, 
         const page = await Page.get({
             ...parsed_title,
 
-            raw_url: req.raw.originalUrl
+            raw_url: req.url
         }, client_user as User.User);
 
         // TODO get_raw does nothing here, Page.get renders it anyway
@@ -246,16 +246,20 @@ export async function RootRoute(req: any, res: any): Promise<void> {
         }
 
         // Check if a body was provided
-        if(!req.body) {
+        if(!req.body && route_name !== "file/upload") {
             apiSendError(res, new Rejection(RejectionType.GENERAL_INVALID_DATA, "No POST body provided"));
             return;
         }
 
         // Check for required arguments
-        for(const required_arg of api_route_object.required_arguments) {
-            if(!req.body.hasOwnProperty(required_arg)) {
-                apiSendError(res, new Rejection(RejectionType.GENERAL_PARAMETER_REQUIRED, `Parameter '${ required_arg }' is required`));
-                return;
+        if(route_name !== "file/upload") {
+            const request_args = Object.keys(req.body);
+
+            for(const required_arg of api_route_object.required_arguments) {
+                if(!request_args.includes(required_arg)) {
+                    apiSendError(res, new Rejection(RejectionType.GENERAL_PARAMETER_REQUIRED, `Parameter '${ required_arg }' is required`));
+                    return;
+                }
             }
         }
     }
