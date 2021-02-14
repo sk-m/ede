@@ -153,7 +153,7 @@ export async function directRoute(req: any, res: any): Promise<void> {
     const client_user = await User.getFromSession(req).catch(() => undefined);
 
     // Substring is to delete the first slash from the url
-    const address = pageTitleParser(req.raw.originalUrl.substring(1));
+    const address = pageTitleParser(req.url.substring(1));
 
     // Get the requested page and send to the client
     // TODO allow sending options to the Page.get to, for example, disable returning raw content or rendered content

@@ -10,6 +10,7 @@ const Redis = require("redis-fast-driver");
 import fastify_static = require("fastify-static");
 import fastify_cookie = require("fastify-cookie");
 import fastify_formbody = require("fastify-formbody");
+import fastify_multipart = require("fastify-multipart");
 
 // Local imports
 // TODO do something with this
@@ -36,6 +37,8 @@ const local_app: any = fastify();
 
 // Register fastify modules
 app.register(fastify_cookie, {});
+
+app.register(fastify_multipart);
 
 app.register(fastify_formbody, {
     addToBody: true
@@ -246,7 +249,6 @@ async function serverInit(db_error: Error): Promise<void> {
         prefix: '/public/assets',
     });
 
-    // Register routes
     app.get("/*", directRoute);
     app.get("/api*", Api.RootRoute);
     app.get("/api/get_editor_html", getEditorRoute);
